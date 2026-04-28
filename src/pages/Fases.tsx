@@ -75,7 +75,7 @@ const Fases = () => {
           </div>
         </div>
 
-        {!isPlaceholder && (
+        {!isPlaceholder && match.status === 'finalizado' && (
           <div style={{ textAlign: 'center', fontSize: '0.6rem', color: 'var(--primary-color)', marginTop: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Partida encerrada <ChevronRight size={10} />
           </div>

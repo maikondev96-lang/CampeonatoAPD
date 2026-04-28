@@ -126,8 +126,8 @@ const Jogos = () => {
                       alignItems: 'center'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-end', minWidth: 0 }}>
-                      <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#020617', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-end', minWidth: 0, flex: 1 }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#020617', textAlign: 'right', flex: 1 }}>
                         {homeName}
                       </span>
                       {jogo.home_team?.logo_url ? (
@@ -161,13 +161,13 @@ const Jogos = () => {
                       </div>
                     </div>
   
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-start', minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-start', minWidth: 0, flex: 1 }}>
                       {jogo.away_team?.logo_url ? (
                         <img src={jogo.away_team.logo_url} style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} alt="" />
                       ) : (
                         <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#64748b', fontWeight: 900, flexShrink: 0 }}>?</div>
                       )}
-                      <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#020617', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#020617', textAlign: 'left', flex: 1 }}>
                         {awayName}
                       </span>
                     </div>
