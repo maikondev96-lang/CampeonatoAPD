@@ -244,13 +244,14 @@ const AdminMatchDetail = () => {
             <div style={{ textAlign: 'center' }}>
               <img src={match.home_team?.logo_url} style={{ width: 80, height: 80, objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))' }} />
               <div style={{ fontWeight: 900, marginTop: '0.75rem', fontSize: '1rem', color: 'var(--primary-dark)', textTransform: 'uppercase' }}>{match.home_team?.name}</div>
-              <input
-                type="number"
-                value={homeScore}
-                onChange={e => setHomeScore(Math.max(0, parseInt(e.target.value) || 0))}
-                min={0}
-                style={{ width: '80px', height: '80px', fontSize: '2.5rem', fontWeight: 900, textAlign: 'center', background: 'var(--primary-dark)', color: '#fff', border: 'none', borderRadius: '14px', marginTop: '1rem', cursor: 'text' }}
-              />
+              <div style={{
+                width: '80px', height: '80px', fontSize: '2.5rem', fontWeight: 900, 
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--primary-dark)', color: '#fff', 
+                borderRadius: '14px', marginTop: '1rem', marginInline: 'auto'
+              }}>
+                {homeScore}
+              </div>
             </div>
 
             <div style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: 900, color: 'var(--text-subtle)' }}>×</div>
@@ -258,13 +259,14 @@ const AdminMatchDetail = () => {
             <div style={{ textAlign: 'center' }}>
               <img src={match.away_team?.logo_url} style={{ width: 80, height: 80, objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))' }} />
               <div style={{ fontWeight: 900, marginTop: '0.75rem', fontSize: '1rem', color: 'var(--primary-dark)', textTransform: 'uppercase' }}>{match.away_team?.name}</div>
-              <input
-                type="number"
-                value={awayScore}
-                onChange={e => setAwayScore(Math.max(0, parseInt(e.target.value) || 0))}
-                min={0}
-                style={{ width: '80px', height: '80px', fontSize: '2.5rem', fontWeight: 900, textAlign: 'center', background: 'var(--primary-dark)', color: '#fff', border: 'none', borderRadius: '14px', marginTop: '1rem', cursor: 'text' }}
-              />
+              <div style={{
+                width: '80px', height: '80px', fontSize: '2.5rem', fontWeight: 900, 
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--primary-dark)', color: '#fff', 
+                borderRadius: '14px', marginTop: '1rem', marginInline: 'auto'
+              }}>
+                {awayScore}
+              </div>
             </div>
           </div>
 
