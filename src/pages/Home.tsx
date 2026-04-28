@@ -324,59 +324,98 @@ const Home = () => {
         {/* ── LINHA 2: Resultados e Estatísticas ── */}
         <section className="dashboard-section-row row-2-start" style={{ gridColumn: '2' }}>
           {latestResults.length > 0 && !champion && (
-            <div className="premium-card" style={{ height: '100%', marginBottom: 0 }}>
+            <div className="premium-card" style={{ marginBottom: 0 }}>
               <div className="premium-card-header">
-                <div className="header-small-label">Resultados</div>
-                <h2 className="header-main-title">{latestRoundLabel}</h2>
+                <div className="section-label-bar">
+                  <span className="header-main-title">Resultados</span>
+                </div>
+                <span className="header-small-label" style={{ background: 'var(--bg-color)', padding: '2px 8px', borderRadius: '20px' }}>{latestRoundLabel}</span>
               </div>
-              <div className="premium-card-body" style={{ padding: '0' }}>
-                {latestResults.map(m => (
-                  <Link to={`/jogos/${m.id}`} key={m.id} style={{ display: 'block', padding: '1rem', borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s' }}>
-                    <div className="sidebar-match-info" style={{ padding: 0 }}>
-                      <div className="sidebar-team" style={{ flexDirection: 'row', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                        <span className={`team-name-premium ${ (m.home_score || 0) > (m.away_score || 0) ? 'is-winner' : (m.home_score || 0) < (m.away_score || 0) ? 'is-loser' : '' }`} style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.home_team?.name.slice(0, 3)}</span>
-                        <img src={m.home_team?.logo_url} style={{ width: 28, height: 28 }} alt="" />
+              <div>
+                {latestResults.map((m, idx) => {
+                  const homeWin = (m.home_score || 0) > (m.away_score || 0);
+                  const awayWin = (m.away_score || 0) > (m.home_score || 0);
+                  return (
+                    <Link
+                      to={`/jogos/${m.id}`}
+                      key={m.id}
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 72px 1fr',
+                        alignItems: 'center',
+                        padding: '10px 16px',
+                        borderBottom: idx < latestResults.length - 1 ? '1px solid var(--border-color)' : 'none',
+                        transition: 'background 0.15s',
+                        textDecoration: 'none',
+                        gap: '8px',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-color)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      {/* Home Team */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', overflow: 'hidden' }}>
+                        <span style={{
+                          fontSize: '0.8rem', fontWeight: homeWin ? 900 : 500,
+                          color: homeWin ? 'var(--primary-dark)' : 'var(--text-subtle)',
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                        }}>{m.home_team?.name.slice(0, 3).toUpperCase()}</span>
+                        <img src={m.home_team?.logo_url} style={{ width: 24, height: 24, objectFit: 'contain', flexShrink: 0 }} alt="" />
                       </div>
-                      <div className="score-display-premium" style={{ minWidth: '50px', padding: 0, gap: '0.4rem' }}>
-                        <div className={`score-number-premium ${(m.home_score || 0) >= (m.away_score || 0) ? 'is-winner' : ''}`} style={{ fontSize: '1.2rem' }}>{m.home_score}</div>
-                        <span className="score-divider-premium" style={{ fontSize: '0.8rem', opacity: 0.1 }}>-</span>
-                        <div className={`score-number-premium ${(m.away_score || 0) >= (m.home_score || 0) ? 'is-winner' : ''}`} style={{ fontSize: '1.2rem' }}>{m.away_score}</div>
+
+                      {/* Score */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 900, color: homeWin ? 'var(--primary-dark)' : 'var(--text-muted)', minWidth: '18px', textAlign: 'right' }}>{m.home_score}</span>
+                        <span style={{ color: 'var(--text-subtle)', fontWeight: 700, fontSize: '0.8rem' }}>–</span>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 900, color: awayWin ? 'var(--primary-dark)' : 'var(--text-muted)', minWidth: '18px', textAlign: 'left' }}>{m.away_score}</span>
                       </div>
-                      <div className="sidebar-team" style={{ flexDirection: 'row', gap: '0.75rem', justifyContent: 'flex-start' }}>
-                        <img src={m.away_team?.logo_url} style={{ width: 28, height: 28 }} alt="" />
-                        <span className={`team-name-premium ${ (m.away_score || 0) > (m.home_score || 0) ? 'is-winner' : (m.away_score || 0) < (m.home_score || 0) ? 'is-loser' : '' }`} style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.away_team?.name.slice(0, 3)}</span>
+
+                      {/* Away Team */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', overflow: 'hidden' }}>
+                        <img src={m.away_team?.logo_url} style={{ width: 24, height: 24, objectFit: 'contain', flexShrink: 0 }} alt="" />
+                        <span style={{
+                          fontSize: '0.8rem', fontWeight: awayWin ? 900 : 500,
+                          color: awayWin ? 'var(--primary-dark)' : 'var(--text-subtle)',
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                        }}>{m.away_team?.name.slice(0, 3).toUpperCase()}</span>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           )}
         </section>
 
-        <aside className="dashboard-section-row row-2-start" style={{ gridColumn: '3', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-           {/* Artilheiro e Assistência agrupados */}
-           {topScorer && (
-            <div className="metric-card" style={{ flex: 1, marginBottom: 0 }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem' }}>Artilheiro do Torneio</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: 48, height: 48, borderRadius: '12px', background: 'var(--bg-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>⚽</div>
-                <div>
-                  <div style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--primary-dark)' }}>{topScorer.name}</div>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>{topScorer.value} gols • {topScorer.team_name}</div>
+        <aside className="dashboard-section-row row-2-start" style={{ gridColumn: '3', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {topScorer && (
+            <div className="premium-card">
+              <div className="premium-card-header">
+                <div className="section-label-bar">
+                  <span className="header-main-title">Artilheiro</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem' }}>
+                <div style={{ width: 38, height: 38, borderRadius: '10px', background: 'var(--bg-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>⚽</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 900, fontSize: '0.95rem', color: 'var(--primary-dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topScorer.name}</div>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', marginTop: '2px' }}>{topScorer.value} gols • {topScorer.team_name}</div>
                 </div>
               </div>
             </div>
           )}
 
           {topAssist && (
-            <div className="metric-card" style={{ flex: 1, marginBottom: 0 }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem' }}>Líder de Assistências</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: 48, height: 48, borderRadius: '12px', background: 'var(--bg-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>👟</div>
-                <div>
-                  <div style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--primary-dark)' }}>{topAssist.name}</div>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>{topAssist.value} passes • {topAssist.team_name}</div>
+            <div className="premium-card">
+              <div className="premium-card-header">
+                <div className="section-label-bar">
+                  <span className="header-main-title">Assistências</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem' }}>
+                <div style={{ width: 38, height: 38, borderRadius: '10px', background: 'var(--bg-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>🎯</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 900, fontSize: '0.95rem', color: 'var(--primary-dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topAssist.name}</div>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', marginTop: '2px' }}>{topAssist.value} passes • {topAssist.team_name}</div>
                 </div>
               </div>
             </div>
