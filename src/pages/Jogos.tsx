@@ -138,17 +138,19 @@ const Jogos = () => {
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary-dark)', padding: '5px 14px', borderRadius: '6px', color: 'white', fontWeight: 950, fontSize: '1.1rem' }}>
-                        {jogo.status === 'finalizado' ? (
-                          <>
-                            <span>{jogo.home_score}</span>
-                            <span style={{ opacity: 0.3 }}>-</span>
-                            <span>{jogo.away_score}</span>
-                          </>
-                        ) : (
-                          <span style={{ fontSize: '0.85rem' }}>{jogo.time ? jogo.time.slice(0, 5) : 'H/D'}</span>
-                        )}
-                      </div>
+                      {(jogo.status === 'finalizado' || jogo.time) && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary-dark)', padding: '5px 14px', borderRadius: '6px', color: 'white', fontWeight: 950, fontSize: '1.1rem' }}>
+                          {jogo.status === 'finalizado' ? (
+                            <>
+                              <span>{jogo.home_score}</span>
+                              <span style={{ opacity: 0.3 }}>-</span>
+                              <span>{jogo.away_score}</span>
+                            </>
+                          ) : (
+                            <span style={{ fontSize: '0.85rem' }}>{jogo.time?.slice(0, 5)}</span>
+                          )}
+                        </div>
+                      )}
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
                         <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                           {jogo.date ? jogo.date.split('-').reverse().join('/') : 'Data a definir'}
