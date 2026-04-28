@@ -881,7 +881,67 @@ input:focus, select:focus {
 .animate-fade {
   animation: fadeIn 0.4s ease-out forwards;
 }
+/* Bracket System */
+.bracket-container {
+  display: flex;
+  gap: 4rem;
+  padding: 2rem 0;
+  overflow-x: auto;
+  align-items: center;
+}
 
+.bracket-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 3rem;
+  min-width: 300px;
+}
+
+.bracket-match-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Gold Final Card */
+.final-card-gold {
+  background: linear-gradient(135deg, #fffcf0 0%, #fff 100%) !important;
+  border: 3px solid #ffd700 !important;
+  box-shadow: 0 15px 40px -10px rgba(218, 165, 32, 0.25) !important;
+  transform: scale(1.05);
+}
+
+.final-card-gold:hover {
+  transform: scale(1.08) translateY(-5px) !important;
+}
+
+.final-card-gold .bracket-score {
+  background: #ffd700 !important;
+  color: #000 !important;
+}
+
+.bronze-card {
+  border-left: 5px solid #cd7f32 !important;
+}
+
+@media (max-width: 1024px) {
+  .bracket-container {
+    flex-direction: column;
+    gap: 3rem;
+    overflow-x: visible;
+  }
+  .bracket-column {
+    min-width: 100%;
+    gap: 1.5rem;
+  }
+  .final-card-gold {
+    transform: none;
+  }
+  .final-card-gold:hover {
+    transform: translateY(-5px) !important;
+  }
+}
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
