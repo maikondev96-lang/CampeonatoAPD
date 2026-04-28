@@ -19,7 +19,7 @@ export type Match = {
   time?: string;
   venue?: string;
   phase: 'grupo' | 'semifinal' | 'terceiro_lugar' | 'final';
-  status: 'agendado' | 'finalizado';
+  status: 'agendado' | 'finalizado' | 'ao_vivo' | 'adiado';
   home_score?: number;
   away_score?: number;
   home_penalties?: number;
@@ -33,7 +33,7 @@ export type MatchEvent = {
   id: string;
   match_id: string;
   player_id: string;
-  type: 'gol' | 'assistencia' | 'cartao_amarelo' | 'cartao_vermelho';
+  type: 'gol' | 'assistencia' | 'cartao_amarelo' | 'cartao_vermelho' | 'cartao_vermelho_direto' | 'cartao_vermelho_indireto';
   minute?: number;
   assist_player_id?: string;
   player?: Player;
