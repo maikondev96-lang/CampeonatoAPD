@@ -356,7 +356,7 @@ const AdminJogos = () => {
                     </div>
                     
                     <div style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                      {new Date(jogo.date).toLocaleDateString()} • {jogo.time?.slice(0, 5)}
+                      {jogo.date.split('-').reverse().join('/')} • {jogo.time?.slice(0, 5)}
                     </div>
                   </div>
                 ))}

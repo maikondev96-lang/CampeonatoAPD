@@ -105,7 +105,7 @@ const MatchDetail = () => {
       {/* Placar Principal */}
       <div className="card match-header-card">
         <div className="match-date-info">
-          <Calendar size={14} /> {new Date(match.date).toLocaleDateString()}
+          <Calendar size={14} /> {match.date.split('-').reverse().join('/')}
           {match.time && <><Clock size={14} style={{ marginLeft: '10px' }} /> {match.time}</>}
         </div>
 
@@ -188,7 +188,7 @@ const MatchDetail = () => {
             <div className="card h2h-card">
               {homeHistory.map(h => (
                 <div key={h.id} className="h2h-row">
-                  <span className="h2h-date">{new Date(h.date).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</span>
+                  <span className="h2h-date">{h.date.split('-').reverse().slice(0,2).join('/')}</span>
                   <div className="h2h-teams">
                     <div className={`h2h-team-row ${h.home_team_id === match.home_team_id ? 'active' : ''}`}>
                       <img src={h.home_team?.logo_url} className="h2h-logo" />
@@ -212,7 +212,7 @@ const MatchDetail = () => {
             <div className="card h2h-card">
               {awayHistory.map(h => (
                 <div key={h.id} className="h2h-row">
-                  <span className="h2h-date">{new Date(h.date).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</span>
+                  <span className="h2h-date">{h.date.split('-').reverse().slice(0,2).join('/')}</span>
                   <div className="h2h-teams">
                     <div className={`h2h-team-row ${h.home_team_id === match.away_team_id ? 'active' : ''}`}>
                       <img src={h.home_team?.logo_url} className="h2h-logo" />
