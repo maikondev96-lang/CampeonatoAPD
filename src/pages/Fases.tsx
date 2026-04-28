@@ -50,7 +50,7 @@ const Fases = () => {
                 {match?.home_team ? (
                   <img src={match.home_team.logo_url} style={{ width: 24, height: 24, objectFit: 'contain' }} alt="" />
                 ) : <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: 'var(--text-muted)' }}>?</div>}
-                <span style={{ fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: match?.winner_id === match?.home_team_id ? 900 : 500 }}>{match?.home_team?.name || placeholderHome}</span>
+                <span className={`team-name-premium ${!isPlaceholder && match.status === 'finalizado' && match.winner_id === match.home_team_id ? 'is-winner' : !isPlaceholder && match.status === 'finalizado' && match.winner_id === match.away_team_id ? 'is-loser' : ''}`} style={{ fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{match?.home_team?.name || placeholderHome}</span>
               </div>
             </div>
             <div className={`bracket-team ${match?.winner_id === match?.away_team_id ? 'winner' : ''}`} style={{ border: 'none', padding: 0, marginTop: 0 }}>
@@ -58,24 +58,24 @@ const Fases = () => {
                 {match?.away_team ? (
                   <img src={match.away_team.logo_url} style={{ width: 24, height: 24, objectFit: 'contain' }} alt="" />
                 ) : <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: 'var(--text-muted)' }}>?</div>}
-                <span style={{ fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: match?.winner_id === match?.away_team_id ? 900 : 500 }}>{match?.away_team?.name || placeholderAway}</span>
+                <span className={`team-name-premium ${!isPlaceholder && match.status === 'finalizado' && match.winner_id === match.away_team_id ? 'is-winner' : !isPlaceholder && match.status === 'finalizado' && match.winner_id === match.home_team_id ? 'is-loser' : ''}`} style={{ fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{match?.away_team?.name || placeholderAway}</span>
               </div>
             </div>
           </div>
 
-          <div className="score-display-premium" style={{ minWidth: '70px', padding: '0.5rem' }}>
+          <div className="score-display-premium" style={{ minWidth: '40px', padding: 0 }}>
             {!isPlaceholder && (match.status === 'finalizado' || match.status === 'ao_vivo') ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <div className="score-wrapper-premium">
-                  {match.home_penalties !== null && <span className="penalty-score-premium" style={{ left: '-25px', top: '2px' }}>({match.home_penalties})</span>}
-                  <span className="score-number-premium">{match.home_score}</span>
+                  {match.home_penalties !== null && <span className={`penalty-score-premium ${match.home_penalties > (match.away_penalties || 0) ? 'is-winner' : ''}`} style={{ left: '-25px', top: '2px' }}>({match.home_penalties})</span>}
+                  <span className={`score-number-premium ${match.status === 'finalizado' && (match.home_score || 0) >= (match.away_score || 0) ? 'is-winner' : ''}`}>{match.home_score}</span>
                 </div>
                 <div className="score-wrapper-premium">
-                  {match.away_penalties !== null && <span className="penalty-score-premium" style={{ left: '-25px', top: '2px' }}>({match.away_penalties})</span>}
-                  <span className="score-number-premium">{match.away_score}</span>
+                  {match.away_penalties !== null && <span className={`penalty-score-premium ${match.away_penalties > (match.home_penalties || 0) ? 'is-winner' : ''}`} style={{ left: '-25px', top: '2px' }}>({match.away_penalties})</span>}
+                  <span className={`score-number-premium ${match.status === 'finalizado' && (match.away_score || 0) >= (match.home_score || 0) ? 'is-winner' : ''}`}>{match.away_score}</span>
                 </div>
               </div>
-            ) : <span style={{ opacity: 0.3 }}>-</span>}
+            ) : <span style={{ opacity: 0.2 }}>-</span>}
           </div>
         </div>
 
