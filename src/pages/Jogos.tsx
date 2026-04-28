@@ -16,15 +16,30 @@ const Jogos = () => {
   }, []);
 
   const fetchJogos = async () => {
-    const { data } = await supabase.from('matches').select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)').order('round').order('date');
+    const { data } = await supabase.from('matches').select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)');
     if (data) {
-      setJogos(data);
+      const phaseOrder = { 'grupo': 1, 'semifinal': 2, 'terceiro_lugar': 3, 'final': 4 };
+      const sorted = [...data].sort((a, b) => {
+        if (phaseOrder[a.phase] !== phaseOrder[b.phase]) return phaseOrder[a.phase] - phaseOrder[b.phase];
+        if (a.phase === 'grupo' && a.round !== b.round) return (a.round || 0) - (b.round || 0);
+        
+        const dateA = a.date || '9999-99-99';
+        const dateB = b.date || '9999-99-99';
+        if (dateA !== dateB) return dateA.localeCompare(dateB);
+        
+        const timeA = a.time || '99:99';
+        const timeB = b.time || '99:99';
+        return timeA.localeCompare(timeB);
+      });
+
+      setJogos(sorted);
       // Find first non-finished match round
-      const firstNotFinished = data.find(j => j.status !== 'finalizado');
+      const firstNotFinished = sorted.find(j => j.status !== 'finalizado');
       if (firstNotFinished) {
         // Scroll to that round after render
         setTimeout(() => {
-          const el = document.getElementById(`round-${firstNotFinished.round}`);
+          const id = firstNotFinished.phase === 'grupo' ? `round-${firstNotFinished.round}` : `phase-${firstNotFinished.phase}`;
+          const el = document.getElementById(id);
           if (el) el.scrollIntoView({ behavior: 'smooth' });
         }, 500);
       }
