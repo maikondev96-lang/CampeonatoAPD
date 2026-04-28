@@ -111,8 +111,12 @@ const MatchDetail = () => {
 
         <div className="score-main-row">
           <div className="team-col">
-            <img src={match.home_team?.logo_url} className="team-logo-large" />
-            <div className="team-name-large">{match.home_team?.name}</div>
+            {match.home_team?.logo_url ? (
+              <img src={match.home_team.logo_url} className="team-logo-large" />
+            ) : (
+              <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: '#64748b', fontWeight: 950 }}>?</div>
+            )}
+            <div className="team-name-large">{match.home_team?.name || 'A definir'}</div>
           </div>
 
           <div className="score-display">
@@ -132,8 +136,12 @@ const MatchDetail = () => {
           </div>
 
           <div className="team-col">
-            <img src={match.away_team?.logo_url} className="team-logo-large" />
-            <div className="team-name-large">{match.away_team?.name}</div>
+            {match.away_team?.logo_url ? (
+              <img src={match.away_team.logo_url} className="team-logo-large" />
+            ) : (
+              <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: '#64748b', fontWeight: 950 }}>?</div>
+            )}
+            <div className="team-name-large">{match.away_team?.name || 'A definir'}</div>
           </div>
         </div>
 
