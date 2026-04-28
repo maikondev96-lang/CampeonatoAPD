@@ -85,10 +85,25 @@ const AdminMatchDetail = () => {
 
   const handleAddEvent = async (pId: string, type: string, min: string, assistId: string) => {
     setSaving(true);
+    let finalType = type;
+
+    // Lógica Inteligente de Cartões: detecta 2º amarelo
+    if (type === 'cartao_amarelo') {
+      const existingYellow = events.find(ev => ev.player_id === pId && ev.type === 'cartao_amarelo');
+      if (existingYellow) {
+        if (confirm('Este jogador já tem um amarelo. Lançar como Expulsão (2º Amarelo)?')) {
+          finalType = 'cartao_vermelho_indireto';
+        } else {
+          setSaving(false);
+          return;
+        }
+      }
+    }
+
     const { error } = await supabase.from('match_events').insert([{
       match_id: id,
       player_id: pId,
-      type: type,
+      type: finalType,
       minute: min ? parseInt(min) : null,
       assist_player_id: assistId || null
     }]);
@@ -250,7 +265,8 @@ const EventForm = ({ players, onAdd, disabled }: { players: Player[], onAdd: (p:
         }} style={{ flex: 1 }}>
           <option value="gol">Gol ⚽</option>
           <option value="cartao_amarelo">🟨 Amarelo</option>
-          <option value="cartao_vermelho">🟥 Vermelho</option>
+          <option value="cartao_vermelho_direto">🟥 Vermelho Direto</option>
+          <option value="cartao_vermelho_indireto">🟥 2º Amarelo (Expulso)</option>
         </select>
       </div>
       
@@ -274,7 +290,9 @@ const EventForm = ({ players, onAdd, disabled }: { players: Player[], onAdd: (p:
 const EventRow = ({ ev, players, onDelete }: { ev: any, players: Player[], onDelete: (id: string) => void }) => {
   const player = players.find(p => p.id === ev.player_id);
   const assistPlayer = players.find(p => p.id === ev.assist_player_id);
-  const isRed = ev.type === 'cartao_vermelho';
+  const isRedDirect = ev.type === 'cartao_vermelho_direto';
+  const isRedIndirect = ev.type === 'cartao_vermelho_indireto';
+  const isRed = isRedDirect || isRedIndirect;
   const isYellow = ev.type === 'cartao_amarelo';
   const isGoal = ev.type === 'gol';
 
@@ -288,7 +306,8 @@ const EventRow = ({ ev, players, onDelete }: { ev: any, players: Player[], onDel
         </span>
         <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
           {player?.name} {ev.minute && <span style={{ opacity: 0.5 }}>({ev.minute}')</span>}
-          {isRed && <span style={{ color: '#ff5252', fontSize: '0.7rem', marginLeft: '5px' }}>VERMELHO</span>}
+          {isRedDirect && <span style={{ color: '#ff5252', fontSize: '0.7rem', marginLeft: '5px' }}>VERMELHO DIRETO</span>}
+          {isRedIndirect && <span style={{ color: '#ff5252', fontSize: '0.7rem', marginLeft: '5px' }}>2º AMARELO (EXPULSO)</span>}
           {assistPlayer && (
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400, marginTop: '2px' }}>
               🤝 Assist: {assistPlayer.name}

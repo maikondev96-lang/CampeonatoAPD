@@ -53,25 +53,36 @@ const Artilharia = () => {
 
       if (players && teams && matches && events) {
         // --- Process Player Stats ---
+        // --- Process Player Stats (Regra Brasileirão) ---
         const pMap: Record<string, PlayerStat> = {};
         players.forEach(p => {
-          pMap[p.id] = {
-            id: p.id,
-            name: p.name,
-            team_name: p.team?.name || 'Sem Time',
-            team_logo: p.team?.logo_url || '',
-            gols: 0,
-            assistencias: 0,
-            yellow_cards: 0,
-            red_cards: 0,
-          };
+          pMap[p.id] = { id: p.id, name: p.name, team_name: p.team?.name || 'Sem Time', team_logo: p.team?.logo_url || '', gols: 0, assistencias: 0, yellow_cards: 0, red_cards: 0 };
         });
 
+        // 1. Gols e Assistências (Geral)
         events.forEach(ev => {
           if (ev.type === 'gol' && pMap[ev.player_id]) pMap[ev.player_id].gols++;
           if (ev.assist_player_id && pMap[ev.assist_player_id]) pMap[ev.assist_player_id].assistencias++;
-          if (ev.type === 'cartao_amarelo' && pMap[ev.player_id]) pMap[ev.player_id].yellow_cards++;
-          if (ev.type === 'cartao_vermelho' && pMap[ev.player_id]) pMap[ev.player_id].red_cards++;
+        });
+
+        // 2. Cartões com Regra de Acúmulo (Por Partida)
+        matches.forEach(m => {
+          const matchEvents = events.filter(e => e.match_id === m.id);
+          
+          players.forEach(p => {
+            const pEvents = matchEvents.filter(e => e.player_id === p.id);
+            const hasIndirectRed = pEvents.some(e => e.type === 'cartao_vermelho_indireto');
+            const hasDirectRed = pEvents.some(e => e.type === 'cartao_vermelho_direto');
+            const yellowCount = pEvents.filter(e => e.type === 'cartao_amarelo').length;
+
+            if (hasIndirectRed) {
+              pMap[p.id].red_cards++;
+              // Regra Brasileirão: 2 amarelos na mesma partida = 0 amarelos pro acumulado
+            } else {
+              if (hasDirectRed) pMap[p.id].red_cards++;
+              pMap[p.id].yellow_cards += yellowCount;
+            }
+          });
         });
 
         setPlayerStats(Object.values(pMap));

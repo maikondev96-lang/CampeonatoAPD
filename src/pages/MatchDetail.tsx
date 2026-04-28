@@ -50,7 +50,20 @@ const MatchDetail = () => {
           player: pMap[ev.player_id] || null,
           assist_player: ev.assist_player_id ? pMap[ev.assist_player_id] || null : null
         }));
-        setEvents([...enriched].sort((a, b) => (a.minute || 0) - (b.minute || 0)));
+
+        // Filtrar amarelos se houver vermelho indireto para o mesmo jogador
+        const filtered = enriched.filter(ev => {
+          if (ev.type === 'cartao_amarelo') {
+            const hasIndirect = enriched.some(other => 
+              other.player_id === ev.player_id && 
+              other.type === 'cartao_vermelho_indireto'
+            );
+            return !hasIndirect;
+          }
+          return true;
+        });
+
+        setEvents([...filtered].sort((a, b) => (a.minute || 0) - (b.minute || 0)));
       } else {
         setEvents([]);
       }
@@ -170,16 +183,18 @@ const MatchDetail = () => {
                   <span className="event-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', marginTop: '2px' }}>
                     {event.type === 'gol' && <span style={{ fontSize: '1.2rem' }}>⚽</span>}
                     {event.type === 'cartao_amarelo' && <div style={{ width: 14, height: 20, background: '#ffd600', borderRadius: 3, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />}
-                    {event.type === 'cartao_vermelho' && <div style={{ width: 14, height: 20, background: '#ff5252', borderRadius: 3, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />}
+                    {(event.type === 'cartao_vermelho_direto' || event.type === 'cartao_vermelho_indireto') && <div style={{ width: 14, height: 20, background: '#ff5252', borderRadius: 3, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />}
                   </span>
                   <div className="event-details">
                     <div className="player-name">{event.player?.name || 'Jogador'}</div>
                     <div className="event-type" style={{ 
-                      color: event.type === 'gol' ? 'var(--primary-color)' : event.type === 'cartao_vermelho' ? '#dc2626' : '#b89112', 
+                      color: event.type === 'gol' ? 'var(--primary-color)' : (event.type === 'cartao_vermelho_direto' || event.type === 'cartao_vermelho_indireto') ? '#dc2626' : '#b89112', 
                       fontWeight: 950,
                       letterSpacing: '0.5px'
                     }}>
-                      {event.type === 'gol' ? 'GOL!' : event.type === 'cartao_vermelho' ? 'CARTÃO VERMELHO' : 'CARTÃO AMARELO'}
+                      {event.type === 'gol' ? 'GOL!' : 
+                       event.type === 'cartao_vermelho_direto' ? 'VERMELHO DIRETO' : 
+                       event.type === 'cartao_vermelho_indireto' ? 'EXPULSO (2º AMARELO)' : 'CARTÃO AMARELO'}
                     </div>
                     {event.assist_player && (
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-main)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>

@@ -82,7 +82,18 @@ const Jogos = () => {
           assist_player: ev.assist_player_id ? playerMap[ev.assist_player_id] || null : null
         }));
 
-        setEvents(prev => ({ ...prev, [matchId]: enriched }));
+        // Filtrar amarelos se houver vermelho indireto (Regra Brasileirão)
+        const filtered = enriched.filter(ev => {
+          if (ev.type === 'cartao_amarelo') {
+            return !enriched.some(other => 
+              other.player_id === ev.player_id && 
+              other.type === 'cartao_vermelho_indireto'
+            );
+          }
+          return true;
+        });
+
+        setEvents(prev => ({ ...prev, [matchId]: filtered }));
       } else {
         setEvents(prev => ({ ...prev, [matchId]: [] }));
       }
@@ -202,7 +213,7 @@ const Jogos = () => {
                             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
                               {e.type === 'gol' && <span style={{ fontSize: '1rem' }}>⚽</span>}
                               {e.type === 'cartao_amarelo' && <div style={{ width: 10, height: 14, background: '#ffd600', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
-                              {e.type === 'cartao_vermelho' && <div style={{ width: 10, height: 14, background: '#ff5252', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
+                              {(e.type === 'cartao_vermelho_direto' || e.type === 'cartao_vermelho_indireto') && <div style={{ width: 10, height: 14, background: '#ff5252', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                             </span>
                           </div>
                         ))}
@@ -214,7 +225,7 @@ const Jogos = () => {
                             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
                               {e.type === 'gol' && <span style={{ fontSize: '1rem' }}>⚽</span>}
                               {e.type === 'cartao_amarelo' && <div style={{ width: 10, height: 14, background: '#ffd600', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
-                              {e.type === 'cartao_vermelho' && <div style={{ width: 10, height: 14, background: '#ff5252', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
+                              {(e.type === 'cartao_vermelho_direto' || e.type === 'cartao_vermelho_indireto') && <div style={{ width: 10, height: 14, background: '#ff5252', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                             </span>
                             <span>{e.player?.name}</span>
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', opacity: 0.6 }}>{e.minute ? `${e.minute}'` : ''}</span>
