@@ -59,8 +59,15 @@ const AdminJogadores = () => {
         fetchData();
       }
     } else {
-      const { error } = await supabase.from('players').insert([{ name, team_id: teamId }]);
-      if (error) alert('Erro ao salvar jogador');
+      // Suporte para múltiplos nomes separados por vírgula ou nova linha
+      const names = name.split(/[,\n]/).map(n => n.trim()).filter(n => n !== '');
+      
+      if (names.length === 0) return alert('Insira ao menos um nome');
+      
+      const newPlayers = names.map(n => ({ name: n, team_id: teamId }));
+      
+      const { error } = await supabase.from('players').insert(newPlayers);
+      if (error) alert('Erro ao salvar jogadores');
       else {
         setName('');
         fetchData();
@@ -96,9 +103,19 @@ const AdminJogadores = () => {
           {editingId ? '📝 Editar Jogador' : '➕ Novo Jogador'}
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
-          <div className="form-group">
-            <label>Nome do Jogador</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Pelé" />
+          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+            <label>{editingId ? 'Nome do Jogador' : 'Nome(s) do(s) Jogador(es)'}</label>
+            {editingId ? (
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Pelé" />
+            ) : (
+              <textarea 
+                value={name} 
+                onChange={e => setName(e.target.value)} 
+                placeholder="Insira os nomes separados por vírgula ou pule uma linha. Ex: Pelé, Ronaldo, Neymar"
+                style={{ width: '100%', minHeight: '100px', padding: '0.8rem', borderRadius: '8px', border: '2px solid var(--border-color)', fontWeight: 700, resize: 'vertical' }}
+              />
+            )}
+            {!editingId && <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem', fontWeight: 800 }}>DICA: Você pode colar uma lista inteira de nomes aqui.</p>}
           </div>
           <div className="form-group">
             <label>Time</label>
