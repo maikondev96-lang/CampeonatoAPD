@@ -124,9 +124,9 @@ const Artilharia = () => {
   };
 
   const Section = ({ 
-    id, title, icon: Icon, color, data, renderItem, valueLabel, extraHeader 
+    id, title, subtitle, icon: Icon, color, data, renderItem, valueLabel, extraHeader 
   }: { 
-    id: string, title: string, icon: any, color: string, data: any[], renderItem: (item: any, idx: number) => React.ReactNode, valueLabel: string, extraHeader?: React.ReactNode
+    id: string, title: string, subtitle?: string, icon: any, color: string, data: any[], renderItem: (item: any, idx: number) => React.ReactNode, valueLabel: string, extraHeader?: React.ReactNode
   }) => {
     const isExpanded = expandedSection === id;
     const top3 = data.slice(0, 3);
@@ -145,9 +145,10 @@ const Artilharia = () => {
               <Icon size={24} />
             </div>
             <div style={{ textAlign: 'left' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 950, color: 'var(--primary-dark)', textTransform: 'uppercase' }}>{title}</h3>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 950, color: 'var(--primary-dark)', textTransform: 'uppercase', lineHeight: 1 }}>{title}</h3>
+              {subtitle && <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 800, marginTop: '2px', opacity: 0.8, textTransform: 'uppercase' }}>{subtitle}</p>}
               {!isExpanded && top3.length > 0 && (
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, marginTop: '4px' }}>
                   Líder: {top3[0].name} ({top3[0].value} {valueLabel})
                 </p>
               )}
@@ -281,7 +282,11 @@ const Artilharia = () => {
         />
 
         <Section 
-          id="cards-player" title="Mais Indisciplinados" icon={AlertTriangle} color="#ef4444" 
+          id="cards-player" 
+          title="Mais Indisciplinados" 
+          subtitle="Histórico de cartões por jogador"
+          icon={AlertTriangle} 
+          color="#ef4444" 
           data={playerCards} renderItem={renderPlayerCards} valueLabel="Peso" 
         />
       </div>
