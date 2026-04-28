@@ -33,7 +33,7 @@ export type MatchEvent = {
   id: string;
   match_id: string;
   player_id: string;
-  type: 'gol' | 'assistencia' | 'cartao_amarelo' | 'cartao_vermelho' | 'cartao_vermelho_direto' | 'cartao_vermelho_indireto' | 'penalti_convertido' | 'penalti_perdido';
+  type: 'gol' | 'gol_penalti' | 'penalti_perdido_tempo_normal' | 'assistencia' | 'cartao_amarelo' | 'cartao_vermelho' | 'cartao_vermelho_direto' | 'cartao_vermelho_indireto' | 'penalti_convertido' | 'penalti_perdido';
   minute?: number;
   assist_player_id?: string;
   player?: Player;
