@@ -83,11 +83,11 @@ const Fases = () => {
 
         {!isPlaceholder && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', borderTop: '1px solid #f1f5f9', paddingTop: '0.5rem' }}>
-            <span style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-              {match.date ? match.date.split('-').reverse().join('/') : 'Data a definir'}
+            <span style={{ fontSize: '0.6rem', fontWeight: 800, color: match.status === 'adiado' ? 'var(--error)' : 'var(--text-muted)', textTransform: 'uppercase' }}>
+              {match.status === 'adiado' ? '⚠️ Adiado' : match.date ? match.date.split('-').reverse().join('/') : 'Data a definir'}
             </span>
-            <span style={{ fontSize: '0.6rem', fontWeight: 900, color: match.status === 'finalizado' ? 'var(--text-muted)' : 'var(--primary-color)', textTransform: 'uppercase' }}>
-              {match.status === 'finalizado' ? 'Encerrado' : match.time ? match.time.slice(0, 5) : 'Horário a definir'}
+            <span style={{ fontSize: '0.6rem', fontWeight: 900, color: match.status === 'finalizado' ? 'var(--text-muted)' : match.status === 'adiado' ? 'var(--error)' : 'var(--primary-color)', textTransform: 'uppercase' }}>
+              {match.status === 'finalizado' ? 'Encerrado' : match.status === 'adiado' ? 'Data a definir' : match.time ? match.time.slice(0, 5) : 'Horário a definir'}
             </span>
           </div>
         )}

@@ -178,11 +178,13 @@ const Jogos = () => {
                         </div>
                       )}
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                          {jogo.date ? jogo.date.split('-').reverse().join('/') : 'Data a definir'}
+                        <span style={{ fontSize: '0.65rem', fontWeight: 900, color: jogo.status === 'adiado' ? 'var(--error)' : 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          {jogo.status === 'adiado' ? '⚠️ Adiado' : jogo.date ? jogo.date.split('-').reverse().join('/') : 'Data a definir'}
                         </span>
                         {jogo.status === 'finalizado' ? (
                            <span style={{ fontSize: '0.6rem', fontWeight: 950, color: 'var(--primary-color)', textTransform: 'uppercase' }}>Encerrado</span>
+                        ) : jogo.status === 'adiado' ? (
+                           <span style={{ fontSize: '0.55rem', fontWeight: 700, color: 'var(--error)', opacity: 0.8 }}>Data a definir</span>
                         ) : !jogo.time && (
                            <span style={{ fontSize: '0.55rem', fontWeight: 700, color: 'var(--text-muted)', opacity: 0.7 }}>Horário a definir</span>
                         )}
