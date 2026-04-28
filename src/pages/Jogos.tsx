@@ -131,7 +131,7 @@ const Jogos = () => {
                   if (idx === 0) return isHome ? '1º Colocado' : '4º Colocado';
                   return isHome ? '2º Colocado' : '3º Colocado';
                 }
-                if (phase === 'terceiro_lugar') return isHome ? 'A definir (S1)' : 'A definir (S2)';
+                if (phase === 'terceiro_lugar') return isHome ? 'A definir (Semi 1)' : 'A definir (Semi 2)';
                 if (phase === 'final') return isHome ? 'Vencedor Semi 1' : 'Vencedor Semi 2';
                 return 'A definir';
               };

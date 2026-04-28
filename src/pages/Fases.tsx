@@ -137,8 +137,8 @@ const Fases = () => {
             <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#cd7f32', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '1rem' }}>Disputa de 3º Lugar</div>
             <MatchCard 
               match={thirdPlace} 
-              placeholderHome="Perdedor Semi 1" 
-              placeholderAway="Perdedor Semi 2" 
+              placeholderHome="A definir (Semi 1)" 
+              placeholderAway="A definir (Semi 2)" 
               isThird
             />
           </div>
