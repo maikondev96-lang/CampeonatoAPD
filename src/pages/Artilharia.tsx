@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { 
-  Activity, Loader2, Medal, Users, HandHeart, 
+  Activity, Loader2, Medal, Users, Footprints, 
   ChevronDown, ChevronUp, Shield, Flame, Zap, ScrollText, AlertTriangle 
 } from 'lucide-react';
 
@@ -258,7 +258,7 @@ const Artilharia = () => {
         <Section 
           id="ranking" 
           title={activeIndivTab === 'gols' ? 'Artilharia' : 'Assistências'} 
-          icon={activeIndivTab === 'gols' ? () => <span>⚽</span> : HandHeart} 
+          icon={activeIndivTab === 'gols' ? () => <span>⚽</span> : Footprints} 
           color={activeIndivTab === 'gols' ? '#059669' : '#b89112'} 
           data={activeIndivTab === 'gols' ? scorers : assisters} 
           renderItem={renderPlayer} 
@@ -277,7 +277,7 @@ const Artilharia = () => {
                 className={`tab-btn ${activeIndivTab === 'assistencias' ? 'active' : ''}`}
                 style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
               >
-                <HandHeart size={16} /> ASSISTÊNCIAS
+                <Footprints size={16} /> ASSISTÊNCIAS
               </button>
             </div>
           }
