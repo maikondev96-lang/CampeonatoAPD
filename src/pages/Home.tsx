@@ -261,7 +261,7 @@ const Home = () => {
                   {activeRoundMatches.map(m => (
                     <Link to={`/jogos/${m.id}`} key={m.id} className="sidebar-match-item" style={{ display: 'block', padding: '1rem', borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s' }}>
                       <div style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)', textAlign: 'center', marginBottom: '0.75rem', opacity: 0.6 }}>
-                        {m.date ? m.date.split('-').reverse().join('/') : 'TBD'} {m.time && `• ${m.time.slice(0, 5)}`}
+                        {m.date ? m.date.split('-').reverse().join('/') : 'Data a definir'} {m.time ? `• ${m.time.slice(0, 5)}` : '• Horário a definir'}
                       </div>
                       <div className="sidebar-match-info" style={{ padding: 0 }}>
                         <div className="sidebar-team">
