@@ -53,7 +53,12 @@ const Home = () => {
 
       const firstPending = sortedMatches.find(m => m.status === 'agendado');
       if (firstPending) {
-        const roundMatches = sortedMatches.filter(m => m.phase === firstPending.phase && m.round === firstPending.round);
+        // Mostra todos os jogos daquela rodada que ainda estão agendados
+        const roundMatches = sortedMatches.filter(m => 
+          m.phase === firstPending.phase && 
+          m.round === firstPending.round && 
+          m.status === 'agendado'
+        );
         setActiveRoundMatches(roundMatches);
       } else {
         setActiveRoundMatches([]);
@@ -100,15 +105,41 @@ const Home = () => {
       setRecentResults(resultsMap);
     }
 
-    // 2. Standings
-    const { data: standings } = await supabase.from('standings').select('*, team:teams(*)');
-    if (standings) {
-      const sorted = [...standings].sort((a, b) => {
-        if (b.points !== a.points) return b.points - a.points;
-        if (b.goal_diff !== a.goal_diff) return b.goal_diff - a.goal_diff;
-        return b.goals_for - a.goals_for;
-      }); // Sem slice — mostra todos os times
-      setTopTeams(sorted);
+    // 2. Classificação Automática (Baseada nos jogos buscados acima)
+    if (matches) {
+      const { data: teams } = await supabase.from('teams').select('*');
+      if (teams) {
+        const baseMap: Record<string, Standing> = {};
+        teams.forEach(t => {
+          baseMap[t.id] = { team_id: t.id, played: 0, wins: 0, draws: 0, losses: 0, goals_for: 0, goals_against: 0, goal_diff: 0, points: 0, team: t } as any;
+        });
+
+        const finished = matches.filter(m => m.status === 'finalizado' && m.phase === 'grupo');
+        finished.forEach(m => {
+          const home = baseMap[m.home_team_id];
+          const away = baseMap[m.away_team_id];
+          if (!home || !away) return;
+          home.played++; away.played++;
+          home.goals_for += m.home_score || 0; home.goals_against += m.away_score || 0;
+          away.goals_for += m.away_score || 0; away.goals_against += m.home_score || 0;
+          if (m.home_score === m.away_score) {
+            home.draws++; away.draws++; home.points += 1; away.points += 1;
+          } else if ((m.home_score ?? 0) > (m.away_score ?? 0)) {
+            home.wins++; away.losses++; home.points += 3;
+          } else {
+            away.wins++; home.losses++; away.points += 3;
+          }
+          home.goal_diff = home.goals_for - home.goals_against;
+          away.goal_diff = away.goals_for - away.goals_against;
+        });
+
+        const sorted = Object.values(baseMap).sort((a, b) => {
+          if (b.points !== a.points) return b.points - a.points;
+          if (b.goal_diff !== a.goal_diff) return b.goal_diff - a.goal_diff;
+          return b.goals_for - a.goals_for;
+        });
+        setTopTeams(sorted);
+      }
     }
 
     // 3. Artilheiro & Garçom

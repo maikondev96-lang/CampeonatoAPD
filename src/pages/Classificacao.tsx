@@ -38,12 +38,36 @@ const Classificacao = () => {
         } as any;
       });
 
-      // Sobrepõe com dados reais de classificação se houver
-      if (standingsRes.data) {
-        standingsRes.data.forEach(s => {
-          if (baseMap[s.team_id]) {
-            baseMap[s.team_id] = { ...baseMap[s.team_id], ...s };
+      // Calcula pontos a partir dos jogos finalizados
+      if (matchesRes.data) {
+        matchesRes.data.forEach(m => {
+          const home = baseMap[m.home_team_id];
+          const away = baseMap[m.away_team_id];
+          if (!home || !away) return;
+
+          home.played++;
+          away.played++;
+          home.goals_for += m.home_score || 0;
+          home.goals_against += m.away_score || 0;
+          away.goals_for += m.away_score || 0;
+          away.goals_against += m.home_score || 0;
+
+          if (m.home_score === m.away_score) {
+            home.draws++;
+            away.draws++;
+            home.points += 1;
+            away.points += 1;
+          } else if ((m.home_score ?? 0) > (m.away_score ?? 0)) {
+            home.wins++;
+            away.losses++;
+            home.points += 3;
+          } else {
+            away.wins++;
+            home.losses++;
+            away.points += 3;
           }
+          home.goal_diff = home.goals_for - home.goals_against;
+          away.goal_diff = away.goals_for - away.goals_against;
         });
       }
 
