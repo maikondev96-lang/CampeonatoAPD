@@ -115,9 +115,8 @@ const Jogos = () => {
                     <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--primary-dark)', textAlign: 'right' }}>{jogo.home_team?.name}</span>
                     <img src={jogo.home_team?.logo_url} style={{ width: 28, height: 28, objectFit: 'contain' }} alt="" />
                   </div>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary-dark)', padding: '4px 12px', borderRadius: '6px', color: 'white', fontWeight: 950, fontSize: '1rem' }}>
+                                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary-dark)', padding: '5px 14px', borderRadius: '6px', color: 'white', fontWeight: 950, fontSize: '1.1rem' }}>
                       {jogo.status === 'finalizado' ? (
                         <>
                           <span>{jogo.home_score}</span>
@@ -125,12 +124,19 @@ const Jogos = () => {
                           <span>{jogo.away_score}</span>
                         </>
                       ) : (
-                        <span style={{ fontSize: '0.75rem' }}>{jogo.time?.slice(0, 5) || '--:--'}</span>
+                        <span style={{ fontSize: '0.85rem' }}>{jogo.time ? jogo.time.slice(0, 5) : 'H/D'}</span>
                       )}
                     </div>
-                    {jogo.status === 'finalizado' && (
-                       <span style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>FIM</span>
-                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        {jogo.date ? jogo.date.split('-').reverse().join('/') : 'Data a definir'}
+                      </span>
+                      {jogo.status === 'finalizado' ? (
+                         <span style={{ fontSize: '0.6rem', fontWeight: 950, color: 'var(--primary-color)', textTransform: 'uppercase' }}>Encerrado</span>
+                      ) : !jogo.time && (
+                         <span style={{ fontSize: '0.55rem', fontWeight: 700, color: 'var(--text-muted)', opacity: 0.7 }}>Horário a definir</span>
+                      )}
+                    </div>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-start' }}>
