@@ -32,9 +32,33 @@ const Home = () => {
       .order('date');
 
     if (matches) {
-      setNextMatch(matches.find(m => m.status === 'agendado') || null);
-      const finished = matches.filter(m => m.status === 'finalizado');
-      setLatestResult(finished.length > 0 ? finished[finished.length - 1] : null);
+      // Ordenação inteligente: grupo (por rodada) -> semi -> 3º lugar -> final
+      const phaseOrder = { 'grupo': 1, 'semifinal': 2, 'terceiro_lugar': 3, 'final': 4 };
+      const sortedMatches = [...matches].sort((a, b) => {
+        if (phaseOrder[a.phase] !== phaseOrder[b.phase]) {
+          return phaseOrder[a.phase] - phaseOrder[b.phase];
+        }
+        if (a.phase === 'grupo' && a.round !== b.round) {
+          return (a.round || 0) - (b.round || 0);
+        }
+        // Se mesma fase/rodada, ordena por data e hora
+        const dateA = a.date || '9999-99-99';
+        const dateB = b.date || '9999-99-99';
+        if (dateA !== dateB) return dateA.localeCompare(dateB);
+        
+        const timeA = a.time || '99:99';
+        const timeB = b.time || '99:99';
+        return timeA.localeCompare(timeB);
+      });
+
+      setNextMatch(sortedMatches.find(m => m.status === 'agendado') || null);
+      const finished = [...matches].filter(m => m.status === 'finalizado').sort((a, b) => {
+        // Para último resultado, queremos o mais recente (oposto da ordem acima)
+        if (phaseOrder[b.phase] !== phaseOrder[a.phase]) return phaseOrder[b.phase] - phaseOrder[a.phase];
+        if (b.phase === 'grupo' && b.round !== a.round) return (b.round || 0) - (a.round || 0);
+        return (b.date || '').localeCompare(a.date || '');
+      });
+      setLatestResult(finished.length > 0 ? finished[0] : null);
 
       // Campeão: vencedor da final
       const finalMatch = matches.find(m => m.phase === 'final' && m.status === 'finalizado' && m.winner_id);
@@ -181,8 +205,10 @@ const Home = () => {
                  </div>
                ) : nextMatch ? (
                 <>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '1.5rem', textAlign: 'center', textTransform: 'uppercase' }}>
-                    {nextMatch.phase} • {nextMatch.date.split('-').reverse().join('/')} • {nextMatch.time?.slice(0, 5)}
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '1.5rem', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                    {nextMatch.phase === 'grupo' ? `Rodada ${nextMatch.round}` : nextMatch.phase.replace('_', ' ')} 
+                    {nextMatch.date && ` • ${nextMatch.date.split('-').reverse().join('/')}`} 
+                    {nextMatch.time && ` • ${nextMatch.time.slice(0, 5)}`}
                   </div>
                   <div className="sidebar-match-info">
                     <div className="sidebar-team">
