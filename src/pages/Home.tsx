@@ -196,13 +196,11 @@ const Home = () => {
       <div className="dashboard-grid">
         
         {/* ── COLUNA 1: Branding e Atalhos ── */}
-        <section className="hero-branding">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <img src={logoApd} alt="APD Logo" className="hero-logo-large" />
-            <h1 className="hero-main-title">Copa do Mundo APD</h1>
-            <p className="hero-desc">
-              A emoção do futebol amador em um torneio de nível mundial.
-            </p>
+        <section className="hero-branding" style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '3rem 0 5rem', borderBottom: '1px solid var(--border-color)', background: 'radial-gradient(circle at center, rgba(234, 179, 8, 0.03) 0%, transparent 70%)' }}>
+          <div className="animate-up" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <img src={logoApd} alt="Copa do Mundo APD" className="hero-logo-monumental" />
+            <h1 className="hero-title-official">Copa do Mundo APD</h1>
+            <p className="hero-subtitle-official">A emoção do futebol amador em um torneio de nível mundial.</p>
           </div>
 
           <div className="quick-nav-grid">

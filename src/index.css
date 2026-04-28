@@ -1087,3 +1087,54 @@ input:focus, select:focus {
   flex-direction: column;
   align-items: center;
 }
+
+/* Monumental Logo System */
+.hero-logo-monumental {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 25px rgba(234, 179, 8, 0.3));
+  animation: floatMonumental 4s ease-in-out infinite;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-logo-monumental:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 35px rgba(234, 179, 8, 0.5));
+}
+
+@keyframes floatMonumental {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.hero-title-official {
+  font-size: 4rem;
+  font-weight: 950;
+  color: var(--primary-dark);
+  text-transform: uppercase;
+  letter-spacing: -2px;
+  line-height: 0.9;
+  margin-bottom: 0.5rem;
+}
+
+.hero-subtitle-official {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .hero-logo-monumental {
+    width: 120px;
+    height: 120px;
+  }
+  .hero-title-official {
+    font-size: 2.5rem;
+    letter-spacing: -1px;
+  }
+}
