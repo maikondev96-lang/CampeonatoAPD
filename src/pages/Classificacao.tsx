@@ -13,24 +13,49 @@ const Classificacao = () => {
   }, []);
 
   const fetchStandings = async () => {
-    const [standingsRes, matchesRes] = await Promise.all([
+    const [standingsRes, matchesRes, teamsRes] = await Promise.all([
       supabase.from('standings').select('*, team:teams(*)'),
       supabase.from('matches')
         .select('home_team_id, away_team_id, home_score, away_score, phase, status')
         .eq('status', 'finalizado')
         .eq('phase', 'grupo')
-        .order('date', { ascending: true })
+        .order('date', { ascending: true }),
+      supabase.from('teams').select('*').order('name')
     ]);
 
-    if (standingsRes.data) {
-      const sorted = [...standingsRes.data].sort((a, b) => {
+    let finalStandings: Standing[] = [];
+
+    if (teamsRes.data) {
+      // Cria base com todos os times
+      const baseMap: Record<string, Standing> = {};
+      teamsRes.data.forEach(t => {
+        baseMap[t.id] = {
+          team_id: t.id,
+          played: 0, wins: 0, draws: 0, losses: 0,
+          goals_for: 0, goals_against: 0, goal_diff: 0,
+          points: 0,
+          team: t
+        } as any;
+      });
+
+      // Sobrepõe com dados reais de classificação se houver
+      if (standingsRes.data) {
+        standingsRes.data.forEach(s => {
+          if (baseMap[s.team_id]) {
+            baseMap[s.team_id] = { ...baseMap[s.team_id], ...s };
+          }
+        });
+      }
+
+      finalStandings = Object.values(baseMap).sort((a, b) => {
         if (b.points !== a.points) return b.points - a.points;
         if (b.goal_diff !== a.goal_diff) return b.goal_diff - a.goal_diff;
         if (b.goals_for !== a.goals_for) return b.goals_for - a.goals_for;
         return (a.team?.name || '').localeCompare(b.team?.name || '');
       });
-      setStandings(sorted);
     }
+    
+    setStandings(finalStandings);
 
     // Calcula últimos jogos por time
     if (matchesRes.data) {
@@ -63,9 +88,9 @@ const Classificacao = () => {
     <div className="animate-fade">
       <h1 className="section-title"><Table /> Classificação</h1>
 
-      <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
-        {standings.length === 0 ? (
-          <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Sem dados ainda</p>
+      <div className="card" style={{ padding: 0, overflowX: 'auto', border: '2px solid var(--border-color)' }}>
+        {standings.length === 0 && !loading ? (
+          <p style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontWeight: 700 }}>Carregando dados da tabela...</p>
         ) : (
           <table className="standings-table" style={{ fontSize: '0.85rem' }}>
             <thead>

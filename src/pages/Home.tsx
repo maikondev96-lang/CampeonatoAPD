@@ -186,13 +186,17 @@ const Home = () => {
                   </div>
                   <div className="sidebar-match-info">
                     <div className="sidebar-team">
-                      <img src={nextMatch.home_team?.logo_url} />
-                      <span>{nextMatch.home_team?.name.slice(0, 3)}</span>
+                      {nextMatch.home_team?.logo_url ? (
+                        <img src={nextMatch.home_team.logo_url} alt="" />
+                      ) : <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 900 }}>?</div>}
+                      <span style={{ fontWeight: 800 }}>{nextMatch.home_team?.name.slice(0, 3) || 'TBD'}</span>
                     </div>
                     <div className="sidebar-vs">VS</div>
                     <div className="sidebar-team">
-                      <img src={nextMatch.away_team?.logo_url} />
-                      <span>{nextMatch.away_team?.name.slice(0, 3)}</span>
+                      {nextMatch.away_team?.logo_url ? (
+                        <img src={nextMatch.away_team.logo_url} alt="" />
+                      ) : <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 900 }}>?</div>}
+                      <span style={{ fontWeight: 800 }}>{nextMatch.away_team?.name.slice(0, 3) || 'TBD'}</span>
                     </div>
                   </div>
                 </>
