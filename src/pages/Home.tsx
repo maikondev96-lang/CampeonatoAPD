@@ -196,7 +196,7 @@ const Home = () => {
       <div className="dashboard-grid">
         
         {/* ── COLUNA 1: Branding e Atalhos ── */}
-        <section className="hero-branding" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <section className="hero-branding" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gridRow: '1 / span 2' }}>
           <div className="animate-up" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
             <img src={logoApd} alt="Copa do Mundo APD" className="hero-logo-monumental" style={{ width: '180px', height: '180px', margin: '0' }} />
             <h1 className="hero-title-official" style={{ fontSize: '1.8rem', letterSpacing: '-1px' }}>Copa do Mundo APD</h1>
