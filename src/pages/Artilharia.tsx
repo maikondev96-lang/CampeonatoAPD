@@ -70,8 +70,8 @@ const Artilharia = () => {
         events.forEach(ev => {
           if (ev.type === 'gol' && pMap[ev.player_id]) pMap[ev.player_id].gols++;
           if (ev.assist_player_id && pMap[ev.assist_player_id]) pMap[ev.assist_player_id].assistencias++;
-          if (ev.type === 'amarelo' && pMap[ev.player_id]) pMap[ev.player_id].yellow_cards++;
-          if (ev.type === 'vermelho' && pMap[ev.player_id]) pMap[ev.player_id].red_cards++;
+          if (ev.type === 'cartao_amarelo' && pMap[ev.player_id]) pMap[ev.player_id].yellow_cards++;
+          if (ev.type === 'cartao_vermelho' && pMap[ev.player_id]) pMap[ev.player_id].red_cards++;
         });
 
         setPlayerStats(Object.values(pMap));
