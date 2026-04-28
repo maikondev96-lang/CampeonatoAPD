@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Match, MatchEvent } from '../types';
-import { Calendar, Clock, ChevronLeft, Loader2, Goal } from 'lucide-react';
+import { Calendar, Clock, ChevronLeft, Loader2 } from 'lucide-react';
 
 const MatchDetail = () => {
   const { id } = useParams();
@@ -168,7 +168,7 @@ const MatchDetail = () => {
                 <div className="time-col">{event.minute ? `${event.minute}'` : ''}</div>
                 <div className="event-content">
                   <span className="event-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', marginTop: '2px' }}>
-                    {event.type === 'gol' && <Goal size={18} color="var(--primary-color)" />}
+                    {event.type === 'gol' && <span style={{ fontSize: '1.2rem' }}>⚽</span>}
                     {event.type === 'cartao_amarelo' && <div style={{ width: 14, height: 20, background: '#ffd600', borderRadius: 3, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />}
                     {event.type === 'cartao_vermelho' && <div style={{ width: 14, height: 20, background: '#ff5252', borderRadius: 3, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />}
                   </span>

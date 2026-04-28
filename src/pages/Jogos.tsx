@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { Match, MatchEvent } from '../types';
-import { Calendar, Loader2, ChevronRight, ChevronDown, ChevronUp, Goal, AlertCircle, Footprints } from 'lucide-react';
+import { Calendar, Loader2, ChevronRight, ChevronDown, ChevronUp, AlertCircle, Footprints } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Jogos = () => {
@@ -198,11 +198,6 @@ const Jogos = () => {
                         {events[jogo.id]?.filter(e => e.player?.team_id === jogo.home_team_id).map(e => (
                           <div key={e.id} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end', fontWeight: 700, color: 'var(--primary-dark)' }}>
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', opacity: 0.6 }}>{e.minute ? `${e.minute}'` : ''}</span>
-                            {e.assist_player && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-                                {e.assist_player.name} <Footprints size={12} style={{ opacity: 0.5 }} />
-                              </div>
-                            )}
                             <span>{e.player?.name}</span>
                             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
                               {e.type === 'gol' && <span style={{ fontSize: '1rem' }}>⚽</span>}
@@ -222,11 +217,6 @@ const Jogos = () => {
                               {e.type === 'cartao_vermelho' && <div style={{ width: 10, height: 14, background: '#ff5252', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                             </span>
                             <span>{e.player?.name}</span>
-                            {e.assist_player && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-                                <Footprints size={12} style={{ opacity: 0.5 }} /> {e.assist_player.name}
-                              </div>
-                            )}
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', opacity: 0.6 }}>{e.minute ? `${e.minute}'` : ''}</span>
                           </div>
                         ))}
