@@ -318,19 +318,43 @@ const Home = () => {
         {/* ── COLUNA 3: Sidebar de Destaques ── */}
         <aside className="sticky-sidebar">
           
-          {/* Líder da Liga */}
-          {topTeams[0] && (
-            <div className="metric-card">
-              <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem' }}>Líder da Classificação</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <img src={topTeams[0].team?.logo_url} style={{ width: 48, height: 48, objectFit: 'contain' }} />
-                <div>
-                  <div style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--primary-dark)' }}>{topTeams[0].team?.name}</div>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary-color)' }}>{topTeams[0].points} pontos</div>
-                </div>
-              </div>
+          {/* G-4 Mini Tabela */}
+          <div className="premium-card" style={{ padding: '0' }}>
+            <div className="premium-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="header-small-label">G-4 Zona de Classificação</div>
+              <Link to="/classificacao" style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--primary-color)', textTransform: 'uppercase' }}>Ver Tudo</Link>
             </div>
-          )}
+            <div className="premium-card-body" style={{ padding: '0' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 900, color: 'var(--text-muted)', width: '40px' }}>#</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 900, color: 'var(--text-muted)' }}>Equipe</th>
+                    <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 900, color: 'var(--text-muted)', width: '50px' }}>Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topTeams.slice(0, 4).map((t, idx) => (
+                    <tr key={t.team_id} style={{ borderBottom: idx < 3 ? '1px solid #f1f5f9' : 'none' }}>
+                      <td style={{ padding: '10px 12px', fontWeight: 900, color: idx === 0 ? 'var(--primary-color)' : 'var(--text-main)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <div style={{ width: '4px', height: '12px', background: 'var(--primary-color)', borderRadius: '2px' }} />
+                          {idx + 1}º
+                        </div>
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <img src={t.team?.logo_url} style={{ width: 24, height: 24, objectFit: 'contain' }} alt="" />
+                          <span style={{ fontWeight: 800 }}>{t.team?.name}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 900, color: 'var(--primary-dark)' }}>{t.points}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
           {/* Artilheiro */}
           {topScorer && (
