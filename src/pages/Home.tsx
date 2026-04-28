@@ -232,43 +232,6 @@ const Home = () => {
           </div>
         </section>
 
-        {/* ── COLUNA 1: Branding e Atalhos (Ocupa as duas linhas) ── */}
-        <section className="hero-branding" style={{ gridRow: '1 / span 2' }}>
-          <div className="animate-up" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem' }}>
-            <img src={logoApd} alt="Copa do Mundo APD" className="hero-logo-monumental" style={{ width: '180px', height: '180px', margin: '0' }} />
-            <h1 className="hero-title-official" style={{ fontSize: '1.8rem', letterSpacing: '-1px' }}>Copa do Mundo APD</h1>
-            <p className="hero-desc" style={{ textAlign: 'center', maxWidth: '100%' }}>
-              A emoção do futebol amador em um torneio de nível mundial.
-            </p>
-          </div>
-
-          <div className="quick-nav-grid">
-            <Link to="/jogos" className="quick-card">
-              <div className="quick-card-icon" style={{ background: 'rgba(255, 214, 0, 0.1)' }}>
-                <Calendar size={20} color="#b89112" />
-              </div>
-              <h4>Jogos</h4>
-              <p>Rodadas, mata-mata e placares.</p>
-            </Link>
-
-            <Link to="/classificacao" className="quick-card">
-              <div className="quick-card-icon" style={{ background: 'rgba(0, 230, 118, 0.1)' }}>
-                <Table size={20} color="#00e676" />
-              </div>
-              <h4>Tabela</h4>
-              <p>Classificação e critérios.</p>
-            </Link>
-
-            <Link to="/artilharia" className="quick-card">
-              <div className="quick-card-icon" style={{ background: 'rgba(10, 25, 47, 0.05)' }}>
-                <Activity size={20} color="var(--primary-dark)" />
-              </div>
-              <h4>Estatísticas</h4>
-              <p>Artilharia e desempenho.</p>
-            </Link>
-          </div>
-        </section>
-
         {/* ── LINHA 1: Calendário e G-4 ── */}
         <section className="dashboard-section-row" style={{ gridColumn: '2', gridRow: '1' }}>
           <div className="premium-card" style={{ height: '100%', marginBottom: 0 }}>
