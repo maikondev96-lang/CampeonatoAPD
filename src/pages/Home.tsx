@@ -234,61 +234,60 @@ const Home = () => {
           </div>
         </section>
 
-        {/* ── COLUNA DIREITA: Sidebar de Destaques ── */}
-        <aside className="sidebar-cards">
+        {/* ── COLUNA 2: Central de Partidas ── */}
+        <section className="sidebar-cards">
           
           {/* Status do Torneio / Próximo Jogo */}
           <div className="premium-card">
             <div className="premium-card-header">
               <div className="header-small-label">Copa do Mundo APD</div>
-                            <h2 className="header-main-title">
+              <h2 className="header-main-title">
                 {champion ? 'Finalizado' : activeRoundMatches.length > 0 ? 'Próxima Rodada' : 'Aguardando a final'}
               </h2>
             </div>
             <div className="premium-card-body">
                {champion ? (
-                 <div style={{ textAlign: 'center', padding: '1.5rem 1rem', position: 'relative', overflow: 'hidden' }}>
-                    <img src={logoApd} style={{ height: 110, width: 'auto', marginBottom: '1.5rem', filter: 'drop-shadow(0 0 25px rgba(255, 255, 255, 0.2))' }} alt="" />
+                 <div style={{ textAlign: 'center', padding: '1rem', position: 'relative', overflow: 'hidden' }}>
+                    <img src={logoApd} style={{ height: 80, width: 'auto', marginBottom: '1rem', filter: 'drop-shadow(0 0 25px rgba(255, 255, 255, 0.2))' }} alt="" />
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                      <img src={champion.logo} style={{ width: 70, height: 70, objectFit: 'contain', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.1))' }} />
-                      <div style={{ fontWeight: 950, fontSize: '1.5rem', color: 'var(--primary-dark)', letterSpacing: '-0.5px', lineHeight: 1 }}>{champion.name}</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
+                      <img src={champion.logo} style={{ width: 60, height: 60, objectFit: 'contain', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.1))' }} />
+                      <div style={{ fontWeight: 950, fontSize: '1.2rem', color: 'var(--primary-dark)', letterSpacing: '-0.5px', lineHeight: 1 }}>{champion.name}</div>
                     </div>
 
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 950, marginTop: '1.5rem', textTransform: 'uppercase', letterSpacing: '3px' }}>🏆 Grande Campeão 🏆</div>
-                    <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', opacity: 0.6, marginTop: '0.5rem', fontWeight: 800 }}>Mundial APD • 2026</div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 950, marginTop: '1rem', textTransform: 'uppercase', letterSpacing: '2px' }}>🏆 Campeão 🏆</div>
                  </div>
                ) : activeRoundMatches.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-muted)', marginBottom: '0.5rem', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '2px', background: '#f8fafc', padding: '6px', borderRadius: '6px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--text-muted)', marginBottom: '0.4rem', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '2px', background: '#f8fafc', padding: '4px', borderRadius: '4px' }}>
                     {activeRoundMatches[0].phase === 'grupo' ? `Rodada ${activeRoundMatches[0].round}` : activeRoundMatches[0].phase.replace('_', ' ')}
                   </div>
                   {activeRoundMatches.map(m => (
-                    <div key={m.id} style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
-                      <div style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)', textAlign: 'center', marginBottom: '0.5rem', opacity: 0.7 }}>
+                    <div key={m.id} style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
+                      <div style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)', textAlign: 'center', marginBottom: '0.4rem', opacity: 0.7 }}>
                         {m.date ? m.date.split('-').reverse().join('/') : 'Data a definir'} {m.time && `• ${m.time.slice(0, 5)}`}
                       </div>
                       <div className="sidebar-match-info" style={{ padding: 0 }}>
                         <div className="sidebar-team">
                           {m.home_team?.logo_url ? (
-                            <img src={m.home_team.logo_url} style={{ width: 32, height: 32 }} alt="" />
-                          ) : <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 900 }}>?</div>}
-                          <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>{m.home_team?.name.slice(0, 3) || 'TBD'}</span>
+                            <img src={m.home_team.logo_url} style={{ width: 28, height: 28 }} alt="" />
+                          ) : <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 900 }}>?</div>}
+                          <span style={{ fontWeight: 800, fontSize: '0.7rem' }}>{m.home_team?.name.slice(0, 3) || 'TBD'}</span>
                         </div>
                         <div className="sidebar-vs" style={{ fontSize: '0.6rem' }}>VS</div>
                         <div className="sidebar-team">
                           {m.away_team?.logo_url ? (
-                            <img src={m.away_team.logo_url} style={{ width: 32, height: 32 }} alt="" />
-                          ) : <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 900 }}>?</div>}
-                          <span style={{ fontWeight: 800, fontSize: '0.75rem' }}>{m.away_team?.name.slice(0, 3) || 'TBD'}</span>
+                            <img src={m.away_team.logo_url} style={{ width: 28, height: 28 }} alt="" />
+                          ) : <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 900 }}>?</div>}
+                          <span style={{ fontWeight: 800, fontSize: '0.7rem' }}>{m.away_team?.name.slice(0, 3) || 'TBD'}</span>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
                ) : (
-                 <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center' }}>
-                   Aguardando sorteio das partidas.
+                 <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center' }}>
+                   Aguardando sorteio.
                  </p>
                )}
             </div>
@@ -297,54 +296,43 @@ const Home = () => {
           {/* Último Resultado */}
           {latestResults.length > 0 && !champion && (
             <div className="premium-card" style={{ border: '1px solid #edf2f7' }}>
-              <div className="premium-card-header" style={{ background: '#f8fafc', color: 'var(--primary-dark)', borderBottom: '1px solid #edf2f7' }}>
+              <div className="premium-card-header" style={{ background: '#f8fafc', color: 'var(--primary-dark)', borderBottom: '1px solid #edf2f7', padding: '0.75rem 1rem' }}>
                 <div className="header-small-label">Resumo da Rodada</div>
-                <h2 className="header-main-title" style={{ color: 'var(--primary-dark)' }}>{latestRoundLabel}</h2>
+                <h2 className="header-main-title" style={{ color: 'var(--primary-dark)', fontSize: '0.9rem' }}>{latestRoundLabel}</h2>
               </div>
-              <div className="premium-card-body">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="premium-card-body" style={{ padding: '0.75rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {latestResults.map(m => (
-                    <div key={m.id} style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
+                    <div key={m.id} style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>
                       <div className="sidebar-match-info" style={{ padding: 0 }}>
                         <div className="sidebar-team">
-                          <img src={m.home_team?.logo_url} style={{ width: 32, height: 32 }} alt="" />
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <span style={{ fontWeight: 900, fontSize: '1rem' }}>{m.home_score}</span>
-                            {m.home_penalties != null && (
-                              <span style={{ fontSize: '0.5rem', color: 'var(--primary-color)', fontWeight: 800 }}>({m.home_penalties})</span>
-                            )}
-                          </div>
+                          <img src={m.home_team?.logo_url} style={{ width: 24, height: 24 }} alt="" />
+                          <span style={{ fontWeight: 900, fontSize: '0.9rem' }}>{m.home_score}</span>
                         </div>
                         <div className="sidebar-vs" style={{ fontSize: '0.6rem' }}>X</div>
                         <div className="sidebar-team">
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <span style={{ fontWeight: 900, fontSize: '1rem' }}>{m.away_score}</span>
-                            {m.away_penalties != null && (
-                              <span style={{ fontSize: '0.5rem', color: 'var(--primary-color)', fontWeight: 800 }}>({m.away_penalties})</span>
-                            )}
-                          </div>
-                          <img src={m.away_team?.logo_url} style={{ width: 32, height: 32 }} alt="" />
+                          <span style={{ fontWeight: 900, fontSize: '0.9rem' }}>{m.away_score}</span>
+                          <img src={m.away_team?.logo_url} style={{ width: 24, height: 24 }} alt="" />
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.6rem', color: 'var(--primary-color)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
-                  Rodada Encerrada
-                </div>
               </div>
             </div>
           )}
+        </section>
 
+        {/* ── COLUNA 3: Destaques e Líder ── */}
+        <aside className="sidebar-cards">
           {/* Líder da Liga */}
           {topTeams[0] && (
-            <div className="metric-card">
-              <div className="metric-label">Líder da Liga</div>
-              <div className="metric-content">
-                <div className="metric-val">{topTeams[0].points} pts</div>
+            <div className="metric-card" style={{ padding: '1.25rem' }}>
+              <div className="metric-label" style={{ fontSize: '0.7rem' }}>Líder da Liga</div>
+              <div className="metric-content" style={{ marginTop: '0.5rem' }}>
+                <div className="metric-val" style={{ fontSize: '1.2rem' }}>{topTeams[0].points} pts</div>
                 <div className="metric-entity">
-                  <div className="entity-name">{topTeams[0].team?.name}</div>
-                  <div className="entity-sub">{topTeams[0].team?.name.slice(0, 3)}</div>
+                  <div className="entity-name" style={{ fontSize: '0.85rem' }}>{topTeams[0].team?.name}</div>
                 </div>
               </div>
             </div>
@@ -352,18 +340,29 @@ const Home = () => {
 
           {/* Artilheiro */}
           {topScorer && (
-            <div className="metric-card">
-              <div className="metric-label">Artilheiro</div>
-              <div className="metric-content">
-                <div className="metric-val">{topScorer.value} gols</div>
+            <div className="metric-card" style={{ padding: '1.25rem' }}>
+              <div className="metric-label" style={{ fontSize: '0.7rem' }}>Artilheiro</div>
+              <div className="metric-content" style={{ marginTop: '0.5rem' }}>
+                <div className="metric-val" style={{ fontSize: '1.2rem' }}>{topScorer.value} gols</div>
                 <div className="metric-entity">
-                  <div className="entity-name">{topScorer.name}</div>
-                  <div className="entity-sub">{topScorer.team_name}</div>
+                  <div className="entity-name" style={{ fontSize: '0.85rem' }}>{topScorer.name}</div>
                 </div>
               </div>
             </div>
           )}
 
+          {/* Garçom */}
+          {topAssist && (
+            <div className="metric-card" style={{ padding: '1.25rem' }}>
+              <div className="metric-label" style={{ fontSize: '0.7rem' }}>Garçom</div>
+              <div className="metric-content" style={{ marginTop: '0.5rem' }}>
+                <div className="metric-val" style={{ fontSize: '1.2rem' }}>{topAssist.value} assists</div>
+                <div className="metric-entity">
+                  <div className="entity-name" style={{ fontSize: '0.85rem' }}>{topAssist.name}</div>
+                </div>
+              </div>
+            </div>
+          )}
         </aside>
 
       </div>
