@@ -266,12 +266,12 @@ const Home = () => {
                       <div className="sidebar-match-info" style={{ padding: 0 }}>
                         <div className="sidebar-team">
                           <img src={m.home_team?.logo_url || logoApd} style={{ width: 32, height: 32 }} alt="" />
-                          <span style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.home_team?.name.slice(0, 3)}</span>
+                          <span className="team-name-premium" style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.home_team?.name.slice(0, 3)}</span>
                         </div>
                         <div className="sidebar-vs">VS</div>
                         <div className="sidebar-team">
                           <img src={m.away_team?.logo_url || logoApd} style={{ width: 32, height: 32 }} alt="" />
-                          <span style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.away_team?.name.slice(0, 3)}</span>
+                          <span className="team-name-premium" style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.away_team?.name.slice(0, 3)}</span>
                         </div>
                       </div>
                     </Link>
@@ -295,17 +295,17 @@ const Home = () => {
                   <Link to={`/jogos/${m.id}`} key={m.id} style={{ display: 'block', padding: '1rem', borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s' }}>
                     <div className="sidebar-match-info" style={{ padding: 0 }}>
                       <div className="sidebar-team" style={{ flexDirection: 'row', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                        <span style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.home_team?.name.slice(0, 3)}</span>
+                        <span className={`team-name-premium ${ (m.home_score || 0) > (m.away_score || 0) ? 'is-winner' : (m.home_score || 0) < (m.away_score || 0) ? 'is-loser' : '' }`} style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.home_team?.name.slice(0, 3)}</span>
                         <img src={m.home_team?.logo_url} style={{ width: 28, height: 28 }} alt="" />
                       </div>
-                      <div className="score-display-premium" style={{ minWidth: '60px', padding: '0.4rem 0.6rem', background: '#000', border: '1px solid #1e293b' }}>
-                        <div className="score-number-premium" style={{ fontSize: '1.1rem' }}>{m.home_score}</div>
-                        <span className="score-divider-premium" style={{ fontSize: '0.8rem' }}>-</span>
-                        <div className="score-number-premium" style={{ fontSize: '1.1rem' }}>{m.away_score}</div>
+                      <div className="score-display-premium" style={{ minWidth: '50px', padding: 0, gap: '0.4rem' }}>
+                        <div className={`score-number-premium ${(m.home_score || 0) >= (m.away_score || 0) ? 'is-winner' : ''}`} style={{ fontSize: '1.2rem' }}>{m.home_score}</div>
+                        <span className="score-divider-premium" style={{ fontSize: '0.8rem', opacity: 0.1 }}>-</span>
+                        <div className={`score-number-premium ${(m.away_score || 0) >= (m.home_score || 0) ? 'is-winner' : ''}`} style={{ fontSize: '1.2rem' }}>{m.away_score}</div>
                       </div>
                       <div className="sidebar-team" style={{ flexDirection: 'row', gap: '0.75rem', justifyContent: 'flex-start' }}>
                         <img src={m.away_team?.logo_url} style={{ width: 28, height: 28 }} alt="" />
-                        <span style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.away_team?.name.slice(0, 3)}</span>
+                        <span className={`team-name-premium ${ (m.away_score || 0) > (m.home_score || 0) ? 'is-winner' : (m.away_score || 0) < (m.home_score || 0) ? 'is-loser' : '' }`} style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.away_team?.name.slice(0, 3)}</span>
                       </div>
                     </div>
                   </Link>
