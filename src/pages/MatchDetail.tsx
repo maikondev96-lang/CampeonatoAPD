@@ -215,7 +215,7 @@ const MatchDetail = () => {
             <div className="card h2h-card">
               {homeHistory.map(h => (
                 <div key={h.id} className="h2h-row">
-                  <span className="h2h-date">{h.date.split('-').reverse().slice(0,2).join('/')}</span>
+                  <span className="h2h-date">{h.date ? h.date.split('-').reverse().slice(0,2).join('/') : '??/??'}</span>
                   <div className="h2h-teams">
                     <div className={`h2h-team-row ${h.home_team_id === match.home_team_id ? 'active' : ''}`}>
                       <img src={h.home_team?.logo_url} className="h2h-logo" />
@@ -239,7 +239,7 @@ const MatchDetail = () => {
             <div className="card h2h-card">
               {awayHistory.map(h => (
                 <div key={h.id} className="h2h-row">
-                  <span className="h2h-date">{h.date.split('-').reverse().slice(0,2).join('/')}</span>
+                  <span className="h2h-date">{h.date ? h.date.split('-').reverse().slice(0,2).join('/') : '??/??'}</span>
                   <div className="h2h-teams">
                     <div className={`h2h-team-row ${h.home_team_id === match.away_team_id ? 'active' : ''}`}>
                       <img src={h.home_team?.logo_url} className="h2h-logo" />

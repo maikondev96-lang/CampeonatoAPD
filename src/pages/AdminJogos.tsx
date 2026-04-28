@@ -354,7 +354,7 @@ const AdminJogos = () => {
                     </div>
                     
                     <div style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                      {jogo.date.split('-').reverse().join('/')} • {jogo.time?.slice(0, 5)}
+                      {jogo.date ? jogo.date.split('-').reverse().join('/') : 'A definir'} {jogo.time ? `• ${jogo.time.slice(0, 5)}` : ''}
                     </div>
                   </div>
                 ))}
