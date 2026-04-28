@@ -195,17 +195,15 @@ const Home = () => {
     <div className="animate-up container">
       <div className="dashboard-grid">
         
-        {/* ── COLUNA ESQUERDA: Branding e Atalhos ── */}
+        {/* ── COLUNA 1: Branding e Atalhos ── */}
         <section className="hero-branding">
-          <img src={logoApd} alt="APD Logo" className="hero-logo-large" />
-          
-          <div className="hero-label">Torneio Mundial Amador</div>
-          <h1 className="hero-main-title">
-            Copa do Mundo<br />APD
-          </h1>
-          <p className="hero-desc">
-            A emoção do futebol amador em um torneio de nível mundial.
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <img src={logoApd} alt="APD Logo" className="hero-logo-large" />
+            <h1 className="hero-main-title">Copa do Mundo APD</h1>
+            <p className="hero-desc">
+              A emoção do futebol amador em um torneio de nível mundial.
+            </p>
+          </div>
 
           <div className="quick-nav-grid">
             <Link to="/jogos" className="quick-card">
@@ -213,23 +211,23 @@ const Home = () => {
                 <Calendar size={20} color="#b89112" />
               </div>
               <h4>Jogos</h4>
-              <p>Rodadas, mata-mata, placares e eventos.</p>
+              <p>Rodadas, mata-mata e placares.</p>
             </Link>
 
             <Link to="/classificacao" className="quick-card">
               <div className="quick-card-icon" style={{ background: 'rgba(0, 230, 118, 0.1)' }}>
                 <Table size={20} color="#00e676" />
               </div>
-              <h4>Classificação</h4>
-              <p>Tabela da liga com pontos e critérios.</p>
+              <h4>Tabela</h4>
+              <p>Classificação e critérios.</p>
             </Link>
 
             <Link to="/artilharia" className="quick-card">
               <div className="quick-card-icon" style={{ background: 'rgba(10, 25, 47, 0.05)' }}>
                 <Activity size={20} color="var(--primary-dark)" />
               </div>
-              <h4>Artilharia</h4>
-              <p>Ranking dos goleadores do campeonato.</p>
+              <h4>Estatísticas</h4>
+              <p>Artilharia e desempenho.</p>
             </Link>
           </div>
         </section>

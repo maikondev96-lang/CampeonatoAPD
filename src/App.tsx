@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Trophy, Calendar, Table, Activity, Settings, Users, Shield } from 'lucide-react';
+import { Trophy, Calendar, Table, Activity, Settings, Users, Shield, Menu, X } from 'lucide-react';
 import Home from './pages/Home';
 import Jogos from './pages/Jogos';
 import Classificacao from './pages/Classificacao';
@@ -18,9 +18,15 @@ import AdminLogin from './pages/AdminLogin';
 import AdminRoute from './components/AdminRoute';
 
 const Navbar = () => {
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
   const navigate = useNavigate();
+
+  // Close menu when location changes
+  React.useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location]);
 
   const handleLogout = () => {
     localStorage.removeItem('isAdminAuthenticated');
@@ -37,7 +43,12 @@ const Navbar = () => {
             <div className="logo-subtext">Futebol amador de nível mundial</div>
           </div>
         </Link>
-        <div className="nav-links">
+
+        <button className="mobile-menu-btn" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+
+        <div className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
           {!isAdmin ? (
             <>
               <Link to="/jogos" className={`nav-link-item ${location.pathname === '/jogos' ? 'active' : ''}`}>
