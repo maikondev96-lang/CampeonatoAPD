@@ -213,30 +213,26 @@ const Jogos = () => {
                 {expanded === jogo.id && (
                   <div style={{ padding: '1.5rem', background: '#f8fafc', borderTop: '1px solid var(--border-color)', animation: 'fadeIn 0.2s ease-out' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-                      {/* Home Events */}
+                      {/* Home Regular Events */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', textAlign: 'right' }}>
-                        {events[jogo.id]?.filter(e => e.player?.team_id === jogo.home_team_id).map(e => (
-                          <div key={e.id} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end', fontWeight: 700, color: 'var(--primary-dark)' }}>
+                        {events[jogo.id]?.filter(e => !e.type.includes('penalti') && e.player?.team_id === jogo.home_team_id).map(e => (
+                          <div key={e.id} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end', fontWeight: 800, color: '#0f172a' }}>
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', opacity: 0.6 }}>{e.minute ? `${e.minute}'` : ''}</span>
                             <span>{e.player?.name}</span>
                             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
                               {e.type === 'gol' && <span style={{ fontSize: '1rem' }}>⚽</span>}
-                              {e.type === 'penalti_convertido' && <span style={{ fontSize: '1rem' }}>✅</span>}
-                              {e.type === 'penalti_perdido' && <span style={{ fontSize: '1rem' }}>❌</span>}
                               {e.type === 'cartao_amarelo' && <div style={{ width: 10, height: 14, background: '#ffd600', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                               {(e.type === 'cartao_vermelho_direto' || e.type === 'cartao_vermelho_indireto') && <div style={{ width: 10, height: 14, background: '#ff5252', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                             </span>
                           </div>
                         ))}
                       </div>
-                      {/* Away Events */}
+                      {/* Away Regular Events */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                        {events[jogo.id]?.filter(e => e.player?.team_id === jogo.away_team_id).map(e => (
-                          <div key={e.id} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: 'var(--primary-dark)' }}>
+                        {events[jogo.id]?.filter(e => !e.type.includes('penalti') && e.player?.team_id === jogo.away_team_id).map(e => (
+                          <div key={e.id} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, color: '#0f172a' }}>
                             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
                               {e.type === 'gol' && <span style={{ fontSize: '1rem' }}>⚽</span>}
-                              {e.type === 'penalti_convertido' && <span style={{ fontSize: '1rem' }}>✅</span>}
-                              {e.type === 'penalti_perdido' && <span style={{ fontSize: '1rem' }}>❌</span>}
                               {e.type === 'cartao_amarelo' && <div style={{ width: 10, height: 14, background: '#ffd600', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                               {(e.type === 'cartao_vermelho_direto' || e.type === 'cartao_vermelho_indireto') && <div style={{ width: 10, height: 14, background: '#ff5252', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                             </span>
@@ -246,6 +242,38 @@ const Jogos = () => {
                         ))}
                       </div>
                     </div>
+
+                    {events[jogo.id]?.some(e => e.type.includes('penalti')) && (
+                      <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px dashed #cbd5e1' }}>
+                        <div style={{ textAlign: 'center', marginBottom: '1rem', fontSize: '0.75rem', fontWeight: 900, color: '#b45309', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                          🥅 Disputa de Pênaltis
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', textAlign: 'right' }}>
+                            {events[jogo.id]?.filter(e => e.type.includes('penalti') && e.player?.team_id === jogo.home_team_id).map(e => (
+                              <div key={e.id} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end', fontWeight: 800, color: '#0f172a' }}>
+                                <span>{e.player?.name}</span>
+                                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
+                                  {e.type === 'penalti_convertido' && <span style={{ fontSize: '1rem' }}>✅</span>}
+                                  {e.type === 'penalti_perdido' && <span style={{ fontSize: '1rem' }}>❌</span>}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                            {events[jogo.id]?.filter(e => e.type.includes('penalti') && e.player?.team_id === jogo.away_team_id).map(e => (
+                              <div key={e.id} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, color: '#0f172a' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
+                                  {e.type === 'penalti_convertido' && <span style={{ fontSize: '1rem' }}>✅</span>}
+                                  {e.type === 'penalti_perdido' && <span style={{ fontSize: '1rem' }}>❌</span>}
+                                </span>
+                                <span>{e.player?.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <div style={{ marginTop: '1rem', textAlign: 'center' }}>
                       <Link to={`/jogos/${jogo.id}`} className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}>
                         Ver lances completos <ChevronRight size={14} />

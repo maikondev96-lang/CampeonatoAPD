@@ -173,39 +173,66 @@ const MatchDetail = () => {
       {activeTab === 'lances' ? (
         <div className="card timeline-card">
           {events.length === 0 ? <p className="empty-msg">Nenhum lance registrado.</p> : (
-            events.map(event => (
-              <div key={event.id} className="timeline-row">
-                <div className="time-col">{event.minute ? `${event.minute}'` : ''}</div>
-                <div className="event-content">
-                  <span className="event-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', marginTop: '2px' }}>
-                    {event.type === 'gol' && <span style={{ fontSize: '1.2rem' }}>⚽</span>}
-                    {event.type === 'penalti_convertido' && <span style={{ fontSize: '1.2rem' }}>✅</span>}
-                    {event.type === 'penalti_perdido' && <span style={{ fontSize: '1.2rem' }}>❌</span>}
-                    {event.type === 'cartao_amarelo' && <div style={{ width: 14, height: 20, background: '#ffd600', borderRadius: 3, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />}
-                    {(event.type === 'cartao_vermelho_direto' || event.type === 'cartao_vermelho_indireto') && <div style={{ width: 14, height: 20, background: '#ff5252', borderRadius: 3, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />}
-                  </span>
-                  <div className="event-details">
-                    <div className="player-name">{event.player?.name || 'Jogador'}</div>
-                    <div className="event-type" style={{ 
-                      color: event.type === 'gol' || event.type === 'penalti_convertido' ? 'var(--primary-color)' : (event.type === 'cartao_vermelho_direto' || event.type === 'cartao_vermelho_indireto' || event.type === 'penalti_perdido') ? '#dc2626' : '#b89112', 
-                      fontWeight: 950,
-                      letterSpacing: '0.5px'
-                    }}>
-                      {event.type === 'gol' ? 'GOL!' : 
-                       event.type === 'penalti_convertido' ? 'PÊNALTI CONVERTIDO' :
-                       event.type === 'penalti_perdido' ? 'PÊNALTI PERDIDO' :
-                       event.type === 'cartao_vermelho_direto' ? 'VERMELHO DIRETO' : 
-                       event.type === 'cartao_vermelho_indireto' ? 'EXPULSO (2º AMARELO)' : 'CARTÃO AMARELO'}
-                    </div>
-                    {event.assist_player && (
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-main)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span style={{ opacity: 0.8, fontWeight: 700 }}>Assistência:</span> <span style={{ color: 'var(--primary-dark)', fontWeight: 900 }}>{event.assist_player.name}</span>
+            <>
+              {events.filter(e => !e.type.includes('penalti')).map(event => (
+                <div key={event.id} className="timeline-row">
+                  <div className="time-col">{event.minute ? `${event.minute}'` : ''}</div>
+                  <div className="event-content">
+                    <span className="event-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', marginTop: '2px' }}>
+                      {event.type === 'gol' && <span style={{ fontSize: '1.2rem' }}>⚽</span>}
+                      {event.type === 'cartao_amarelo' && <div style={{ width: 14, height: 20, background: '#ffd600', borderRadius: 3, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />}
+                      {(event.type === 'cartao_vermelho_direto' || event.type === 'cartao_vermelho_indireto') && <div style={{ width: 14, height: 20, background: '#ff5252', borderRadius: 3, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />}
+                    </span>
+                    <div className="event-details">
+                      <div className="player-name" style={{ color: '#0f172a', fontWeight: 800 }}>{event.player?.name || 'Jogador'}</div>
+                      <div className="event-type" style={{ 
+                        color: event.type === 'gol' ? 'var(--primary-color)' : (event.type === 'cartao_vermelho_direto' || event.type === 'cartao_vermelho_indireto') ? '#dc2626' : '#b89112', 
+                        fontWeight: 950,
+                        letterSpacing: '0.5px'
+                      }}>
+                        {event.type === 'gol' ? 'GOL!' : 
+                         event.type === 'cartao_vermelho_direto' ? 'VERMELHO DIRETO' : 
+                         event.type === 'cartao_vermelho_indireto' ? 'EXPULSO (2º AMARELO)' : 'CARTÃO AMARELO'}
                       </div>
-                    )}
+                      {event.assist_player && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-main)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ opacity: 0.8, fontWeight: 700 }}>Assistência:</span> <span style={{ color: 'var(--primary-dark)', fontWeight: 900 }}>{event.assist_player.name}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              ))}
+              
+              {events.some(e => e.type.includes('penalti')) && (
+                <div style={{ marginTop: '2rem', borderTop: '2px dashed #cbd5e1', paddingTop: '1.5rem' }}>
+                  <div style={{ textAlign: 'center', marginBottom: '1.5rem', fontSize: '0.85rem', fontWeight: 900, color: '#b45309', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                    🥅 Disputa de Pênaltis
+                  </div>
+                  {events.filter(e => e.type.includes('penalti')).map(event => (
+                    <div key={event.id} className="timeline-row" style={{ minHeight: '50px' }}>
+                      <div className="time-col"></div>
+                      <div className="event-content" style={{ paddingBottom: '1rem' }}>
+                        <span className="event-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', marginTop: '2px' }}>
+                          {event.type === 'penalti_convertido' && <span style={{ fontSize: '1.2rem' }}>✅</span>}
+                          {event.type === 'penalti_perdido' && <span style={{ fontSize: '1.2rem' }}>❌</span>}
+                        </span>
+                        <div className="event-details">
+                          <div className="player-name" style={{ color: '#0f172a', fontWeight: 800 }}>{event.player?.name || 'Jogador'}</div>
+                          <div className="event-type" style={{ 
+                            color: event.type === 'penalti_convertido' ? '#059669' : '#dc2626', 
+                            fontWeight: 950,
+                            letterSpacing: '0.5px'
+                          }}>
+                            {event.type === 'penalti_convertido' ? 'PÊNALTI CONVERTIDO' : 'PÊNALTI PERDIDO'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       ) : (

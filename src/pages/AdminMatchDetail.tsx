@@ -400,9 +400,17 @@ const AdminMatchDetail = () => {
           </h4>
           <EventForm players={players.filter(p => p.team_id === match.home_team_id)} onAdd={handleAddEvent} disabled={saving} />
           <div style={{ marginTop: '0.75rem' }}>
-            {events.filter(ev => players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id).map(ev => (
+            {events.filter(ev => !ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id).map(ev => (
               <EventRow key={ev.id} ev={ev} players={players} onDelete={deleteEvent} />
             ))}
+            {events.some(ev => ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id) && (
+              <>
+                <div style={{ marginTop: '1rem', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 800, color: '#b45309', textTransform: 'uppercase', textAlign: 'center' }}>🥅 Pênaltis</div>
+                {events.filter(ev => ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id).map(ev => (
+                  <EventRow key={ev.id} ev={ev} players={players} onDelete={deleteEvent} />
+                ))}
+              </>
+            )}
           </div>
         </div>
         <div>
@@ -411,9 +419,17 @@ const AdminMatchDetail = () => {
           </h4>
           <EventForm players={players.filter(p => p.team_id === match.away_team_id)} onAdd={handleAddEvent} disabled={saving} />
           <div style={{ marginTop: '0.75rem' }}>
-            {events.filter(ev => players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id).map(ev => (
+            {events.filter(ev => !ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id).map(ev => (
               <EventRow key={ev.id} ev={ev} players={players} onDelete={deleteEvent} />
             ))}
+            {events.some(ev => ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id) && (
+              <>
+                <div style={{ marginTop: '1rem', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 800, color: '#b45309', textTransform: 'uppercase', textAlign: 'center' }}>🥅 Pênaltis</div>
+                {events.filter(ev => ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id).map(ev => (
+                  <EventRow key={ev.id} ev={ev} players={players} onDelete={deleteEvent} />
+                ))}
+              </>
+            )}
           </div>
         </div>
       </div>
