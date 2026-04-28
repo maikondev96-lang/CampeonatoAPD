@@ -105,8 +105,12 @@ const MatchDetail = () => {
       {/* Placar Principal */}
       <div className="card match-header-card">
         <div className="match-date-info">
-          <Calendar size={14} /> {match.date.split('-').reverse().join('/')}
-          {match.time && <><Clock size={14} style={{ marginLeft: '10px' }} /> {match.time}</>}
+          <Calendar size={14} /> {match.date ? match.date.split('-').reverse().join('/') : 'Data a definir'}
+          {match.time ? (
+            <><Clock size={14} style={{ marginLeft: '10px' }} /> {match.time.slice(0, 5)}</>
+          ) : (
+            <span style={{ marginLeft: '10px', opacity: 0.6 }}>• Horário a definir</span>
+          )}
         </div>
 
         <div className="score-main-row">
