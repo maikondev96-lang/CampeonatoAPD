@@ -137,16 +137,19 @@ const MatchDetail = () => {
           </div>
 
           <div className="score-display" style={{ flexDirection: 'column', gap: '0.25rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <div className="score-number">{match.status === 'agendado' ? '-' : match.home_score}</div>
-              <div className="score-divider">x</div>
+              
+              {match.phase !== 'grupo' && match.home_penalties !== null && match.home_penalties !== undefined ? (
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#64748b' }}>
+                  ({match.home_penalties} <span style={{ opacity: 0.5, margin: '0 4px' }}>×</span> {match.away_penalties})
+                </div>
+              ) : (
+                <div className="score-divider">x</div>
+              )}
+
               <div className="score-number">{match.status === 'agendado' ? '-' : match.away_score}</div>
             </div>
-            {match.phase !== 'grupo' && match.home_penalties !== null && match.home_penalties !== undefined && (
-              <div style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--primary-color)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                Pênaltis: {match.home_penalties} - {match.away_penalties}
-              </div>
-            )}
           </div>
 
           <div className="team-col">

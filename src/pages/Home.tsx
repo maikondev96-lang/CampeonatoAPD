@@ -390,14 +390,17 @@ const Home = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <span style={{ fontSize: '1.1rem', fontWeight: 900, color: homeWin ? 'var(--primary-dark)' : 'var(--text-muted)', minWidth: '18px', textAlign: 'right' }}>{m.home_score}</span>
-                          <span style={{ color: 'var(--text-subtle)', fontWeight: 700, fontSize: '0.8rem' }}>–</span>
+                          
+                          {m.phase !== 'grupo' && m.home_penalties !== null ? (
+                            <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#64748b', margin: '0 2px', letterSpacing: '0.5px' }}>
+                              ({m.home_penalties}<span style={{ opacity: 0.5, margin: '0 2px' }}>×</span>{m.away_penalties})
+                            </span>
+                          ) : (
+                            <span style={{ color: 'var(--text-subtle)', fontWeight: 700, fontSize: '0.8rem' }}>–</span>
+                          )}
+
                           <span style={{ fontSize: '1.1rem', fontWeight: 900, color: awayWin ? 'var(--primary-dark)' : 'var(--text-muted)', minWidth: '18px', textAlign: 'left' }}>{m.away_score}</span>
                         </div>
-                        {m.phase !== 'grupo' && m.home_penalties !== null && (
-                          <span style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--primary-color)', textTransform: 'uppercase', marginTop: '-2px' }}>
-                            Pên: {m.home_penalties}-{m.away_penalties}
-                          </span>
-                        )}
                       </div>
 
                       {/* Away Team */}

@@ -167,16 +167,17 @@ const Jogos = () => {
                       <div className="score-display-premium" style={{ background: 'transparent', boxShadow: 'none', border: 'none', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {jogo.status === 'finalizado' || jogo.status === 'ao_vivo' ? (
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                               <span className={`score-number-premium ${(jogo.home_score || 0) >= (jogo.away_score || 0) ? 'is-winner' : ''}`}>{jogo.home_score}</span>
-                              <span className="score-divider-premium" style={{ opacity: 0.3 }}>-</span>
+                              {jogo.phase !== 'grupo' && jogo.home_penalties !== null ? (
+                                <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#64748b', margin: '0 4px', letterSpacing: '1px' }}>
+                                  ({jogo.home_penalties} <span style={{ opacity: 0.5, margin: '0 2px' }}>×</span> {jogo.away_penalties})
+                                </span>
+                              ) : (
+                                <span className="score-divider-premium" style={{ opacity: 0.3 }}>-</span>
+                              )}
                               <span className={`score-number-premium ${(jogo.away_score || 0) >= (jogo.home_score || 0) ? 'is-winner' : ''}`}>{jogo.away_score}</span>
                             </div>
-                            {jogo.phase !== 'grupo' && jogo.home_penalties !== null && (
-                              <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary-color)', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                Pên: {jogo.home_penalties} - {jogo.away_penalties}
-                              </div>
-                            )}
                           </div>
                         ) : (
                           <span style={{ fontSize: '1.1rem', fontWeight: 950, color: jogo.time ? 'var(--primary-color)' : 'var(--text-muted)', opacity: jogo.time ? 1 : 0.4 }}>
