@@ -256,21 +256,45 @@ const Home = () => {
                   <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '1px', padding: '12px', borderBottom: '1px solid var(--border-color)' }}>
                     {activeRoundMatches[0].phase === 'grupo' ? `Rodada ${activeRoundMatches[0].round}` : activeRoundMatches[0].phase.replace('_', ' ')}
                   </div>
-                  {activeRoundMatches.map(m => (
-                    <Link to={`/jogos/${m.id}`} key={m.id} className="sidebar-match-item" style={{ display: 'block', padding: '1rem', borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s' }}>
-                      <div style={{ fontSize: '0.6rem', fontWeight: 800, color: m.status === 'adiado' ? 'var(--error)' : 'var(--text-muted)', textAlign: 'center', marginBottom: '0.75rem', opacity: m.status === 'adiado' ? 1 : 0.6 }}>
-                        {m.status === 'adiado' ? '⚠️ ADIADO' : m.date ? m.date.split('-').reverse().join('/') : 'Data a definir'} {m.time ? `• ${m.time.slice(0, 5)}` : '• Horário a definir'}
+                  {activeRoundMatches.map((m, idx) => (
+                    <Link
+                      to={`/jogos/${m.id}`}
+                      key={m.id}
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 56px 1fr',
+                        alignItems: 'center',
+                        padding: '10px 16px',
+                        borderBottom: idx < activeRoundMatches.length - 1 ? '1px solid var(--border-color)' : 'none',
+                        textDecoration: 'none',
+                        gap: '8px',
+                        transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-color)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      {/* Home Team: logo + name right-aligned */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', overflow: 'hidden' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {m.home_team?.name.slice(0, 3).toUpperCase()}
+                        </span>
+                        <img src={m.home_team?.logo_url || logoApd} style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} alt="" />
                       </div>
-                      <div className="sidebar-match-info" style={{ padding: 0 }}>
-                        <div className="sidebar-team">
-                          <img src={m.home_team?.logo_url || logoApd} style={{ width: 32, height: 32 }} alt="" />
-                          <span className="team-name-premium" style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.home_team?.name.slice(0, 3)}</span>
-                        </div>
-                        <div className="sidebar-vs">VS</div>
-                        <div className="sidebar-team">
-                          <img src={m.away_team?.logo_url || logoApd} style={{ width: 32, height: 32 }} alt="" />
-                          <span className="team-name-premium" style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.away_team?.name.slice(0, 3)}</span>
-                        </div>
+
+                      {/* Center: date + VS */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                        <span style={{ fontSize: '0.55rem', fontWeight: 800, color: m.status === 'adiado' ? 'var(--error)' : 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
+                          {m.status === 'adiado' ? 'ADIADO' : m.date ? m.date.split('-').reverse().join('/') : '??/??'}
+                        </span>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-subtle)', background: 'var(--bg-color)', padding: '2px 6px', borderRadius: '4px' }}>VS</span>
+                      </div>
+
+                      {/* Away Team: name + logo left-aligned */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', overflow: 'hidden' }}>
+                        <img src={m.away_team?.logo_url || logoApd} style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} alt="" />
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {m.away_team?.name.slice(0, 3).toUpperCase()}
+                        </span>
                       </div>
                     </Link>
                   ))}
