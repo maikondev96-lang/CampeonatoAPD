@@ -221,6 +221,8 @@ const Jogos = () => {
                             <span>{e.player?.name}</span>
                             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
                               {e.type === 'gol' && <span style={{ fontSize: '1rem' }}>⚽</span>}
+                              {e.type === 'penalti_convertido' && <span style={{ fontSize: '1rem' }}>✅</span>}
+                              {e.type === 'penalti_perdido' && <span style={{ fontSize: '1rem' }}>❌</span>}
                               {e.type === 'cartao_amarelo' && <div style={{ width: 10, height: 14, background: '#ffd600', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                               {(e.type === 'cartao_vermelho_direto' || e.type === 'cartao_vermelho_indireto') && <div style={{ width: 10, height: 14, background: '#ff5252', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                             </span>
@@ -233,6 +235,8 @@ const Jogos = () => {
                           <div key={e.id} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: 'var(--primary-dark)' }}>
                             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
                               {e.type === 'gol' && <span style={{ fontSize: '1rem' }}>⚽</span>}
+                              {e.type === 'penalti_convertido' && <span style={{ fontSize: '1rem' }}>✅</span>}
+                              {e.type === 'penalti_perdido' && <span style={{ fontSize: '1rem' }}>❌</span>}
                               {e.type === 'cartao_amarelo' && <div style={{ width: 10, height: 14, background: '#ffd600', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                               {(e.type === 'cartao_vermelho_direto' || e.type === 'cartao_vermelho_indireto') && <div style={{ width: 10, height: 14, background: '#ff5252', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                             </span>

@@ -179,17 +179,21 @@ const MatchDetail = () => {
                 <div className="event-content">
                   <span className="event-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', marginTop: '2px' }}>
                     {event.type === 'gol' && <span style={{ fontSize: '1.2rem' }}>⚽</span>}
+                    {event.type === 'penalti_convertido' && <span style={{ fontSize: '1.2rem' }}>✅</span>}
+                    {event.type === 'penalti_perdido' && <span style={{ fontSize: '1.2rem' }}>❌</span>}
                     {event.type === 'cartao_amarelo' && <div style={{ width: 14, height: 20, background: '#ffd600', borderRadius: 3, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />}
                     {(event.type === 'cartao_vermelho_direto' || event.type === 'cartao_vermelho_indireto') && <div style={{ width: 14, height: 20, background: '#ff5252', borderRadius: 3, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />}
                   </span>
                   <div className="event-details">
                     <div className="player-name">{event.player?.name || 'Jogador'}</div>
                     <div className="event-type" style={{ 
-                      color: event.type === 'gol' ? 'var(--primary-color)' : (event.type === 'cartao_vermelho_direto' || event.type === 'cartao_vermelho_indireto') ? '#dc2626' : '#b89112', 
+                      color: event.type === 'gol' || event.type === 'penalti_convertido' ? 'var(--primary-color)' : (event.type === 'cartao_vermelho_direto' || event.type === 'cartao_vermelho_indireto' || event.type === 'penalti_perdido') ? '#dc2626' : '#b89112', 
                       fontWeight: 950,
                       letterSpacing: '0.5px'
                     }}>
                       {event.type === 'gol' ? 'GOL!' : 
+                       event.type === 'penalti_convertido' ? 'PÊNALTI CONVERTIDO' :
+                       event.type === 'penalti_perdido' ? 'PÊNALTI PERDIDO' :
                        event.type === 'cartao_vermelho_direto' ? 'VERMELHO DIRETO' : 
                        event.type === 'cartao_vermelho_indireto' ? 'EXPULSO (2º AMARELO)' : 'CARTÃO AMARELO'}
                     </div>

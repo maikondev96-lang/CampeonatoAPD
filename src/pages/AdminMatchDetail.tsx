@@ -35,8 +35,18 @@ const AdminMatchDetail = () => {
         ev.type === 'gol' &&
         players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id
       ).length;
+      const hPens = events.filter(ev =>
+        ev.type === 'penalti_convertido' &&
+        players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id
+      ).length;
+      const aPens = events.filter(ev =>
+        ev.type === 'penalti_convertido' &&
+        players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id
+      ).length;
       setHomeScore(hScore);
       setAwayScore(aScore);
+      setHomePens(hPens);
+      setAwayPens(aPens);
     }
   }, [events, players, match]);
 
@@ -277,37 +287,25 @@ const AdminMatchDetail = () => {
                 🥅 Disputa de Pênaltis
               </h4>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', alignItems: 'center' }}>
-                <input 
-                  type="text" 
-                  inputMode="numeric"
-                  value={homePens} 
-                  onChange={e => {
-                    const val = e.target.value.replace(/[^0-9]/g, '');
-                    setHomePens(val ? parseInt(val) : 0);
-                  }} 
-                  style={{ 
+                <div style={{ 
                     width: '80px', height: '70px', fontSize: '2.5rem', fontWeight: 900, 
-                    textAlign: 'center', borderRadius: '12px', border: '3px solid #fbbf24',
-                    background: '#fff', color: '#b45309', outline: 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: '12px', border: '3px solid #fbbf24',
+                    background: '#fff', color: '#b45309',
                     boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
-                  }} 
-                />
+                  }}>
+                  {homePens}
+                </div>
                 <span style={{ fontWeight: 900, color: '#b45309', fontSize: '1.5rem' }}>×</span>
-                <input 
-                  type="text" 
-                  inputMode="numeric"
-                  value={awayPens} 
-                  onChange={e => {
-                    const val = e.target.value.replace(/[^0-9]/g, '');
-                    setAwayPens(val ? parseInt(val) : 0);
-                  }} 
-                  style={{ 
+                <div style={{ 
                     width: '80px', height: '70px', fontSize: '2.5rem', fontWeight: 900, 
-                    textAlign: 'center', borderRadius: '12px', border: '3px solid #fbbf24',
-                    background: '#fff', color: '#b45309', outline: 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: '12px', border: '3px solid #fbbf24',
+                    background: '#fff', color: '#b45309',
                     boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
-                  }} 
-                />
+                  }}>
+                  {awayPens}
+                </div>
               </div>
             </div>
           )}
@@ -445,6 +443,8 @@ const EventForm = ({ players, onAdd, disabled }: { players: Player[], onAdd: (p:
         </select>
         <select value={type} onChange={e => { setType(e.target.value); if (e.target.value !== 'gol') setAssistId(''); }} style={{ flex: 1, fontSize: '0.82rem', padding: '0.4rem 0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
           <option value="gol">⚽ Gol</option>
+          <option value="penalti_convertido">✅ Pênalti Convertido</option>
+          <option value="penalti_perdido">❌ Pênalti Perdido</option>
           <option value="cartao_amarelo">🟨 Amarelo</option>
           <option value="cartao_vermelho_direto">🟥 Vermelho Direto</option>
           <option value="cartao_vermelho_indireto">🟥 2º Amarelo</option>
@@ -483,6 +483,8 @@ const EventRow = ({ ev, players, onDelete }: { ev: any, players: Player[], onDel
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
         <span style={{ fontSize: '1rem' }}>
           {isGoal && '⚽'}
+          {ev.type === 'penalti_convertido' && '✅'}
+          {ev.type === 'penalti_perdido' && '❌'}
           {isYellow && '🟨'}
           {(isRedDirect || isRedIndirect) && '🟥'}
         </span>
@@ -492,6 +494,8 @@ const EventRow = ({ ev, players, onDelete }: { ev: any, players: Player[], onDel
             {ev.minute && <span style={{ fontWeight: 500, color: 'var(--text-subtle)', marginLeft: '4px' }}>{ev.minute}'</span>}
             {isRedDirect && <span style={{ color: 'var(--error)', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>DIRETO</span>}
             {isRedIndirect && <span style={{ color: 'var(--error)', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>2º AMARELO</span>}
+            {ev.type === 'penalti_convertido' && <span style={{ color: '#059669', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>CONVERTIDO</span>}
+            {ev.type === 'penalti_perdido' && <span style={{ color: 'var(--error)', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>PERDIDO</span>}
           </div>
           {assistPlayer && (
             <div style={{ fontSize: '0.7rem', color: 'var(--text-subtle)', marginTop: '1px' }}>
