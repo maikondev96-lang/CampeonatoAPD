@@ -213,12 +213,13 @@ const Jogos = () => {
                   </div>
                 )}
               </div>
-            })}
-          </div>
-        ))
-      )}
-    </div>
-  );
+            );
+          })}
+        </div>
+      ))
+    )}
+  </div>
+);
 };
 
 export default Jogos;
