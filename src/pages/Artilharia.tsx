@@ -231,14 +231,17 @@ const Artilharia = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div>
             <div style={{ fontWeight: 800, color: 'var(--primary-dark)' }}>{p.name}</div>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: 900, color: '#eab308' }}>
-                <div style={{ width: 10, height: 14, background: '#eab308', borderRadius: '2px' }}></div> {p.yellow_cards}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: 900, color: '#ef4444' }}>
-                <div style={{ width: 10, height: 14, background: '#ef4444', borderRadius: '2px' }}></div> {p.red_cards}
-              </div>
-            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700 }}>{p.team_name}</div>
+          </div>
+        </div>
+      </td>
+      <td style={{ textAlign: 'right' }}>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 900, color: '#eab308' }}>
+            <div style={{ width: 10, height: 14, background: '#eab308', borderRadius: '2px' }}></div> {p.yellow_cards}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 900, color: '#ef4444' }}>
+            <div style={{ width: 10, height: 14, background: '#ef4444', borderRadius: '2px' }}></div> {p.red_cards}
           </div>
         </div>
       </td>
@@ -286,7 +289,7 @@ const Artilharia = () => {
           subtitle="Histórico de cartões por jogador"
           icon={AlertTriangle} 
           color="#ef4444" 
-          data={playerCards} renderItem={renderPlayerCards} valueLabel="" 
+          data={playerCards} renderItem={renderPlayerCards} valueLabel="Cartões" 
         />
       </div>
 
