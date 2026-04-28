@@ -75,9 +75,9 @@ const Fases = () => {
           </div>
         </div>
 
-        {!isPlaceholder && match.status === 'finalizado' && match.home_team_id && match.away_team_id && (
-          <div style={{ textAlign: 'center', fontSize: '0.6rem', color: 'var(--primary-color)', marginTop: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Partida encerrada <ChevronRight size={10} />
+        {match && match.status === 'finalizado' && match.home_team_id && match.away_team_id && (
+          <div style={{ textAlign: 'center', fontSize: '0.6rem', color: 'red', marginTop: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            TESTE VISIVEL <ChevronRight size={10} />
           </div>
         )}
       </div>
