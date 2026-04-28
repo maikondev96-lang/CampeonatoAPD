@@ -232,11 +232,46 @@ const Home = () => {
           </div>
         </section>
 
-        {/* ── COLUNA 2: Central de Partidas ── */}
-        <section className="sidebar-cards">
-          
-          {/* Status do Torneio / Próximo Jogo */}
-          <div className="premium-card">
+        {/* ── COLUNA 1: Branding e Atalhos (Ocupa as duas linhas) ── */}
+        <section className="hero-branding" style={{ gridRow: '1 / span 2' }}>
+          <div className="animate-up" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem' }}>
+            <img src={logoApd} alt="Copa do Mundo APD" className="hero-logo-monumental" style={{ width: '180px', height: '180px', margin: '0' }} />
+            <h1 className="hero-title-official" style={{ fontSize: '1.8rem', letterSpacing: '-1px' }}>Copa do Mundo APD</h1>
+            <p className="hero-desc" style={{ textAlign: 'center', maxWidth: '100%' }}>
+              A emoção do futebol amador em um torneio de nível mundial.
+            </p>
+          </div>
+
+          <div className="quick-nav-grid">
+            <Link to="/jogos" className="quick-card">
+              <div className="quick-card-icon" style={{ background: 'rgba(255, 214, 0, 0.1)' }}>
+                <Calendar size={20} color="#b89112" />
+              </div>
+              <h4>Jogos</h4>
+              <p>Rodadas, mata-mata e placares.</p>
+            </Link>
+
+            <Link to="/classificacao" className="quick-card">
+              <div className="quick-card-icon" style={{ background: 'rgba(0, 230, 118, 0.1)' }}>
+                <Table size={20} color="#00e676" />
+              </div>
+              <h4>Tabela</h4>
+              <p>Classificação e critérios.</p>
+            </Link>
+
+            <Link to="/artilharia" className="quick-card">
+              <div className="quick-card-icon" style={{ background: 'rgba(10, 25, 47, 0.05)' }}>
+                <Activity size={20} color="var(--primary-dark)" />
+              </div>
+              <h4>Estatísticas</h4>
+              <p>Artilharia e desempenho.</p>
+            </Link>
+          </div>
+        </section>
+
+        {/* ── LINHA 1: Calendário e G-4 ── */}
+        <section className="dashboard-section-row" style={{ gridColumn: '2', gridRow: '1' }}>
+          <div className="premium-card" style={{ height: '100%', marginBottom: 0 }}>
             <div className="premium-card-header">
               <div className="header-small-label">Calendário</div>
               <h2 className="header-main-title">
@@ -282,44 +317,10 @@ const Home = () => {
                )}
             </div>
           </div>
-
-          {/* Últimos Resultados */}
-          {latestResults.length > 0 && !champion && (
-            <div className="premium-card">
-              <div className="premium-card-header">
-                <div className="header-small-label">Resultados</div>
-                <h2 className="header-main-title">{latestRoundLabel}</h2>
-              </div>
-              <div className="premium-card-body" style={{ padding: '0' }}>
-                {latestResults.map(m => (
-                  <Link to={`/jogos/${m.id}`} key={m.id} style={{ display: 'block', padding: '1rem', borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s' }}>
-                    <div className="sidebar-match-info" style={{ padding: 0 }}>
-                      <div className="sidebar-team" style={{ flexDirection: 'row', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                        <span className={`team-name-premium ${ (m.home_score || 0) > (m.away_score || 0) ? 'is-winner' : (m.home_score || 0) < (m.away_score || 0) ? 'is-loser' : '' }`} style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.home_team?.name.slice(0, 3)}</span>
-                        <img src={m.home_team?.logo_url} style={{ width: 28, height: 28 }} alt="" />
-                      </div>
-                      <div className="score-display-premium" style={{ minWidth: '50px', padding: 0, gap: '0.4rem' }}>
-                        <div className={`score-number-premium ${(m.home_score || 0) >= (m.away_score || 0) ? 'is-winner' : ''}`} style={{ fontSize: '1.2rem' }}>{m.home_score}</div>
-                        <span className="score-divider-premium" style={{ fontSize: '0.8rem', opacity: 0.1 }}>-</span>
-                        <div className={`score-number-premium ${(m.away_score || 0) >= (m.home_score || 0) ? 'is-winner' : ''}`} style={{ fontSize: '1.2rem' }}>{m.away_score}</div>
-                      </div>
-                      <div className="sidebar-team" style={{ flexDirection: 'row', gap: '0.75rem', justifyContent: 'flex-start' }}>
-                        <img src={m.away_team?.logo_url} style={{ width: 28, height: 28 }} alt="" />
-                        <span className={`team-name-premium ${ (m.away_score || 0) > (m.home_score || 0) ? 'is-winner' : (m.away_score || 0) < (m.home_score || 0) ? 'is-loser' : '' }`} style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.away_team?.name.slice(0, 3)}</span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
         </section>
 
-        {/* ── COLUNA 3: Sidebar de Destaques ── */}
-        <aside className="sticky-sidebar">
-          
-          {/* G-4 Mini Tabela */}
-          <div className="premium-card" style={{ padding: '0' }}>
+        <aside className="dashboard-section-row" style={{ gridColumn: '3', gridRow: '1' }}>
+          <div className="premium-card" style={{ height: '100%', marginBottom: 0, padding: '0' }}>
             <div className="premium-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div className="header-small-label">G-4 Zona de Classificação</div>
               <Link to="/classificacao" style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--primary-color)', textTransform: 'uppercase' }}>Ver Tudo</Link>
@@ -355,10 +356,45 @@ const Home = () => {
               </table>
             </div>
           </div>
+        </aside>
 
-          {/* Artilheiro */}
-          {topScorer && (
-            <div className="metric-card">
+        {/* ── LINHA 2: Resultados e Estatísticas ── */}
+        <section className="dashboard-section-row row-2-start" style={{ gridColumn: '2' }}>
+          {latestResults.length > 0 && !champion && (
+            <div className="premium-card" style={{ height: '100%', marginBottom: 0 }}>
+              <div className="premium-card-header">
+                <div className="header-small-label">Resultados</div>
+                <h2 className="header-main-title">{latestRoundLabel}</h2>
+              </div>
+              <div className="premium-card-body" style={{ padding: '0' }}>
+                {latestResults.map(m => (
+                  <Link to={`/jogos/${m.id}`} key={m.id} style={{ display: 'block', padding: '1rem', borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s' }}>
+                    <div className="sidebar-match-info" style={{ padding: 0 }}>
+                      <div className="sidebar-team" style={{ flexDirection: 'row', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                        <span className={`team-name-premium ${ (m.home_score || 0) > (m.away_score || 0) ? 'is-winner' : (m.home_score || 0) < (m.away_score || 0) ? 'is-loser' : '' }`} style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.home_team?.name.slice(0, 3)}</span>
+                        <img src={m.home_team?.logo_url} style={{ width: 28, height: 28 }} alt="" />
+                      </div>
+                      <div className="score-display-premium" style={{ minWidth: '50px', padding: 0, gap: '0.4rem' }}>
+                        <div className={`score-number-premium ${(m.home_score || 0) >= (m.away_score || 0) ? 'is-winner' : ''}`} style={{ fontSize: '1.2rem' }}>{m.home_score}</div>
+                        <span className="score-divider-premium" style={{ fontSize: '0.8rem', opacity: 0.1 }}>-</span>
+                        <div className={`score-number-premium ${(m.away_score || 0) >= (m.home_score || 0) ? 'is-winner' : ''}`} style={{ fontSize: '1.2rem' }}>{m.away_score}</div>
+                      </div>
+                      <div className="sidebar-team" style={{ flexDirection: 'row', gap: '0.75rem', justifyContent: 'flex-start' }}>
+                        <img src={m.away_team?.logo_url} style={{ width: 28, height: 28 }} alt="" />
+                        <span className={`team-name-premium ${ (m.away_score || 0) > (m.home_score || 0) ? 'is-winner' : (m.away_score || 0) < (m.home_score || 0) ? 'is-loser' : '' }`} style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.away_team?.name.slice(0, 3)}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+
+        <aside className="dashboard-section-row row-2-start" style={{ gridColumn: '3', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+           {/* Artilheiro e Assistência agrupados */}
+           {topScorer && (
+            <div className="metric-card" style={{ flex: 1, marginBottom: 0 }}>
               <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem' }}>Artilheiro do Torneio</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <div style={{ width: 48, height: 48, borderRadius: '12px', background: 'var(--bg-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>⚽</div>
@@ -370,9 +406,8 @@ const Home = () => {
             </div>
           )}
 
-          {/* Garçom */}
           {topAssist && (
-            <div className="metric-card">
+            <div className="metric-card" style={{ flex: 1, marginBottom: 0 }}>
               <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem' }}>Líder de Assistências</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <div style={{ width: 48, height: 48, borderRadius: '12px', background: 'var(--bg-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>👟</div>
@@ -383,7 +418,6 @@ const Home = () => {
               </div>
             </div>
           )}
-
         </aside>
 
       </div>

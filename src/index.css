@@ -225,7 +225,25 @@ button {
 @media (min-width: 1200px) {
   .dashboard-grid {
     grid-template-columns: 1.4fr 1.2fr 0.8fr;
+    grid-auto-rows: min-content;
     gap: 2rem;
+  }
+}
+
+.dashboard-section-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Forcing alignment in Row 2 */
+.row-2-start {
+  grid-row-start: 2;
+}
+
+@media (max-width: 1199px) {
+  .row-2-start {
+    grid-row-start: auto;
   }
 }
 
