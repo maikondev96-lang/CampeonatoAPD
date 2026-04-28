@@ -99,15 +99,19 @@ const Jogos = () => {
             </div>
             
             {matches.map((jogo, idx) => {
+              const phase = (jogo.phase || '').toLowerCase();
               const getPlaceholder = (isHome: boolean) => {
-                if (jogo.phase === 'semifinal') {
+                if (phase === 'semifinal') {
                   if (idx === 0) return isHome ? '1º Colocado' : '4º Colocado';
                   return isHome ? '2º Colocado' : '3º Colocado';
                 }
-                if (jogo.phase === 'terceiro_lugar') return isHome ? 'A definir (S1)' : 'A definir (S2)';
-                if (jogo.phase === 'final') return isHome ? 'Vencedor Semi 1' : 'Vencedor Semi 2';
+                if (phase === 'terceiro_lugar') return isHome ? 'A definir (S1)' : 'A definir (S2)';
+                if (phase === 'final') return isHome ? 'Vencedor Semi 1' : 'Vencedor Semi 2';
                 return 'A definir';
               };
+
+              const homeName = jogo.home_team?.name || getPlaceholder(true);
+              const awayName = jogo.away_team?.name || getPlaceholder(false);
 
               return (
                 <div key={jogo.id} className="card card-hover" style={{ padding: 0, overflow: 'hidden', marginBottom: '0.75rem', border: '1px solid var(--border-color)' }}>
@@ -122,14 +126,14 @@ const Jogos = () => {
                       alignItems: 'center'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-end' }}>
-                      <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--primary-dark)', textAlign: 'right' }}>
-                        {jogo.home_team?.name || getPlaceholder(true)}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-end', minWidth: 0 }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#020617', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {homeName}
                       </span>
                       {jogo.home_team?.logo_url ? (
-                        <img src={jogo.home_team.logo_url} style={{ width: 28, height: 28, objectFit: 'contain' }} alt="" />
+                        <img src={jogo.home_team.logo_url} style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} alt="" />
                       ) : (
-                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 900 }}>?</div>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#64748b', fontWeight: 900, flexShrink: 0 }}>?</div>
                       )}
                     </div>
                     
@@ -157,14 +161,14 @@ const Jogos = () => {
                       </div>
                     </div>
   
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-start' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-start', minWidth: 0 }}>
                       {jogo.away_team?.logo_url ? (
-                        <img src={jogo.away_team.logo_url} style={{ width: 28, height: 28, objectFit: 'contain' }} alt="" />
+                        <img src={jogo.away_team.logo_url} style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} alt="" />
                       ) : (
-                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 900 }}>?</div>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#64748b', fontWeight: 900, flexShrink: 0 }}>?</div>
                       )}
-                      <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--primary-dark)' }}>
-                        {jogo.away_team?.name || getPlaceholder(false)}
+                      <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#020617', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {awayName}
                       </span>
                     </div>
                   </div>
