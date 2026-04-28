@@ -136,20 +136,17 @@ const MatchDetail = () => {
             <div className="team-name-large">{match.home_team?.name || 'A definir'}</div>
           </div>
 
-          <div className="score-display">
-            <div className="score-wrapper" style={{ flexDirection: 'column' }}>
+          <div className="score-display" style={{ flexDirection: 'column', gap: '0.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
               <div className="score-number">{match.status === 'agendado' ? '-' : match.home_score}</div>
-              {match.home_penalties !== null && match.home_penalties !== undefined && (
-                <div style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--primary-color)', marginTop: '-5px' }}>({match.home_penalties})</div>
-              )}
-            </div>
-            <div className="score-divider">x</div>
-            <div className="score-wrapper" style={{ flexDirection: 'column' }}>
+              <div className="score-divider">x</div>
               <div className="score-number">{match.status === 'agendado' ? '-' : match.away_score}</div>
-              {match.away_penalties !== null && match.away_penalties !== undefined && (
-                <div style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--primary-color)', marginTop: '-5px' }}>({match.away_penalties})</div>
-              )}
             </div>
+            {match.phase !== 'grupo' && match.home_penalties !== null && match.home_penalties !== undefined && (
+              <div style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--primary-color)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                Pênaltis: {match.home_penalties} - {match.away_penalties}
+              </div>
+            )}
           </div>
 
           <div className="team-col">
