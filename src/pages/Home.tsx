@@ -14,7 +14,8 @@ interface HeroStat {
 
 const Home = () => {
   const [activeRoundMatches, setActiveRoundMatches] = useState<Match[]>([]);
-  const [latestResult, setLatestResult] = useState<Match | null>(null);
+  const [latestResults, setLatestResults] = useState<Match[]>([]);
+  const [latestRoundLabel, setLatestRoundLabel] = useState<string>('');
   const [topTeams, setTopTeams] = useState<Standing[]>([]);
   const [champion, setChampion] = useState<{ name: string; logo: string } | null>(null);
   const [topScorer, setTopScorer] = useState<HeroStat | null>(null);
@@ -68,9 +69,25 @@ const Home = () => {
         // Para último resultado, queremos o mais recente (oposto da ordem acima)
         if (phaseOrder[b.phase] !== phaseOrder[a.phase]) return phaseOrder[b.phase] - phaseOrder[a.phase];
         if (b.phase === 'grupo' && b.round !== a.round) return (b.round || 0) - (a.round || 0);
-        return (b.date || '').localeCompare(a.date || '');
+        
+        const dateA = a.date || '';
+        const dateB = b.date || '';
+        if (dateA !== dateB) return dateB.localeCompare(dateA);
+        
+        const timeA = a.time || '';
+        const timeB = b.time || '';
+        return timeB.localeCompare(timeA);
       });
-      setLatestResult(finished.length > 0 ? finished[0] : null);
+
+      if (finished.length > 0) {
+        const last = finished[0];
+        const roundResults = finished.filter(m => m.phase === last.phase && m.round === last.round);
+        setLatestResults(roundResults);
+        setLatestRoundLabel(last.phase === 'grupo' ? `Rodada ${last.round}` : last.phase.replace('_', ' '));
+      } else {
+        setLatestResults([]);
+        setLatestRoundLabel('');
+      }
 
       // Campeão: vencedor da final
       const finalMatch = matches.find(m => m.phase === 'final' && m.status === 'finalizado' && m.winner_id);
@@ -278,36 +295,42 @@ const Home = () => {
           </div>
 
           {/* Último Resultado */}
-          {latestResult && !champion && (
+          {latestResults.length > 0 && !champion && (
             <div className="premium-card" style={{ border: '1px solid #edf2f7' }}>
               <div className="premium-card-header" style={{ background: '#f8fafc', color: 'var(--primary-dark)', borderBottom: '1px solid #edf2f7' }}>
-                <div className="header-small-label">Último Resultado</div>
-                <h2 className="header-main-title" style={{ color: 'var(--primary-dark)' }}>{latestResult.phase}</h2>
+                <div className="header-small-label">Resumo da Rodada</div>
+                <h2 className="header-main-title" style={{ color: 'var(--primary-dark)' }}>{latestRoundLabel}</h2>
               </div>
               <div className="premium-card-body">
-                <div className="sidebar-match-info">
-                  <div className="sidebar-team">
-                    <img src={latestResult.home_team?.logo_url} />
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 900, fontSize: '1.25rem' }}>{latestResult.home_score}</span>
-                      {latestResult.home_penalties != null && (
-                        <span style={{ fontSize: '0.65rem', color: 'var(--primary-color)', fontWeight: 800 }}>({latestResult.home_penalties})</span>
-                      )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {latestResults.map(m => (
+                    <div key={m.id} style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
+                      <div className="sidebar-match-info" style={{ padding: 0 }}>
+                        <div className="sidebar-team">
+                          <img src={m.home_team?.logo_url} style={{ width: 32, height: 32 }} alt="" />
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <span style={{ fontWeight: 900, fontSize: '1rem' }}>{m.home_score}</span>
+                            {m.home_penalties != null && (
+                              <span style={{ fontSize: '0.5rem', color: 'var(--primary-color)', fontWeight: 800 }}>({m.home_penalties})</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="sidebar-vs" style={{ fontSize: '0.6rem' }}>X</div>
+                        <div className="sidebar-team">
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <span style={{ fontWeight: 900, fontSize: '1rem' }}>{m.away_score}</span>
+                            {m.away_penalties != null && (
+                              <span style={{ fontSize: '0.5rem', color: 'var(--primary-color)', fontWeight: 800 }}>({m.away_penalties})</span>
+                            )}
+                          </div>
+                          <img src={m.away_team?.logo_url} style={{ width: 32, height: 32 }} alt="" />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="sidebar-vs">X</div>
-                  <div className="sidebar-team">
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 900, fontSize: '1.25rem' }}>{latestResult.away_score}</span>
-                      {latestResult.away_penalties != null && (
-                        <span style={{ fontSize: '0.65rem', color: 'var(--primary-color)', fontWeight: 800 }}>({latestResult.away_penalties})</span>
-                      )}
-                    </div>
-                    <img src={latestResult.away_team?.logo_url} />
-                  </div>
+                  ))}
                 </div>
-                <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700 }}>
-                  PARTIDA ENCERRADA
+                <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.6rem', color: 'var(--primary-color)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Rodada Encerrada
                 </div>
               </div>
             </div>
