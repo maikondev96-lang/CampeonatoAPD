@@ -357,8 +357,8 @@ const Home = () => {
               </div>
               <div>
                 {latestResults.map((m, idx) => {
-                  const homeWin = (m.home_score || 0) > (m.away_score || 0);
-                  const awayWin = (m.away_score || 0) > (m.home_score || 0);
+                  const homeWin = m.status === 'finalizado' && ((m.home_score || 0) > (m.away_score || 0) || ((m.home_score === m.away_score) && (m.home_penalties || 0) > (m.away_penalties || 0)));
+                  const awayWin = m.status === 'finalizado' && ((m.away_score || 0) > (m.home_score || 0) || ((m.home_score === m.away_score) && (m.away_penalties || 0) > (m.home_penalties || 0)));
                   return (
                     <Link
                       to={`/jogos/${m.id}`}

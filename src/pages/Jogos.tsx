@@ -139,6 +139,9 @@ const Jogos = () => {
               const homeName = jogo.home_team?.name || getPlaceholder(true);
               const awayName = jogo.away_team?.name || getPlaceholder(false);
 
+              const homeWin = jogo.status === 'finalizado' && ((jogo.home_score || 0) > (jogo.away_score || 0) || ((jogo.home_score === jogo.away_score) && (jogo.home_penalties || 0) > (jogo.away_penalties || 0)));
+              const awayWin = jogo.status === 'finalizado' && ((jogo.away_score || 0) > (jogo.home_score || 0) || ((jogo.home_score === jogo.away_score) && (jogo.away_penalties || 0) > (jogo.home_penalties || 0)));
+
               return (
                 <div key={jogo.id} className="card card-hover" style={{ padding: 0, overflow: 'hidden', marginBottom: '0.75rem', border: '1px solid var(--border-color)' }}>
                   <div 
@@ -153,7 +156,7 @@ const Jogos = () => {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-end', minWidth: 0, flex: 1 }}>
-                      <span className={`team-name-premium ${jogo.status === 'finalizado' && (jogo.home_score || 0) > (jogo.away_score || 0) ? 'is-winner' : jogo.status === 'finalizado' && (jogo.home_score || 0) < (jogo.away_score || 0) ? 'is-loser' : ''}`} style={{ fontWeight: 800, fontSize: '0.9rem', color: '#020617', textAlign: 'right', flex: 1 }}>
+                      <span className={`team-name-premium ${homeWin ? 'is-winner' : awayWin ? 'is-loser' : ''}`} style={{ fontWeight: 800, fontSize: '0.9rem', color: '#020617', textAlign: 'right', flex: 1 }}>
                         {homeName}
                       </span>
                       {jogo.home_team?.logo_url ? (
@@ -167,8 +170,8 @@ const Jogos = () => {
                       <div className="score-display-premium" style={{ background: 'transparent', boxShadow: 'none', border: 'none', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {jogo.status === 'finalizado' || jogo.status === 'ao_vivo' ? (
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                              <span className={`score-number-premium ${(jogo.home_score || 0) >= (jogo.away_score || 0) ? 'is-winner' : ''}`}>{jogo.home_score}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
+                              <span className={`score-number-premium ${homeWin ? 'is-winner' : ''}`}>{jogo.home_score}</span>
                               {jogo.phase !== 'grupo' && jogo.home_penalties !== null ? (
                                 <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#64748b', margin: '0 4px', letterSpacing: '1px' }}>
                                   ({jogo.home_penalties} <span style={{ opacity: 0.5, margin: '0 2px' }}>×</span> {jogo.away_penalties})
@@ -176,7 +179,7 @@ const Jogos = () => {
                               ) : (
                                 <span className="score-divider-premium" style={{ opacity: 0.3 }}>-</span>
                               )}
-                              <span className={`score-number-premium ${(jogo.away_score || 0) >= (jogo.home_score || 0) ? 'is-winner' : ''}`}>{jogo.away_score}</span>
+                              <span className={`score-number-premium ${awayWin ? 'is-winner' : ''}`}>{jogo.away_score}</span>
                             </div>
                           </div>
                         ) : (
@@ -205,7 +208,7 @@ const Jogos = () => {
                       ) : (
                         <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#64748b', fontWeight: 900, flexShrink: 0 }}>?</div>
                       )}
-                      <span className={`team-name-premium ${jogo.status === 'finalizado' && (jogo.away_score || 0) > (jogo.home_score || 0) ? 'is-winner' : jogo.status === 'finalizado' && (jogo.away_score || 0) < (jogo.home_score || 0) ? 'is-loser' : ''}`} style={{ fontWeight: 800, fontSize: '0.9rem', color: '#020617', textAlign: 'left', flex: 1 }}>
+                      <span className={`team-name-premium ${awayWin ? 'is-winner' : homeWin ? 'is-loser' : ''}`} style={{ fontWeight: 800, fontSize: '0.9rem', color: '#020617', textAlign: 'left', flex: 1 }}>
                         {awayName}
                       </span>
                     </div>
