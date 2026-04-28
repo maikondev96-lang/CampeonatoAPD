@@ -61,7 +61,7 @@ const Artilharia = () => {
 
         // 1. Gols e Assistências (Geral)
         events.forEach(ev => {
-          if (ev.type === 'gol' && pMap[ev.player_id]) pMap[ev.player_id].gols++;
+          if ((ev.type === 'gol' || ev.type === 'gol_penalti') && pMap[ev.player_id]) pMap[ev.player_id].gols++;
           if (ev.assist_player_id && pMap[ev.assist_player_id]) pMap[ev.assist_player_id].assistencias++;
         });
 

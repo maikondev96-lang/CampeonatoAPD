@@ -458,16 +458,19 @@ const EventForm = ({ players, onAdd, disabled }: { players: Player[], onAdd: (p:
           {players.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
         <select value={type} onChange={e => { setType(e.target.value); if (e.target.value !== 'gol') setAssistId(''); }} style={{ flex: 1, fontSize: '0.82rem', padding: '0.4rem 0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-          <option value="gol">⚽ Gol</option>
-          <option value="penalti_convertido">✅ Pênalti Convertido</option>
-          <option value="penalti_perdido">❌ Pênalti Perdido</option>
-          <option value="cartao_amarelo">🟨 Amarelo</option>
+          <option value="gol">⚽ Gol (Tempo Normal)</option>
+          <option value="gol_penalti">⚽ Gol de Pênalti (Tempo Normal)</option>
+          <option value="penalti_perdido_tempo_normal">❌ Pênalti Perdido (Tempo Normal)</option>
+          <option value="cartao_amarelo">🟨 Cartão Amarelo</option>
           <option value="cartao_vermelho_direto">🟥 Vermelho Direto</option>
           <option value="cartao_vermelho_indireto">🟥 2º Amarelo</option>
+          <option value="penalti_convertido">✅ Disputa de Pênaltis: Convertido</option>
+          <option value="penalti_perdido">❌ Disputa de Pênaltis: Perdido</option>
         </select>
       </div>
 
-      {type === 'gol' && (
+      {/* Não permitir assistência se for gol de pênalti ou outras coisas */}
+      {(type === 'gol') && (
         <div style={{ marginBottom: '0.5rem' }}>
           <select value={assistId} onChange={e => setAssistId(e.target.value)} style={{ width: '100%', fontSize: '0.82rem', padding: '0.4rem 0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
             <option value="">Assistência (Opcional)...</option>
@@ -489,7 +492,7 @@ const EventForm = ({ players, onAdd, disabled }: { players: Player[], onAdd: (p:
 const EventRow = ({ ev, players, onDelete }: { ev: any, players: Player[], onDelete: (id: string) => void }) => {
   const player = players.find(p => p.id === ev.player_id);
   const assistPlayer = players.find(p => p.id === ev.assist_player_id);
-  const isGoal = ev.type === 'gol';
+  const isGoal = ev.type === 'gol' || ev.type === 'gol_penalti';
   const isYellow = ev.type === 'cartao_amarelo';
   const isRedDirect = ev.type === 'cartao_vermelho_direto';
   const isRedIndirect = ev.type === 'cartao_vermelho_indireto';
@@ -498,9 +501,11 @@ const EventRow = ({ ev, players, onDelete }: { ev: any, players: Player[], onDel
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.75rem', marginBottom: '0.4rem', background: 'var(--bg-color)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
         <span style={{ fontSize: '1rem' }}>
-          {isGoal && '⚽'}
+          {ev.type === 'gol' && '⚽'}
+          {ev.type === 'gol_penalti' && '⚽'}
           {ev.type === 'penalti_convertido' && '✅'}
           {ev.type === 'penalti_perdido' && '❌'}
+          {ev.type === 'penalti_perdido_tempo_normal' && '❌'}
           {isYellow && '🟨'}
           {(isRedDirect || isRedIndirect) && '🟥'}
         </span>
@@ -510,8 +515,10 @@ const EventRow = ({ ev, players, onDelete }: { ev: any, players: Player[], onDel
             {ev.minute && <span style={{ fontWeight: 500, color: 'var(--text-subtle)', marginLeft: '4px' }}>{ev.minute}'</span>}
             {isRedDirect && <span style={{ color: 'var(--error)', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>DIRETO</span>}
             {isRedIndirect && <span style={{ color: 'var(--error)', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>2º AMARELO</span>}
-            {ev.type === 'penalti_convertido' && <span style={{ color: '#059669', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>CONVERTIDO</span>}
-            {ev.type === 'penalti_perdido' && <span style={{ color: 'var(--error)', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>PERDIDO</span>}
+            {ev.type === 'gol_penalti' && <span style={{ color: '#059669', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>PÊNALTI</span>}
+            {ev.type === 'penalti_perdido_tempo_normal' && <span style={{ color: 'var(--error)', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>PÊNALTI PERDIDO</span>}
+            {ev.type === 'penalti_convertido' && <span style={{ color: '#059669', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>PÊNALTI CONVERTIDO</span>}
+            {ev.type === 'penalti_perdido' && <span style={{ color: 'var(--error)', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>PÊNALTI PERDIDO</span>}
           </div>
           {assistPlayer && (
             <div style={{ fontSize: '0.7rem', color: 'var(--text-subtle)', marginTop: '1px' }}>

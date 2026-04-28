@@ -177,26 +177,29 @@ const MatchDetail = () => {
         <div className="card timeline-card">
           {events.length === 0 ? <p className="empty-msg">Nenhum lance registrado.</p> : (
             <>
-              {events.filter(e => !e.type.includes('penalti')).map(event => (
+              {events.filter(e => e.type !== 'penalti_convertido' && e.type !== 'penalti_perdido').map(event => (
                 <div key={event.id} className="timeline-row">
                   <div className="time-col">{event.minute ? `${event.minute}'` : ''}</div>
                   <div className="event-content">
-                    <span className="event-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', marginTop: '2px' }}>
-                      {event.type === 'gol' && <span style={{ fontSize: '1.2rem' }}>⚽</span>}
-                      {event.type === 'cartao_amarelo' && <div style={{ width: 14, height: 20, background: '#ffd600', borderRadius: 3, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />}
-                      {(event.type === 'cartao_vermelho_direto' || event.type === 'cartao_vermelho_indireto') && <div style={{ width: 14, height: 20, background: '#ff5252', borderRadius: 3, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />}
-                    </span>
-                    <div className="event-details">
-                      <div className="player-name" style={{ color: '#0f172a', fontWeight: 800 }}>{event.player?.name || 'Jogador'}</div>
-                      <div className="event-type" style={{ 
-                        color: event.type === 'gol' ? 'var(--primary-color)' : (event.type === 'cartao_vermelho_direto' || event.type === 'cartao_vermelho_indireto') ? '#dc2626' : '#b89112', 
-                        fontWeight: 950,
-                        letterSpacing: '0.5px'
-                      }}>
-                        {event.type === 'gol' ? 'GOL!' : 
-                         event.type === 'cartao_vermelho_direto' ? 'VERMELHO DIRETO' : 
-                         event.type === 'cartao_vermelho_indireto' ? 'EXPULSO (2º AMARELO)' : 'CARTÃO AMARELO'}
-                      </div>
+                      <span className="event-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', marginTop: '2px' }}>
+                        {(event.type === 'gol' || event.type === 'gol_penalti') && <span style={{ fontSize: '1.2rem' }}>⚽</span>}
+                        {event.type === 'penalti_perdido_tempo_normal' && <span style={{ fontSize: '1.2rem' }}>❌</span>}
+                        {event.type === 'cartao_amarelo' && <div style={{ width: 14, height: 20, background: '#ffd600', borderRadius: 3, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />}
+                        {(event.type === 'cartao_vermelho_direto' || event.type === 'cartao_vermelho_indireto') && <div style={{ width: 14, height: 20, background: '#ff5252', borderRadius: 3, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />}
+                      </span>
+                      <div className="event-details">
+                        <div className="player-name" style={{ color: '#0f172a', fontWeight: 800 }}>{event.player?.name || 'Jogador'}</div>
+                        <div className="event-type" style={{ 
+                          color: (event.type === 'gol' || event.type === 'gol_penalti') ? 'var(--primary-color)' : (event.type === 'cartao_vermelho_direto' || event.type === 'cartao_vermelho_indireto' || event.type === 'penalti_perdido_tempo_normal') ? '#dc2626' : '#b89112', 
+                          fontWeight: 950,
+                          letterSpacing: '0.5px'
+                        }}>
+                          {event.type === 'gol' ? 'GOL!' : 
+                           event.type === 'gol_penalti' ? 'GOL DE PÊNALTI' : 
+                           event.type === 'penalti_perdido_tempo_normal' ? 'PÊNALTI PERDIDO' : 
+                           event.type === 'cartao_vermelho_direto' ? 'VERMELHO DIRETO' : 
+                           event.type === 'cartao_vermelho_indireto' ? 'EXPULSO (2º AMARELO)' : 'CARTÃO AMARELO'}
+                        </div>
                       {event.assist_player && (
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-main)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <span style={{ opacity: 0.8, fontWeight: 700 }}>Assistência:</span> <span style={{ color: 'var(--primary-dark)', fontWeight: 900 }}>{event.assist_player.name}</span>
@@ -207,32 +210,58 @@ const MatchDetail = () => {
                 </div>
               ))}
               
-              {events.some(e => e.type.includes('penalti')) && (
+              {events.some(e => e.type === 'penalti_convertido' || e.type === 'penalti_perdido') && (
                 <div style={{ marginTop: '2rem', borderTop: '2px dashed #cbd5e1', paddingTop: '1.5rem' }}>
-                  <div style={{ textAlign: 'center', marginBottom: '1.5rem', fontSize: '0.85rem', fontWeight: 900, color: '#b45309', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    🥅 Disputa de Pênaltis
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', padding: '0 10px' }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>Pênaltis</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 900, color: '#0f172a' }}>{match.home_penalties} - {match.away_penalties}</div>
                   </div>
-                  {events.filter(e => e.type.includes('penalti')).map(event => (
-                    <div key={event.id} className="timeline-row" style={{ minHeight: '50px' }}>
-                      <div className="time-col"></div>
-                      <div className="event-content" style={{ paddingBottom: '1rem' }}>
-                        <span className="event-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', marginTop: '2px' }}>
-                          {event.type === 'penalti_convertido' && <span style={{ fontSize: '1.2rem' }}>✅</span>}
-                          {event.type === 'penalti_perdido' && <span style={{ fontSize: '1.2rem' }}>❌</span>}
-                        </span>
-                        <div className="event-details">
-                          <div className="player-name" style={{ color: '#0f172a', fontWeight: 800 }}>{event.player?.name || 'Jogador'}</div>
-                          <div className="event-type" style={{ 
-                            color: event.type === 'penalti_convertido' ? '#059669' : '#dc2626', 
-                            fontWeight: 950,
-                            letterSpacing: '0.5px'
-                          }}>
-                            {event.type === 'penalti_convertido' ? 'PÊNALTI CONVERTIDO' : 'PÊNALTI PERDIDO'}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {(() => {
+                      let homePenCount = 0;
+                      let awayPenCount = 0;
+                      return events.filter(e => e.type === 'penalti_convertido' || e.type === 'penalti_perdido').map(event => {
+                        const isHome = event.player?.team_id === match.home_team_id;
+                        const penNumber = isHome ? ++homePenCount : ++awayPenCount;
+                        const teamLogo = isHome ? match.home_team?.logo_url : match.away_team?.logo_url;
+                        const isConverted = event.type === 'penalti_convertido';
+                        const statusText = isConverted ? '(Pênalti)' : '(Pênalti perdido)';
+                        const statusColor = isConverted ? '#64748b' : '#dc2626';
+
+                        return (
+                          <div key={event.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', alignItems: 'center' }}>
+                            {/* HOME TEAM SIDE */}
+                            {isHome ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingRight: '15px' }}>
+                                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#94a3b8', width: '16px', textAlign: 'center' }}>{penNumber}</span>
+                                {teamLogo ? (
+                                  <img src={teamLogo} style={{ width: 20, height: 20, objectFit: 'contain' }} alt="logo" />
+                                ) : (
+                                  <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.5rem', fontWeight: 900 }}>?</div>
+                                )}
+                                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>{event.player?.name || 'Jogador'}</span>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: statusColor }}>{statusText}</span>
+                              </div>
+                            ) : <div></div>}
+
+                            {/* AWAY TEAM SIDE */}
+                            {!isHome ? (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', paddingLeft: '15px' }}>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: statusColor }}>{statusText}</span>
+                                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>{event.player?.name || 'Jogador'}</span>
+                                {teamLogo ? (
+                                  <img src={teamLogo} style={{ width: 20, height: 20, objectFit: 'contain' }} alt="logo" />
+                                ) : (
+                                  <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.5rem', fontWeight: 900 }}>?</div>
+                                )}
+                                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#94a3b8', width: '16px', textAlign: 'center' }}>{penNumber}</span>
+                              </div>
+                            ) : <div></div>}
                           </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                        );
+                      });
+                    })()}
+                  </div>
                 </div>
               )}
             </>

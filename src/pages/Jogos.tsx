@@ -219,12 +219,13 @@ const Jogos = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
                       {/* Home Regular Events */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', textAlign: 'right' }}>
-                        {events[jogo.id]?.filter(e => !e.type.includes('penalti') && e.player?.team_id === jogo.home_team_id).map(e => (
+                        {events[jogo.id]?.filter(e => e.type !== 'penalti_convertido' && e.type !== 'penalti_perdido' && e.player?.team_id === jogo.home_team_id).map(e => (
                           <div key={e.id} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end', fontWeight: 800, color: '#0f172a' }}>
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', opacity: 0.6 }}>{e.minute ? `${e.minute}'` : ''}</span>
                             <span>{e.player?.name}</span>
                             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
-                              {e.type === 'gol' && <span style={{ fontSize: '1rem' }}>⚽</span>}
+                              {(e.type === 'gol' || e.type === 'gol_penalti') && <span style={{ fontSize: '1rem' }}>⚽</span>}
+                              {e.type === 'penalti_perdido_tempo_normal' && <span style={{ fontSize: '1rem' }}>❌</span>}
                               {e.type === 'cartao_amarelo' && <div style={{ width: 10, height: 14, background: '#ffd600', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                               {(e.type === 'cartao_vermelho_direto' || e.type === 'cartao_vermelho_indireto') && <div style={{ width: 10, height: 14, background: '#ff5252', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                             </span>
@@ -233,10 +234,11 @@ const Jogos = () => {
                       </div>
                       {/* Away Regular Events */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                        {events[jogo.id]?.filter(e => !e.type.includes('penalti') && e.player?.team_id === jogo.away_team_id).map(e => (
+                        {events[jogo.id]?.filter(e => e.type !== 'penalti_convertido' && e.type !== 'penalti_perdido' && e.player?.team_id === jogo.away_team_id).map(e => (
                           <div key={e.id} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, color: '#0f172a' }}>
                             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
-                              {e.type === 'gol' && <span style={{ fontSize: '1rem' }}>⚽</span>}
+                              {(e.type === 'gol' || e.type === 'gol_penalti') && <span style={{ fontSize: '1rem' }}>⚽</span>}
+                              {e.type === 'penalti_perdido_tempo_normal' && <span style={{ fontSize: '1rem' }}>❌</span>}
                               {e.type === 'cartao_amarelo' && <div style={{ width: 10, height: 14, background: '#ffd600', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                               {(e.type === 'cartao_vermelho_direto' || e.type === 'cartao_vermelho_indireto') && <div style={{ width: 10, height: 14, background: '#ff5252', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                             </span>
@@ -247,34 +249,57 @@ const Jogos = () => {
                       </div>
                     </div>
 
-                    {events[jogo.id]?.some(e => e.type.includes('penalti')) && (
+                    {events[jogo.id]?.some(e => e.type === 'penalti_convertido' || e.type === 'penalti_perdido') && (
                       <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px dashed #cbd5e1' }}>
-                        <div style={{ textAlign: 'center', marginBottom: '1rem', fontSize: '0.75rem', fontWeight: 900, color: '#b45309', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                          🥅 Disputa de Pênaltis
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', padding: '0 10px' }}>
+                          <div style={{ fontSize: '0.75rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>Pênaltis</div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#0f172a' }}>{jogo.home_penalties} - {jogo.away_penalties}</div>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', textAlign: 'right' }}>
-                            {events[jogo.id]?.filter(e => e.type.includes('penalti') && e.player?.team_id === jogo.home_team_id).map(e => (
-                              <div key={e.id} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end', fontWeight: 800, color: '#0f172a' }}>
-                                <span>{e.player?.name}</span>
-                                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
-                                  {e.type === 'penalti_convertido' && <span style={{ fontSize: '1rem' }}>✅</span>}
-                                  {e.type === 'penalti_perdido' && <span style={{ fontSize: '1rem' }}>❌</span>}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                            {events[jogo.id]?.filter(e => e.type.includes('penalti') && e.player?.team_id === jogo.away_team_id).map(e => (
-                              <div key={e.id} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, color: '#0f172a' }}>
-                                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
-                                  {e.type === 'penalti_convertido' && <span style={{ fontSize: '1rem' }}>✅</span>}
-                                  {e.type === 'penalti_perdido' && <span style={{ fontSize: '1rem' }}>❌</span>}
-                                </span>
-                                <span>{e.player?.name}</span>
-                              </div>
-                            ))}
-                          </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                          {(() => {
+                            let homePenCount = 0;
+                            let awayPenCount = 0;
+                            return events[jogo.id]?.filter(e => e.type === 'penalti_convertido' || e.type === 'penalti_perdido').map(event => {
+                              const isHome = event.player?.team_id === jogo.home_team_id;
+                              const penNumber = isHome ? ++homePenCount : ++awayPenCount;
+                              const teamLogo = isHome ? jogo.home_team?.logo_url : jogo.away_team?.logo_url;
+                              const isConverted = event.type === 'penalti_convertido';
+                              const statusText = isConverted ? '(Pênalti)' : '(Pênalti perdido)';
+                              const statusColor = isConverted ? '#64748b' : '#dc2626';
+
+                              return (
+                                <div key={event.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', alignItems: 'center' }}>
+                                  {/* HOME TEAM SIDE */}
+                                  {isHome ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '10px' }}>
+                                      <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94a3b8', width: '14px', textAlign: 'center' }}>{penNumber}</span>
+                                      {teamLogo ? (
+                                        <img src={teamLogo} style={{ width: 16, height: 16, objectFit: 'contain' }} alt="logo" />
+                                      ) : (
+                                        <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.4rem', fontWeight: 900 }}>?</div>
+                                      )}
+                                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0f172a' }}>{event.player?.name}</span>
+                                      <span style={{ fontSize: '0.65rem', fontWeight: 600, color: statusColor }}>{statusText}</span>
+                                    </div>
+                                  ) : <div></div>}
+
+                                  {/* AWAY TEAM SIDE */}
+                                  {!isHome ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingLeft: '10px' }}>
+                                      <span style={{ fontSize: '0.65rem', fontWeight: 600, color: statusColor }}>{statusText}</span>
+                                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0f172a' }}>{event.player?.name}</span>
+                                      {teamLogo ? (
+                                        <img src={teamLogo} style={{ width: 16, height: 16, objectFit: 'contain' }} alt="logo" />
+                                      ) : (
+                                        <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.4rem', fontWeight: 900 }}>?</div>
+                                      )}
+                                      <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94a3b8', width: '14px', textAlign: 'center' }}>{penNumber}</span>
+                                    </div>
+                                  ) : <div></div>}
+                                </div>
+                              );
+                            });
+                          })()}
                         </div>
                       </div>
                     )}
