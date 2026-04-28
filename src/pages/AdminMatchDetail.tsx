@@ -277,9 +277,37 @@ const AdminMatchDetail = () => {
                 🥅 Disputa de Pênaltis
               </h4>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', alignItems: 'center' }}>
-                <input type="number" value={homePens} min={0} onChange={e => setHomePens(parseInt(e.target.value) || 0)} style={{ width: '60px', height: '50px', fontSize: '1.5rem', fontWeight: 900, textAlign: 'center', borderRadius: '8px' }} />
-                <span style={{ fontWeight: 900, color: 'var(--text-muted)' }}>×</span>
-                <input type="number" value={awayPens} min={0} onChange={e => setAwayPens(parseInt(e.target.value) || 0)} style={{ width: '60px', height: '50px', fontSize: '1.5rem', fontWeight: 900, textAlign: 'center', borderRadius: '8px' }} />
+                <input 
+                  type="text" 
+                  inputMode="numeric"
+                  value={homePens} 
+                  onChange={e => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setHomePens(val ? parseInt(val) : 0);
+                  }} 
+                  style={{ 
+                    width: '80px', height: '70px', fontSize: '2.5rem', fontWeight: 900, 
+                    textAlign: 'center', borderRadius: '12px', border: '3px solid #fbbf24',
+                    background: '#fff', color: '#b45309', outline: 'none',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
+                  }} 
+                />
+                <span style={{ fontWeight: 900, color: '#b45309', fontSize: '1.5rem' }}>×</span>
+                <input 
+                  type="text" 
+                  inputMode="numeric"
+                  value={awayPens} 
+                  onChange={e => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setAwayPens(val ? parseInt(val) : 0);
+                  }} 
+                  style={{ 
+                    width: '80px', height: '70px', fontSize: '2.5rem', fontWeight: 900, 
+                    textAlign: 'center', borderRadius: '12px', border: '3px solid #fbbf24',
+                    background: '#fff', color: '#b45309', outline: 'none',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
+                  }} 
+                />
               </div>
             </div>
           )}
