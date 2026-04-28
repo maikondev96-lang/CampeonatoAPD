@@ -23,6 +23,23 @@ const AdminMatchDetail = () => {
     if (id) fetchMatch(true);
   }, [id]);
 
+  // Cálculo automático de placar baseado nos eventos de gol
+  useEffect(() => {
+    if (match && players.length > 0) {
+      const hScore = events.filter(ev => 
+        ev.type === 'gol' && 
+        players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id
+      ).length;
+      const aScore = events.filter(ev => 
+        ev.type === 'gol' && 
+        players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id
+      ).length;
+      
+      setHomeScore(hScore);
+      setAwayScore(aScore);
+    }
+  }, [events, players, match]);
+
   const fetchMatch = async (isInitial = true) => {
     try {
       const { data: mData } = await supabase
