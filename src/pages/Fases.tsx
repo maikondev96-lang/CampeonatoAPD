@@ -43,41 +43,39 @@ const Fases = () => {
           </div>
         )}
 
-        <div className={`bracket-team ${match?.winner_id === match?.home_team_id ? 'winner' : ''}`}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
-            {match?.home_team ? (
-              <img src={match.home_team.logo_url} style={{ width: 24, height: 24, objectFit: 'contain' }} alt="" />
-            ) : <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: 'var(--text-muted)' }}>?</div>}
-            <span style={{ fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{match?.home_team?.name || placeholderHome}</span>
-          </div>
-          <div className="bracket-score">
-            {!isPlaceholder && match.status === 'finalizado' ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                {match.home_score}
-                {match.home_penalties !== null && match.home_penalties !== undefined && (
-                  <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>({match.home_penalties})</span>
-                )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginTop: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
+            <div className={`bracket-team ${match?.winner_id === match?.home_team_id ? 'winner' : ''}`} style={{ border: 'none', padding: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+                {match?.home_team ? (
+                  <img src={match.home_team.logo_url} style={{ width: 24, height: 24, objectFit: 'contain' }} alt="" />
+                ) : <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: 'var(--text-muted)' }}>?</div>}
+                <span style={{ fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: match?.winner_id === match?.home_team_id ? 900 : 500 }}>{match?.home_team?.name || placeholderHome}</span>
               </div>
-            ) : '-'}
-          </div>
-        </div>
-        
-        <div className={`bracket-team ${match?.winner_id === match?.away_team_id ? 'winner' : ''}`} style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #f1f5f9' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
-            {match?.away_team ? (
-              <img src={match.away_team.logo_url} style={{ width: 24, height: 24, objectFit: 'contain' }} alt="" />
-            ) : <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: 'var(--text-muted)' }}>?</div>}
-            <span style={{ fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{match?.away_team?.name || placeholderAway}</span>
-          </div>
-          <div className="bracket-score">
-            {!isPlaceholder && match.status === 'finalizado' ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                {match.away_score}
-                {match.away_penalties !== null && match.away_penalties !== undefined && (
-                  <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>({match.away_penalties})</span>
-                )}
+            </div>
+            <div className={`bracket-team ${match?.winner_id === match?.away_team_id ? 'winner' : ''}`} style={{ border: 'none', padding: 0, marginTop: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+                {match?.away_team ? (
+                  <img src={match.away_team.logo_url} style={{ width: 24, height: 24, objectFit: 'contain' }} alt="" />
+                ) : <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: 'var(--text-muted)' }}>?</div>}
+                <span style={{ fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: match?.winner_id === match?.away_team_id ? 900 : 500 }}>{match?.away_team?.name || placeholderAway}</span>
               </div>
-            ) : '-'}
+            </div>
+          </div>
+
+          <div className="score-display-premium" style={{ minWidth: '70px', padding: '0.5rem' }}>
+            {!isPlaceholder && (match.status === 'finalizado' || match.status === 'ao_vivo') ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div className="score-wrapper-premium">
+                  {match.home_penalties !== null && <span className="penalty-score-premium" style={{ left: '-25px', top: '2px' }}>({match.home_penalties})</span>}
+                  <span className="score-number-premium">{match.home_score}</span>
+                </div>
+                <div className="score-wrapper-premium">
+                  {match.away_penalties !== null && <span className="penalty-score-premium" style={{ left: '-25px', top: '2px' }}>({match.away_penalties})</span>}
+                  <span className="score-number-premium">{match.away_score}</span>
+                </div>
+              </div>
+            ) : <span style={{ opacity: 0.3 }}>-</span>}
           </div>
         </div>
 

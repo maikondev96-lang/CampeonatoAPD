@@ -298,10 +298,10 @@ const Home = () => {
                         <span style={{ fontWeight: 800, fontSize: '0.8rem' }}>{m.home_team?.name.slice(0, 3)}</span>
                         <img src={m.home_team?.logo_url} style={{ width: 28, height: 28 }} alt="" />
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--primary-dark)', color: '#fff', padding: '4px 10px', borderRadius: '6px', fontWeight: 900, fontSize: '0.9rem' }}>
-                        <span>{m.home_score}</span>
-                        <span style={{ opacity: 0.3 }}>-</span>
-                        <span>{m.away_score}</span>
+                      <div className="score-display-premium" style={{ minWidth: '60px', padding: '0.4rem 0.6rem', background: '#000', border: '1px solid #1e293b' }}>
+                        <div className="score-number-premium" style={{ fontSize: '1.1rem' }}>{m.home_score}</div>
+                        <span className="score-divider-premium" style={{ fontSize: '0.8rem' }}>-</span>
+                        <div className="score-number-premium" style={{ fontSize: '1.1rem' }}>{m.away_score}</div>
                       </div>
                       <div className="sidebar-team" style={{ flexDirection: 'row', gap: '0.75rem', justifyContent: 'flex-start' }}>
                         <img src={m.away_team?.logo_url} style={{ width: 28, height: 28 }} alt="" />

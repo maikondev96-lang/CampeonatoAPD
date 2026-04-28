@@ -163,17 +163,23 @@ const Jogos = () => {
                       )}
                     </div>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                      {(jogo.status === 'finalizado' || jogo.time) && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary-dark)', padding: '5px 14px', borderRadius: '6px', color: 'white', fontWeight: 950, fontSize: '1.1rem' }}>
-                          {jogo.status === 'finalizado' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                      {(jogo.status === 'finalizado' || jogo.status === 'ao_vivo' || jogo.time) && (
+                        <div className="score-display-premium">
+                          {jogo.status === 'finalizado' || jogo.status === 'ao_vivo' ? (
                             <>
-                              <span>{jogo.home_score}</span>
-                              <span style={{ opacity: 0.3 }}>-</span>
-                              <span>{jogo.away_score}</span>
+                              <div className="score-wrapper-premium">
+                                {jogo.home_penalties !== null && <span className="penalty-score-premium">{jogo.home_penalties}</span>}
+                                <span className="score-number-premium">{jogo.home_score}</span>
+                              </div>
+                              <span className="score-divider-premium">-</span>
+                              <div className="score-wrapper-premium">
+                                {jogo.away_penalties !== null && <span className="penalty-score-premium">{jogo.away_penalties}</span>}
+                                <span className="score-number-premium">{jogo.away_score}</span>
+                              </div>
                             </>
                           ) : (
-                            <span style={{ fontSize: '0.85rem' }}>{jogo.time?.slice(0, 5)}</span>
+                            <span style={{ fontSize: '1rem', fontWeight: 950 }}>{jogo.time?.slice(0, 5)}</span>
                           )}
                         </div>
                       )}
