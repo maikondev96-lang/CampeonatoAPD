@@ -63,7 +63,7 @@ const AdminJogos = () => {
     setPhase(jogo.phase as any);
     setHomeId(jogo.home_team_id);
     setAwayId(jogo.away_team_id);
-    setDate(jogo.date);
+    setDate(jogo.date || '');
     setTime(jogo.time || '');
     setVenue(jogo.venue || '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -88,7 +88,7 @@ const AdminJogos = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!homeId || !awayId || !date) return alert('Preencha os campos obrigatórios');
+    if (!homeId || !awayId) return alert('Selecione os dois times');
     if (homeId === awayId) return alert('Os times devem ser diferentes');
     
     setSaving(true);
@@ -96,7 +96,7 @@ const AdminJogos = () => {
       round,
       home_team_id: homeId,
       away_team_id: awayId,
-      date,
+      date: date || null,
       time: time || null,
       venue: venue || null,
       phase,
@@ -150,8 +150,8 @@ const AdminJogos = () => {
     const top4 = sortedStandings[3].team_id;
 
     const semis = [
-      { home_team_id: top1, away_team_id: top4, phase: 'semifinal', round: 100, date: new Date().toISOString().split('T')[0], status: 'agendado' },
-      { home_team_id: top2, away_team_id: top3, phase: 'semifinal', round: 100, date: new Date().toISOString().split('T')[0], status: 'agendado' }
+      { home_team_id: top1, away_team_id: top4, phase: 'semifinal', round: 100, date: null, status: 'agendado' },
+      { home_team_id: top2, away_team_id: top3, phase: 'semifinal', round: 100, date: null, status: 'agendado' }
     ];
 
     const { error: iError } = await supabase.from('matches').insert(semis);
@@ -192,11 +192,9 @@ const AdminJogos = () => {
     const loser1 = semi1.home_team_id === winner1 ? semi1.away_team_id : semi1.home_team_id;
     const loser2 = semi2.home_team_id === winner2 ? semi2.away_team_id : semi2.home_team_id;
 
-    const hoje = new Date().toISOString().split('T')[0];
-
     const novasPartidas = [
-      { home_team_id: loser1, away_team_id: loser2, phase: 'terceiro_lugar', round: 200, date: hoje, status: 'agendado' },
-      { home_team_id: winner1, away_team_id: winner2, phase: 'final', round: 201, date: hoje, status: 'agendado' },
+      { home_team_id: loser1, away_team_id: loser2, phase: 'terceiro_lugar', round: 200, date: null, status: 'agendado' },
+      { home_team_id: winner1, away_team_id: winner2, phase: 'final', round: 201, date: null, status: 'agendado' },
     ];
 
     const { error: iErr } = await supabase.from('matches').insert(novasPartidas);
@@ -282,7 +280,7 @@ const AdminJogos = () => {
             </select>
           </div>
           <div className="form-group">
-            <label>Data</label>
+            <label>Data <span style={{ fontWeight: 500, color: 'var(--text-subtle)', fontSize: '0.75rem' }}>(opcional — A definir)</span></label>
             <input type="date" value={date} onChange={e => setDate(e.target.value)} />
           </div>
           <div className="form-group">
