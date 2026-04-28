@@ -98,52 +98,76 @@ const Jogos = () => {
               </h3>
             </div>
             
-            {matches.map(jogo => (
-              <div key={jogo.id} className="card card-hover" style={{ padding: 0, overflow: 'hidden', marginBottom: '0.75rem', border: '1px solid var(--border-color)' }}>
-                <div 
-                  className="match-item" 
-                  onClick={() => toggleExpand(jogo.id)} 
-                  style={{ 
-                    cursor: 'pointer', 
-                    padding: '0.75rem 1.25rem',
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 120px 1fr',
-                    alignItems: 'center'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-end' }}>
-                    <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--primary-dark)', textAlign: 'right' }}>{jogo.home_team?.name}</span>
-                    <img src={jogo.home_team?.logo_url} style={{ width: 28, height: 28, objectFit: 'contain' }} alt="" />
-                  </div>
-                                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary-dark)', padding: '5px 14px', borderRadius: '6px', color: 'white', fontWeight: 950, fontSize: '1.1rem' }}>
-                      {jogo.status === 'finalizado' ? (
-                        <>
-                          <span>{jogo.home_score}</span>
-                          <span style={{ opacity: 0.3 }}>-</span>
-                          <span>{jogo.away_score}</span>
-                        </>
-                      ) : (
-                        <span style={{ fontSize: '0.85rem' }}>{jogo.time ? jogo.time.slice(0, 5) : 'H/D'}</span>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-                      <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        {jogo.date ? jogo.date.split('-').reverse().join('/') : 'Data a definir'}
-                      </span>
-                      {jogo.status === 'finalizado' ? (
-                         <span style={{ fontSize: '0.6rem', fontWeight: 950, color: 'var(--primary-color)', textTransform: 'uppercase' }}>Encerrado</span>
-                      ) : !jogo.time && (
-                         <span style={{ fontSize: '0.55rem', fontWeight: 700, color: 'var(--text-muted)', opacity: 0.7 }}>Horário a definir</span>
-                      )}
-                    </div>
-                  </div>
+            {matches.map((jogo, idx) => {
+              const getPlaceholder = (isHome: boolean) => {
+                if (jogo.phase === 'semifinal') {
+                  if (idx === 0) return isHome ? '1º Colocado' : '4º Colocado';
+                  return isHome ? '2º Colocado' : '3º Colocado';
+                }
+                if (jogo.phase === 'terceiro_lugar') return isHome ? 'A definir (S1)' : 'A definir (S2)';
+                if (jogo.phase === 'final') return isHome ? 'Vencedor Semi 1' : 'Vencedor Semi 2';
+                return 'A definir';
+              };
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-start' }}>
-                    <img src={jogo.away_team?.logo_url} style={{ width: 28, height: 28, objectFit: 'contain' }} alt="" />
-                    <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--primary-dark)' }}>{jogo.away_team?.name}</span>
+              return (
+                <div key={jogo.id} className="card card-hover" style={{ padding: 0, overflow: 'hidden', marginBottom: '0.75rem', border: '1px solid var(--border-color)' }}>
+                  <div 
+                    className="match-item" 
+                    onClick={() => toggleExpand(jogo.id)} 
+                    style={{ 
+                      cursor: 'pointer', 
+                      padding: '0.75rem 1.25rem',
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 120px 1fr',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-end' }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--primary-dark)', textAlign: 'right' }}>
+                        {jogo.home_team?.name || getPlaceholder(true)}
+                      </span>
+                      {jogo.home_team?.logo_url ? (
+                        <img src={jogo.home_team.logo_url} style={{ width: 28, height: 28, objectFit: 'contain' }} alt="" />
+                      ) : (
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 900 }}>?</div>
+                      )}
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary-dark)', padding: '5px 14px', borderRadius: '6px', color: 'white', fontWeight: 950, fontSize: '1.1rem' }}>
+                        {jogo.status === 'finalizado' ? (
+                          <>
+                            <span>{jogo.home_score}</span>
+                            <span style={{ opacity: 0.3 }}>-</span>
+                            <span>{jogo.away_score}</span>
+                          </>
+                        ) : (
+                          <span style={{ fontSize: '0.85rem' }}>{jogo.time ? jogo.time.slice(0, 5) : 'H/D'}</span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          {jogo.date ? jogo.date.split('-').reverse().join('/') : 'Data a definir'}
+                        </span>
+                        {jogo.status === 'finalizado' ? (
+                           <span style={{ fontSize: '0.6rem', fontWeight: 950, color: 'var(--primary-color)', textTransform: 'uppercase' }}>Encerrado</span>
+                        ) : !jogo.time && (
+                           <span style={{ fontSize: '0.55rem', fontWeight: 700, color: 'var(--text-muted)', opacity: 0.7 }}>Horário a definir</span>
+                        )}
+                      </div>
+                    </div>
+  
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-start' }}>
+                      {jogo.away_team?.logo_url ? (
+                        <img src={jogo.away_team.logo_url} style={{ width: 28, height: 28, objectFit: 'contain' }} alt="" />
+                      ) : (
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 900 }}>?</div>
+                      )}
+                      <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--primary-dark)' }}>
+                        {jogo.away_team?.name || getPlaceholder(false)}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
                 {expanded === jogo.id && (
                   <div style={{ padding: '1.5rem', background: '#f8fafc', borderTop: '1px solid var(--border-color)', animation: 'fadeIn 0.2s ease-out' }}>
