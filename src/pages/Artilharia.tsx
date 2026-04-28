@@ -165,7 +165,7 @@ const Artilharia = () => {
                 <tr>
                   <th style={{ width: '50px', background: 'transparent' }}>#</th>
                   <th style={{ background: 'transparent' }}>Nome</th>
-                  <th style={{ background: 'transparent', textAlign: 'right' }}>{valueLabel}</th>
+                  {valueLabel && <th style={{ background: 'transparent', textAlign: 'right' }}>{valueLabel}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -242,7 +242,6 @@ const Artilharia = () => {
           </div>
         </div>
       </td>
-      <td style={{ textAlign: 'right', fontWeight: 950, fontSize: '1rem', color: 'var(--primary-dark)' }}>{p.value} pts</td>
     </tr>
   );
 
@@ -287,7 +286,7 @@ const Artilharia = () => {
           subtitle="Histórico de cartões por jogador"
           icon={AlertTriangle} 
           color="#ef4444" 
-          data={playerCards} renderItem={renderPlayerCards} valueLabel="Peso" 
+          data={playerCards} renderItem={renderPlayerCards} valueLabel="" 
         />
       </div>
 
