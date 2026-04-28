@@ -102,34 +102,29 @@ const Fases = () => {
 
   return (
     <div className="animate-fade container">
-      <header style={{ marginBottom: '3rem' }}>
-        <h1 className="section-title"><Trophy /> Fase Final</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '-2.5rem', fontWeight: 500 }}>A jornada rumo ao topo da Copa do Mundo APD.</p>
-      </header>
+      <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+        <h1 className="section-title" style={{ justifyContent: 'center', marginBottom: '1rem' }}><Trophy /> Fase Final</h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: '1rem', fontWeight: 500 }}>A jornada rumo ao topo da Copa do Mundo APD.</p>
+      </div>
 
       <div className="bracket-container">
         
-        {/* SEMIFINAIS */}
-        <div className="bracket-column">
-          <div style={{ marginBottom: '0.5rem' }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Semifinais</div>
+        {/* COLUNA ESQUERDA: SEMIFINAL 1 */}
+        <div className="bracket-column" style={{ justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px' }}>Semifinal 1</div>
           </div>
           <MatchCard 
             match={semiFinals[0]} 
             placeholderHome="1º Colocado" 
             placeholderAway="4º Colocado" 
           />
-          <MatchCard 
-            match={semiFinals[1]} 
-            placeholderHome="2º Colocado" 
-            placeholderAway="3º Colocado" 
-          />
         </div>
 
-        {/* GRANDE FINAL E 3º LUGAR */}
-        <div className="bracket-column" style={{ gap: '2rem' }}>
-          <div>
-            <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#b89112', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1.5rem' }}>A Decisão</div>
+        {/* COLUNA CENTRAL: GRANDE FINAL E 3º LUGAR */}
+        <div className="bracket-column" style={{ gap: '3rem' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '0.8rem', fontWeight: 900, color: '#b89112', textTransform: 'uppercase', letterSpacing: '3px', marginBottom: '1.5rem' }}>O Palco Principal</div>
             <MatchCard 
               match={final} 
               placeholderHome="Vencedor Semi 1" 
@@ -138,15 +133,27 @@ const Fases = () => {
             />
           </div>
 
-          <div style={{ marginTop: '2rem' }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#cd7f32', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem' }}>Disputa de 3º Lugar</div>
+          <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#cd7f32', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '1rem' }}>Disputa de 3º Lugar</div>
             <MatchCard 
               match={thirdPlace} 
-              placeholderHome="A definir (S1)" 
-              placeholderAway="A definir (S2)" 
+              placeholderHome="Perdedor Semi 1" 
+              placeholderAway="Perdedor Semi 2" 
               isThird
             />
           </div>
+        </div>
+
+        {/* COLUNA DIREITA: SEMIFINAL 2 */}
+        <div className="bracket-column" style={{ justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px' }}>Semifinal 2</div>
+          </div>
+          <MatchCard 
+            match={semiFinals[1]} 
+            placeholderHome="2º Colocado" 
+            placeholderAway="3º Colocado" 
+          />
         </div>
       </div>
 
@@ -157,7 +164,7 @@ const Fases = () => {
           border: 'none',
           textAlign: 'center', 
           padding: '4rem 2rem',
-          marginTop: '5rem',
+          marginTop: '6rem',
           color: '#fff'
         }}>
           <img src={logoApd} style={{ height: 120, width: 'auto', marginBottom: '3rem', filter: 'drop-shadow(0 0 40px rgba(255, 255, 255, 0.4))' }} alt="" />
@@ -169,7 +176,7 @@ const Fases = () => {
               alt=""
             />
             <div style={{ textAlign: 'left' }}>
-              <div style={{ color: '#ffd700', fontSize: '1rem', fontWeight: 950, letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '1rem' }}>🏆 Grande Campeão 🏆</div>
+              <div style={{ color: '#ffd700', fontSize: '1.1rem', fontWeight: 950, letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '1rem' }}>🏆 Grande Campeão 🏆</div>
               <h1 style={{ fontSize: 'clamp(3rem, 10vw, 5rem)', fontWeight: 950, letterSpacing: '-3px', lineHeight: 0.9, margin: 0 }}>
                 {final.winner_id === final.home_team_id ? final.home_team?.name : final.away_team?.name}
               </h1>
@@ -183,3 +190,4 @@ const Fases = () => {
 };
 
 export default Fases;
+

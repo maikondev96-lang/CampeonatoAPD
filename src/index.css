@@ -883,11 +883,19 @@ input:focus, select:focus {
 }
 /* Bracket System */
 .bracket-container {
-  display: flex;
-  gap: 4rem;
-  padding: 2rem 0;
-  overflow-x: auto;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 2rem;
+  padding: 3rem 0;
   align-items: center;
+}
+
+@media (max-width: 1024px) {
+  .bracket-container {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
 }
 
 .bracket-column {
