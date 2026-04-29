@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// Build trigger: maikondev96-lang identity
+// Build trigger: Public Repo - v1.0.2
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Match, Standing } from '../types';
