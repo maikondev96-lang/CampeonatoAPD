@@ -128,7 +128,7 @@ const Jogos = () => {
                       ? 'Semifinal'
                       : matches[0].phase === 'final'
                         ? 'Final'
-                        : matches[0].phase.toUpperCase()}
+                        : String(matches[0].phase).toUpperCase()}
               </h3>
             </div>
             
