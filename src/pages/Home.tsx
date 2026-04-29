@@ -198,7 +198,7 @@ const Home = () => {
       <div className="dashboard-grid">
         
         {/* ── COLUNA 1: Branding e Atalhos ── */}
-        <section className="hero-branding" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gridRow: '1 / span 2' }}>
+        <section className="hero-branding">
           <div className="animate-up" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
             <img src={logoApd} alt="Copa do Mundo APD" className="hero-logo-monumental" style={{ width: '180px', height: '180px', margin: '0' }} />
             <h1 className="hero-title-official" style={{ fontSize: '1.8rem', letterSpacing: '-1px' }}>Copa do Mundo APD</h1>
@@ -235,7 +235,7 @@ const Home = () => {
         </section>
 
         {/* ── LINHA 1: Calendário e G-4 ── */}
-        <section className="dashboard-section-row" style={{ gridColumn: '2', gridRow: '1' }}>
+        <section className="dashboard-section-row dashboard-main-col">
           <div className="premium-card" style={{ height: '100%', marginBottom: 0 }}>
             <div className="premium-card-header">
               <div className="header-small-label">Calendário</div>
@@ -308,7 +308,7 @@ const Home = () => {
           </div>
         </section>
 
-        <aside className="dashboard-section-row" style={{ gridColumn: '3', gridRow: '1' }}>
+        <aside className="dashboard-section-row dashboard-aside-col">
           <div className="premium-card" style={{ height: '100%', marginBottom: 0, padding: '0' }}>
             <div className="premium-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div className="header-small-label">G-4 Zona de Classificação</div>
@@ -348,7 +348,7 @@ const Home = () => {
         </aside>
 
         {/* ── LINHA 2: Resultados e Estatísticas ── */}
-        <section className="dashboard-section-row row-2-start" style={{ gridColumn: '2' }}>
+        <section className="dashboard-section-row dashboard-results-col">
           {latestResults.length > 0 && !champion && (
             <div className="premium-card" style={{ marginBottom: 0 }}>
               <div className="premium-card-header">
@@ -422,7 +422,7 @@ const Home = () => {
           )}
         </section>
 
-        <aside className="dashboard-section-row row-2-start" style={{ gridColumn: '3', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <aside className="dashboard-section-row dashboard-stats-col" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {topScorer && (
             <div className="premium-card">
               <div className="premium-card-header">
