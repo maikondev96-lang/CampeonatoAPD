@@ -34,7 +34,7 @@ const Home = () => {
 
     if (matches) {
       // Ordenação inteligente: grupo (por rodada) -> semi -> 3º lugar -> final
-      const phaseOrder = { 'grupo': 1, 'semifinal': 2, 'terceiro_lugar': 3, 'final': 4 };
+      const phaseOrder: Record<string, number> = { 'grupo': 1, 'semifinal': 2, 'terceiro_lugar': 3, 'final': 4 };
       const sortedMatches = [...matches].sort((a, b) => {
         if (phaseOrder[a.phase] !== phaseOrder[b.phase]) {
           return phaseOrder[a.phase] - phaseOrder[b.phase];
@@ -65,9 +65,10 @@ const Home = () => {
         setActiveRoundMatches([]);
       }
 
+      const phaseOrder2: Record<string, number> = { 'grupo': 1, 'semifinal': 2, 'terceiro_lugar': 3, 'final': 4 };
       const finished = [...matches].filter(m => m.status === 'finalizado').sort((a, b) => {
         // Para último resultado, queremos o mais recente (oposto da ordem acima)
-        if (phaseOrder[b.phase] !== phaseOrder[a.phase]) return phaseOrder[b.phase] - phaseOrder[a.phase];
+        if (phaseOrder2[b.phase] !== phaseOrder2[a.phase]) return phaseOrder2[b.phase] - phaseOrder2[a.phase];
         if (b.phase === 'grupo' && b.round !== a.round) return (b.round || 0) - (a.round || 0);
         
         const dateA = a.date || '';

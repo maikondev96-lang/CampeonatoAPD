@@ -18,7 +18,7 @@ const Jogos = () => {
   const fetchJogos = async () => {
     const { data } = await supabase.from('matches').select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)');
     if (data) {
-      const phaseOrder = { 'grupo': 1, 'semifinal': 2, 'terceiro_lugar': 3, 'final': 4 };
+      const phaseOrder: Record<string, number> = { 'grupo': 1, 'semifinal': 2, 'terceiro_lugar': 3, 'final': 4 };
       const sorted = [...data].sort((a, b) => {
         if (phaseOrder[a.phase] !== phaseOrder[b.phase]) return phaseOrder[a.phase] - phaseOrder[b.phase];
         if (a.phase === 'grupo' && a.round !== b.round) return (a.round || 0) - (b.round || 0);

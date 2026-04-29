@@ -157,7 +157,7 @@ const AdminMatchDetail = () => {
       status: 'finalizado'
     }).eq('id', id);
 
-    if (!error) {
+    if (!error && match) {
       // Propagação automática para mata-mata
       if (match.phase === 'semifinal') {
         const loserId = winnerId === match.home_team_id ? match.away_team_id : match.home_team_id;
@@ -196,7 +196,7 @@ const AdminMatchDetail = () => {
       alert('✅ Resultado salvo com sucesso!');
       navigate('/admin/jogos');
     } else {
-      alert('Erro ao salvar: ' + error.message);
+      alert('Erro ao salvar: ' + (error as Error)?.message || 'Erro desconhecido');
     }
     setSaving(false);
   };
@@ -226,7 +226,7 @@ const AdminMatchDetail = () => {
       if (mError) throw new Error('Erro ao resetar partida: ' + mError.message);
 
       // 2.1. Limpar propagação se for semifinal
-      if (match.phase === 'semifinal') {
+      if (match && match.phase === 'semifinal') {
         const { data: semis } = await supabase.from('matches').select('id').eq('phase', 'semifinal').order('id', { ascending: true });
         if (semis) {
           const semiIndex = semis.findIndex(s => s.id === id);

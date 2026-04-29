@@ -67,11 +67,11 @@ const Fases = () => {
             {!isPlaceholder && (match.status === 'finalizado' || match.status === 'ao_vivo') ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <div className="score-wrapper-premium">
-                  {match.home_penalties !== null && <span className={`penalty-score-premium ${match.home_penalties > (match.away_penalties || 0) ? 'is-winner' : ''}`} style={{ left: '-25px', top: '2px' }}>({match.home_penalties})</span>}
+                  {match.home_penalties != null && <span className={`penalty-score-premium ${(match.home_penalties ?? 0) > (match.away_penalties ?? 0) ? 'is-winner' : ''}`} style={{ left: '-25px', top: '2px' }}>({match.home_penalties})</span>}
                   <span className={`score-number-premium ${match.status === 'finalizado' && (match.home_score || 0) >= (match.away_score || 0) ? 'is-winner' : ''}`}>{match.home_score}</span>
                 </div>
                 <div className="score-wrapper-premium">
-                  {match.away_penalties !== null && <span className={`penalty-score-premium ${match.away_penalties > (match.home_penalties || 0) ? 'is-winner' : ''}`} style={{ left: '-25px', top: '2px' }}>({match.away_penalties})</span>}
+                  {match.away_penalties != null && <span className={`penalty-score-premium ${(match.away_penalties ?? 0) > (match.home_penalties ?? 0) ? 'is-winner' : ''}`} style={{ left: '-25px', top: '2px' }}>({match.away_penalties})</span>}
                   <span className={`score-number-premium ${match.status === 'finalizado' && (match.away_score || 0) >= (match.home_score || 0) ? 'is-winner' : ''}`}>{match.away_score}</span>
                 </div>
               </div>
