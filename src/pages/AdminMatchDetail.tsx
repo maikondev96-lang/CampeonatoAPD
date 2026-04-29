@@ -410,8 +410,8 @@ const AdminMatchDetail = () => {
           {/* Explicação */}
           <p style={{ marginTop: '0.75rem', fontSize: '0.7rem', color: 'var(--text-subtle)', textAlign: 'center', lineHeight: 1.5 }}>
             {isFinished
-              ? '✏️ <b>Corrigir</b> atualiza o placar existente e recalcula a classificação. <b>Resetar</b> apaga tudo e volta ao estado "agendado".'
-              : '✅ <b>Finalizar</b> salva o resultado e atualiza a classificação automaticamente.'}
+              ? <span>✏️ <strong>Corrigir</strong> atualiza o placar existente e recalcula a classificação. <strong>Resetar</strong> apaga tudo e volta ao estado "agendado".</span>
+              : <span>✅ <strong>Finalizar</strong> salva o resultado e atualiza a classificação automaticamente.</span>}
           </p>
         </div>
       </div>

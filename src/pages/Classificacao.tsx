@@ -112,11 +112,11 @@ const Classificacao = () => {
     <div className="animate-fade">
       <h1 className="section-title"><Table /> Classificação</h1>
 
-      <div className="card" style={{ padding: 0, overflowX: 'auto', border: '2px solid var(--border-color)' }}>
+      <div className="card" style={{ padding: 0, overflowX: 'auto', border: '2px solid var(--border-color)', WebkitOverflowScrolling: 'touch' }}>
         {standings.length === 0 && !loading ? (
           <p style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontWeight: 700 }}>Carregando dados da tabela...</p>
         ) : (
-          <table className="standings-table" style={{ fontSize: '0.85rem' }}>
+          <table className="standings-table" style={{ fontSize: undefined }}>
             <thead>
               <tr>
                 <th style={{ width: '40px', textAlign: 'center' }}>POS</th>
