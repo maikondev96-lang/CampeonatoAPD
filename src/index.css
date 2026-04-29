@@ -1159,6 +1159,12 @@ input:focus, select:focus {
 
 @media (max-width: 640px) {
   .quick-nav-grid { grid-template-columns: 1fr; }
+  .standings-table { font-size: 0.75rem; }
+  .standings-table .team-cell span:last-child { font-size: 0.85rem; }
+  .standings-table .team-logo { width: 22px !important; height: 22px !important; }
+  .mobile-hide-xs { display: none !important; }
+  .match-item { padding: 0.65rem 0.75rem !important; }
+  .section-title { font-size: 1.4rem !important; }
 }
 /* Buttons */
 .btn {

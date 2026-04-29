@@ -120,7 +120,15 @@ const Jogos = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
               <div style={{ width: '4px', height: '18px', background: 'var(--primary-color)', borderRadius: '2px' }}></div>
               <h3 style={{ textTransform: 'uppercase', fontSize: '0.85rem', fontWeight: 900, color: 'var(--primary-dark)', letterSpacing: '1px' }}>
-                {matches[0].phase === 'grupo' ? `Rodada ${round}` : matches[0].phase.toUpperCase()}
+                {matches[0].phase === 'grupo'
+                  ? `Rodada ${round}`
+                  : matches[0].phase === 'terceiro_lugar'
+                    ? 'Disputa de 3º Lugar'
+                    : matches[0].phase === 'semifinal'
+                      ? 'Semifinal'
+                      : matches[0].phase === 'final'
+                        ? 'Final'
+                        : matches[0].phase.toUpperCase()}
               </h3>
             </div>
             
@@ -151,7 +159,8 @@ const Jogos = () => {
                       cursor: 'pointer', 
                       padding: '0.75rem 1.25rem',
                       display: 'grid',
-                      gridTemplateColumns: '1fr 120px 1fr',
+                      gridTemplateColumns: '1fr auto 1fr',
+                      gap: '4px',
                       alignItems: 'center'
                     }}
                   >

@@ -129,8 +129,8 @@ const Classificacao = () => {
                 <th className="number-cell mobile-hide">GP</th>
                 <th className="number-cell mobile-hide">GC</th>
                 <th className="number-cell">SG</th>
-                <th className="number-cell" style={{ color: 'var(--primary-color)' }}>%</th>
-                <th style={{ textAlign: 'right', paddingRight: '1rem', fontSize: '0.7rem', letterSpacing: '1px', whiteSpace: 'nowrap' }}>ÜLT. JOGOS</th>
+                <th className="number-cell mobile-hide-xs" style={{ color: 'var(--primary-color)' }}>%</th>
+                <th className="mobile-hide-xs" style={{ textAlign: 'right', paddingRight: '1rem', fontSize: '0.7rem', letterSpacing: '1px', whiteSpace: 'nowrap' }}>ÜLT. JOGOS</th>
               </tr>
             </thead>
             <tbody>
@@ -169,8 +169,8 @@ const Classificacao = () => {
                     <td className="number-cell" style={{ color: s.goal_diff > 0 ? 'var(--primary-color)' : s.goal_diff < 0 ? 'var(--error)' : 'inherit', fontWeight: 600 }}>
                       {s.goal_diff > 0 ? `+${s.goal_diff}` : s.goal_diff}
                     </td>
-                    <td className="number-cell" style={{ fontWeight: 700 }}>{perc}%</td>
-                    <td style={{ textAlign: 'right', paddingRight: '1rem' }}>
+                    <td className="number-cell mobile-hide-xs" style={{ fontWeight: 700 }}>{perc}%</td>
+                    <td className="mobile-hide-xs" style={{ textAlign: 'right', paddingRight: '1rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px', alignItems: 'center' }}>
                         {results.map((r, i) => (
                           <div key={i} style={{
