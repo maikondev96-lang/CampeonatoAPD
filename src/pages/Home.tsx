@@ -170,7 +170,7 @@ const Home = () => {
       const assistsMap: Record<string, number> = {};
 
       events.forEach(ev => {
-        if (ev.type === 'gol') goalsMap[ev.player_id] = (goalsMap[ev.player_id] || 0) + 1;
+        if (ev.type === 'gol' || ev.type === 'gol_penalti') goalsMap[ev.player_id] = (goalsMap[ev.player_id] || 0) + 1;
         if (ev.assist_player_id) assistsMap[ev.assist_player_id] = (assistsMap[ev.assist_player_id] || 0) + 1;
       });
 

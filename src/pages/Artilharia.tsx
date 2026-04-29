@@ -30,7 +30,7 @@ const Artilharia = () => {
   const [playerStats, setPlayerStats] = useState<PlayerStat[]>([]);
   const [teamStats, setTeamStats] = useState<TeamStat[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedSection, setExpandedSection] = useState<string | null>('ranking');
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [activeIndivTab, setActiveIndivTab] = useState<'gols' | 'assistencias'>('gols');
 
   useEffect(() => {

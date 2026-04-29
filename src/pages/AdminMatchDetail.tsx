@@ -28,11 +28,11 @@ const AdminMatchDetail = () => {
   useEffect(() => {
     if (match && players.length > 0) {
       const hScore = events.filter(ev =>
-        ev.type === 'gol' &&
+        (ev.type === 'gol' || ev.type === 'gol_penalti') &&
         players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id
       ).length;
       const aScore = events.filter(ev =>
-        ev.type === 'gol' &&
+        (ev.type === 'gol' || ev.type === 'gol_penalti') &&
         players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id
       ).length;
       const hPens = events.filter(ev =>
@@ -158,6 +158,41 @@ const AdminMatchDetail = () => {
     }).eq('id', id);
 
     if (!error) {
+      // Propagação automática para mata-mata
+      if (match.phase === 'semifinal') {
+        const loserId = winnerId === match.home_team_id ? match.away_team_id : match.home_team_id;
+        
+        // Buscar todas as semis para saber a ordem (Semi 1 ou Semi 2)
+        const { data: semis } = await supabase
+          .from('matches')
+          .select('id')
+          .eq('phase', 'semifinal')
+          .order('id', { ascending: true });
+
+        if (semis && semis.length >= 2) {
+          const semiIndex = semis.findIndex(s => s.id === id);
+          if (semiIndex !== -1) {
+            // Atualizar Final
+            const { data: finalMatches } = await supabase.from('matches').select('id').eq('phase', 'final').limit(1);
+            if (finalMatches && finalMatches.length > 0) {
+              const updateFinal: any = {};
+              if (semiIndex === 0) updateFinal.home_team_id = winnerId;
+              else updateFinal.away_team_id = winnerId;
+              await supabase.from('matches').update(updateFinal).eq('id', finalMatches[0].id);
+            }
+
+            // Atualizar 3º Lugar
+            const { data: thirdMatches } = await supabase.from('matches').select('id').eq('phase', 'terceiro_lugar').limit(1);
+            if (thirdMatches && thirdMatches.length > 0) {
+              const updateThird: any = {};
+              if (semiIndex === 0) updateThird.home_team_id = loserId;
+              else updateThird.away_team_id = loserId;
+              await supabase.from('matches').update(updateThird).eq('id', thirdMatches[0].id);
+            }
+          }
+        }
+      }
+
       alert('✅ Resultado salvo com sucesso!');
       navigate('/admin/jogos');
     } else {
@@ -189,6 +224,30 @@ const AdminMatchDetail = () => {
       }).eq('id', id);
 
       if (mError) throw new Error('Erro ao resetar partida: ' + mError.message);
+
+      // 2.1. Limpar propagação se for semifinal
+      if (match.phase === 'semifinal') {
+        const { data: semis } = await supabase.from('matches').select('id').eq('phase', 'semifinal').order('id', { ascending: true });
+        if (semis) {
+          const semiIndex = semis.findIndex(s => s.id === id);
+          if (semiIndex !== -1) {
+            const { data: finalMatches } = await supabase.from('matches').select('id').eq('phase', 'final').limit(1);
+            if (finalMatches && finalMatches.length > 0) {
+              const updateFinal: any = {};
+              if (semiIndex === 0) updateFinal.home_team_id = null;
+              else updateFinal.away_team_id = null;
+              await supabase.from('matches').update(updateFinal).eq('id', finalMatches[0].id);
+            }
+            const { data: thirdMatches } = await supabase.from('matches').select('id').eq('phase', 'terceiro_lugar').limit(1);
+            if (thirdMatches && thirdMatches.length > 0) {
+              const updateThird: any = {};
+              if (semiIndex === 0) updateThird.home_team_id = null;
+              else updateThird.away_team_id = null;
+              await supabase.from('matches').update(updateThird).eq('id', thirdMatches[0].id);
+            }
+          }
+        }
+      }
 
       // 3. Recarrega dados
       setHomeScore(0);

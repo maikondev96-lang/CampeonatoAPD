@@ -222,7 +222,7 @@ const Jogos = () => {
                         {events[jogo.id]?.filter(e => e.type !== 'penalti_convertido' && e.type !== 'penalti_perdido' && e.player?.team_id === jogo.home_team_id).map(e => (
                           <div key={e.id} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end', fontWeight: 800, color: '#0f172a' }}>
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', opacity: 0.6 }}>{e.minute ? `${e.minute}'` : ''}</span>
-                            <span>{e.player?.name}</span>
+                            <span>{e.player?.name} <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 600 }}>{e.type === 'gol_penalti' ? '(Pênalti)' : e.type === 'penalti_perdido_tempo_normal' ? '(Pênalti perdido)' : ''}</span></span>
                             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
                               {(e.type === 'gol' || e.type === 'gol_penalti') && <span style={{ fontSize: '1rem' }}>⚽</span>}
                               {e.type === 'penalti_perdido_tempo_normal' && <span style={{ fontSize: '1rem' }}>❌</span>}
@@ -242,7 +242,7 @@ const Jogos = () => {
                               {e.type === 'cartao_amarelo' && <div style={{ width: 10, height: 14, background: '#ffd600', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                               {(e.type === 'cartao_vermelho_direto' || e.type === 'cartao_vermelho_indireto') && <div style={{ width: 10, height: 14, background: '#ff5252', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
                             </span>
-                            <span>{e.player?.name}</span>
+                            <span>{e.player?.name} <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 600 }}>{e.type === 'gol_penalti' ? '(Pênalti)' : e.type === 'penalti_perdido_tempo_normal' ? '(Pênalti perdido)' : ''}</span></span>
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', opacity: 0.6 }}>{e.minute ? `${e.minute}'` : ''}</span>
                           </div>
                         ))}
