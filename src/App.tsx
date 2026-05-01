@@ -141,7 +141,7 @@ const Navbar = () => {
               {isInCompetition ? (
                 <>
                   <Link 
-                    to={`/competitions/${competition.slug}/${useSeasonContext().season?.year}`} 
+                    to={`/competitions/${competition.slug}/${competition.seasons?.[0]?.year || 2026}`} 
                     className={`nav-link-item ${location.pathname.endsWith(`${competition.slug}/${competition.seasons?.[0]?.year}`) ? 'active' : ''}`}
                   >
                     <Layout size={18} /> <span>Dashboard</span>
@@ -283,6 +283,7 @@ const CompetitionWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
+  console.log("App booting version:", APP_BUILD_ID);
   useEffect(() => {
     const localBuildId = localStorage.getItem('app_build_id');
     if (localBuildId !== APP_BUILD_ID) {
