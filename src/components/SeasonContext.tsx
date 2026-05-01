@@ -41,7 +41,7 @@ export const SeasonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         .order('name');
 
       if (error) throw error;
-      setCompetitions(comps || []);
+      setCompetitions(comps as any);
       return comps || [];
     } catch (err) {
       console.error('Failed to load competitions:', err);
@@ -67,12 +67,12 @@ export const SeasonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (error || !comp) return;
       
-      setCompetition(comp);
-      const allSeasons = (comp.seasons || []).sort((a: any, b: any) => b.year - a.year);
+      setCompetition(comp as any);
+      const allSeasons = ((comp as any).seasons || []).sort((a: any, b: any) => b.year - a.year);
       setSeasons(allSeasons);
 
       if (year) {
-        const target = allSeasons.find(s => s.year === year);
+        const target = allSeasons.find((s: any) => s.year === year);
         if (target) {
           setSeason(target);
           return;
