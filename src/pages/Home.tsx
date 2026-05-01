@@ -178,9 +178,7 @@ export default function Home() {
 
       <style>{`
         .home-dashboard {
-          background: #f1f5f9;
-          min-height: 100vh;
-          padding: 24px;
+          padding: 16px;
           width: 100%;
         }
 
@@ -411,7 +409,7 @@ export default function Home() {
 
         @media (max-width: 768px) {
           .home-dashboard {
-            padding: 0; /* Remove padding entirely for true app look */
+            padding: 0;
             background: var(--bg-color);
           }
           .dashboard-container {
