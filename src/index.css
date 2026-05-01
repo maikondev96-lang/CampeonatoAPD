@@ -128,8 +128,23 @@ main {
 
 .container {
   width: 100%;
-  padding: 24px;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
+
+/* Responsive Grids Utils */
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+@media (min-width: 768px) { .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+.w-full { width: 100%; }
+.h-auto { height: auto; }
+.object-cover { object-fit: cover; }
 
 /* ─────────── NAVBAR ─────────── */
 .navbar {
@@ -859,11 +874,25 @@ main {
 
 .score-main-row {
   display: grid;
-  grid-template-columns: 1fr clamp(120px, 20vw, 200px) 1fr;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: clamp(0.75rem, 2vw, 2rem);
+  gap: 1.5rem;
   margin-bottom: 2rem;
-  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .score-main-row {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .score-display {
+    order: -1;
+    margin-bottom: 1rem;
+  }
+  .team-logo-large {
+    width: 80px;
+    height: 80px;
+  }
 }
 
 .team-col {
@@ -871,23 +900,23 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+  min-width: 0;
 }
 
 .team-logo-large {
-  width: clamp(48px, 12vw, 100px);
-  height: clamp(48px, 12vw, 100px);
+  width: clamp(64px, 15vw, 120px);
+  height: clamp(64px, 15vw, 120px);
   object-fit: contain;
   filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1));
 }
 
 .team-name-large {
-  font-size: clamp(1rem, 3vw, 1.5rem);
+  font-size: clamp(1.1rem, 4vw, 1.75rem);
   font-weight: 950;
   color: var(--primary-dark);
   letter-spacing: -0.5px;
   text-align: center;
   word-break: break-word;
-  hyphens: auto;
 }
 
 .score-display {
@@ -898,14 +927,14 @@ main {
 }
 
 .score-number {
-  font-size: clamp(2.5rem, 10vw, 4rem);
+  font-size: clamp(3rem, 12vw, 5rem);
   font-weight: 950;
   color: var(--primary-dark);
   line-height: 1;
 }
 
 .score-display .score-divider {
-  font-size: 1.5rem;
+  font-size: 2rem;
   opacity: 0.2;
 }
 

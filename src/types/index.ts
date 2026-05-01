@@ -116,7 +116,6 @@ export type Player = {
   team_id: string;
   shirt_number?: number;
   photo_url?: string;
-  age?: number;
   position?: PlayerPosition;
   active: boolean;
   updated_at?: string;
@@ -262,11 +261,9 @@ export type PlayerRegistration = {
   team_id: string;
   season_id: string;
   name: string;
-  nickname?: string;
   shirt_number: number;
   position: string;
   photo_url?: string;
-  phone?: string;
   status: PlayerRegistrationStatus;
   feedback?: string;
   created_at?: string;

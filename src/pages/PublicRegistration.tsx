@@ -8,6 +8,9 @@ interface RegistrationConfig {
   optional: string[];
 }
 
+import { registrationSubmissionSchema } from '../utils/schemas';
+import { validateImageUrl } from '../utils/imageValidation';
+
 export default function PublicRegistration() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
@@ -64,7 +67,7 @@ export default function PublicRegistration() {
   };
 
   const addPlayer = () => {
-    setPlayers([...players, { id: crypto.randomUUID(), name: '', number: '', position: 'Atacante', photo: null }]);
+    setPlayers([...players, { id: crypto.randomUUID(), name: '', number: '', position: 'ATA', photo: '' }]);
   };
 
   const updatePlayer = (id: string, field: string, value: any) => {
@@ -75,44 +78,33 @@ export default function PublicRegistration() {
     setPlayers(players.filter(p => p.id !== id));
   };
 
-  const getRegistrationConfig = (): RegistrationConfig => {
-    if (!linkData) return { required: ['name', 'number'], optional: [] };
-    
-    // Prioridade 1: Configuração específica da Temporada (settings_json)
-    const seasonSettings = linkData.season?.settings_json?.registration;
-    if (seasonSettings?.required_fields) {
-      return {
-        required: seasonSettings.required_fields,
-        optional: [] // No motor novo, o que não é obrigatório é opcional
-      };
-    }
-
-    // Prioridade 2: Configuração da Competição
-    if (linkData.season?.competition?.registration_fields) {
-      return linkData.season.competition.registration_fields;
-    }
-
-    // Fallback padrão
-    return { required: ['name', 'number', 'position'], optional: [] };
-  };
-
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      // Validations
-      if (!teamName || !managerName) throw new Error('Preencha os campos obrigatórios da equipe e gestor.');
-      if (players.length === 0) throw new Error('Adicione pelo menos um jogador.');
-      
-      const config = getRegistrationConfig();
-      
+      // Validate Player Photos
       for (const p of players) {
-        if (config.required.includes('name') && !p.name) throw new Error('Todos os jogadores precisam ter Nome.');
-        if (config.required.includes('number') && !p.number) throw new Error(`O jogador ${p.name || ''} precisa ter Número.`);
-        if (config.required.includes('position') && !p.position) throw new Error(`O jogador ${p.name || ''} precisa ter Posição.`);
-        if (config.required.includes('photo') && !p.photo) throw new Error(`O jogador ${p.name || ''} precisa ter Foto.`);
-        if (config.required.includes('nickname') && !p.nickname) throw new Error(`O jogador ${p.name || ''} precisa ter Apelido.`);
-        if (config.required.includes('age') && !p.age) throw new Error(`O jogador ${p.name || ''} precisa ter Idade.`);
-        if (config.required.includes('document') && !p.document) throw new Error(`O jogador ${p.name || ''} precisa ter Documento/RG.`);
+        if (p.photo) {
+          const imgCheck = await validateImageUrl(p.photo);
+          if (!imgCheck.valid) {
+            throw new Error(`Erro na foto de ${p.name || 'um jogador'}: ${imgCheck.error}`);
+          }
+        }
+      }
+
+      // Validations using Zod
+      const validation = registrationSubmissionSchema.safeParse({
+        team_name: teamName,
+        manager_name: managerName,
+        players_data: players.map(p => ({
+          name: p.name,
+          number: p.number,
+          position: p.position,
+          photo: p.photo || ''
+        }))
+      });
+
+      if (!validation.success) {
+        throw new Error(validation.error.errors[0].message);
       }
 
       const { error } = await supabase.from('registration_submissions').insert([{
@@ -123,7 +115,7 @@ export default function PublicRegistration() {
         manager_name: managerName,
         manager_email: managerEmail,
         manager_phone: managerPhone,
-        players_data: players,
+        players_data: validation.data.players_data,
         status: 'pending'
       }]);
 
@@ -160,10 +152,9 @@ export default function PublicRegistration() {
   }
 
   const competitionName = linkData.season.competition.name;
-  const config = getRegistrationConfig();
 
   return (
-    <div className="animate-fade" style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '4rem' }}>
+    <div className="animate-fade container" style={{ maxWidth: '800px' }}>
       <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
         <h1 className="section-title" style={{ justifyContent: 'center', marginBottom: '0.5rem' }}>Portal de Inscrição</h1>
         <p style={{ color: 'var(--primary-color)', fontWeight: 800, fontSize: '1.2rem' }}>
@@ -191,7 +182,7 @@ export default function PublicRegistration() {
             <Shield color="var(--primary-color)" /> 1. Dados da Equipe
           </h2>
           
-          <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1fr 1fr' }}>
+          <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
             <div className="form-group" style={{ gridColumn: '1 / -1' }}>
               <label>Nome Completo do Time <span style={{ color: 'var(--danger-color)' }}>*</span></label>
               <input type="text" placeholder="Ex: Esporte Clube Real" value={teamName} onChange={e => setTeamName(e.target.value)} />
@@ -212,7 +203,7 @@ export default function PublicRegistration() {
             <User color="var(--primary-color)" /> 2. Dados do Responsável
           </h2>
 
-          <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1fr 1fr' }}>
+          <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
             <div className="form-group" style={{ gridColumn: '1 / -1' }}>
               <label>Nome do Presidente / Gestor <span style={{ color: 'var(--danger-color)' }}>*</span></label>
               <input type="text" placeholder="Seu nome" value={managerName} onChange={e => setManagerName(e.target.value)} />
@@ -238,7 +229,7 @@ export default function PublicRegistration() {
       {/* Step 2: Elenco */}
       {step === 2 && (
         <div className="animate-fade">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <Users color="var(--primary-color)" /> Elenco Oficial
             </h2>
@@ -255,49 +246,46 @@ export default function PublicRegistration() {
               </div>
             ) : (
               players.map((p, index) => (
-                <div key={p.id} className="card" style={{ padding: '1.5rem', display: 'grid', gridTemplateColumns: '60px 1fr auto', gap: '1.5rem', alignItems: 'start' }}>
+                <div key={p.id} className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   
-                  {/* Photo area (Optional mockup) */}
-                  <div style={{ width: '60px', height: '60px', background: 'var(--bg-color)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
-                    <Camera size={20} color="var(--text-muted)" />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 150px', gap: '1rem' }}>
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label>Nome Completo</label>
-                      <input type="text" placeholder="Nome do atleta" value={p.name} onChange={e => updatePlayer(p.id, 'name', e.target.value)} style={{ padding: '0.5rem', fontSize: '0.9rem' }} />
+                  <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                    <div style={{ width: '60px', height: '60px', background: 'var(--bg-color)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)', flexShrink: 0, overflow: 'hidden' }}>
+                      {p.photo ? (
+                        <img src={p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <Camera size={20} color="var(--text-muted)" />
+                      )}
                     </div>
-                    {config.required.includes('number') && (
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label>Camisa</label>
-                        <input type="text" placeholder="Ex: 10" value={p.number} onChange={e => updatePlayer(p.id, 'number', e.target.value)} style={{ padding: '0.5rem', fontSize: '0.9rem', textAlign: 'center' }} />
-                      </div>
-                    )}
-                    {config.required.includes('position') && (
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label>Posição</label>
-                        <select value={p.position} onChange={e => updatePlayer(p.id, 'position', e.target.value)} style={{ padding: '0.5rem', fontSize: '0.9rem' }}>
-                          <option value="Goleiro">Goleiro</option>
-                          <option value="Zagueiro">Zagueiro</option>
-                          <option value="Lateral">Lateral</option>
-                          <option value="Volante">Volante</option>
-                          <option value="Meia">Meia</option>
-                          <option value="Atacante">Atacante</option>
-                          <option value="Fixo">Fixo</option>
-                          <option value="Ala">Ala</option>
-                          <option value="Pivô">Pivô</option>
-                        </select>
-                      </div>
-                    )}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                       <input type="text" placeholder="Nome do atleta" value={p.name} onChange={e => updatePlayer(p.id, 'name', e.target.value)} style={{ padding: '0.5rem', fontSize: '1.1rem', fontWeight: 700, width: '100%' }} />
+                       <input type="text" placeholder="URL da foto (opcional)" value={p.photo || ''} onChange={e => updatePlayer(p.id, 'photo', e.target.value)} style={{ padding: '0.4rem', fontSize: '0.8rem', width: '100%' }} />
+                    </div>
+                    <button 
+                      onClick={() => removePlayer(p.id)}
+                      style={{ background: 'none', border: 'none', color: 'var(--danger-color)', cursor: 'pointer', padding: '0.5rem' }}
+                      title="Remover Jogador"
+                    >
+                      <Trash2 size={20} />
+                    </button>
                   </div>
 
-                  <button 
-                    onClick={() => removePlayer(p.id)}
-                    style={{ background: 'none', border: 'none', color: 'var(--danger-color)', cursor: 'pointer', padding: '0.5rem', marginTop: '1.2rem' }}
-                    title="Remover Jogador"
-                  >
-                    <Trash2 size={20} />
-                  </button>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem' }}>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label>Camisa</label>
+                      <input type="number" placeholder="Ex: 10" value={p.number} onChange={e => updatePlayer(p.id, 'number', e.target.value)} />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label>Posição</label>
+                      <select value={p.position} onChange={e => updatePlayer(p.id, 'position', e.target.value)}>
+                        <option value="GOL">Goleiro</option>
+                        <option value="ZAG">Zagueiro</option>
+                        <option value="LAT">Lateral</option>
+                        <option value="VOL">Volante</option>
+                        <option value="MEI">Meia</option>
+                        <option value="ATA">Atacante</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               ))
             )}

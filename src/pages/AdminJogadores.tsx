@@ -4,6 +4,9 @@ import { Team, Player } from '../types';
 import { Plus, Users, Trash2, Loader2, Edit2, Save, ChevronDown, ChevronUp, Search, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { useSeasonContext } from '../components/SeasonContext';
 
+import { playerSchema } from '../utils/schemas';
+import { validateImageUrl } from '../utils/imageValidation';
+
 const AdminJogadores = () => {
   const { season, loading: ctxLoading } = useSeasonContext();
   const [times, setTimes] = useState<Team[]>([]);
@@ -13,10 +16,11 @@ const AdminJogadores = () => {
   const [name, setName] = useState('');
   const [teamId, setTeamId] = useState('');
   const [shirtNumber, setShirtNumber] = useState('');
-  const [age, setAge] = useState('');
   const [position, setPosition] = useState<any>('');
+  const [photoUrl, setPhotoUrl] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [saving, setSaving] = useState(false);
@@ -50,8 +54,8 @@ const AdminJogadores = () => {
     setName(j.name);
     setTeamId(j.team_id);
     setShirtNumber(j.shirt_number?.toString() || '');
-    setAge(j.age?.toString() || '');
     setPosition(j.position || '');
+    setPhotoUrl(j.photo_url || '');
     setPreviewUrl(j.photo_url || '');
     setFile(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -62,8 +66,8 @@ const AdminJogadores = () => {
     setName('');
     setTeamId('');
     setShirtNumber('');
-    setAge('');
     setPosition('');
+    setPhotoUrl('');
     setPreviewUrl('');
     setFile(null);
   };
@@ -78,11 +82,31 @@ const AdminJogadores = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !teamId || !shirtNumber) return alert('Apelido, Time e Número são obrigatórios.');
     
     setSaving(true);
     
     try {
+      // Validate Image URL if provided
+      if (photoUrl && photoUrl !== previewUrl) {
+        setIsValidating(true);
+        const imgCheck = await validateImageUrl(photoUrl);
+        setIsValidating(false);
+        if (!imgCheck.valid) {
+          throw new Error(imgCheck.error);
+        }
+      }
+
+      const validation = playerSchema.safeParse({
+        name,
+        team_id: teamId,
+        shirt_number: shirtNumber,
+        photo_url: photoUrl || previewUrl,
+        position
+      });
+
+      if (!validation.success) {
+        throw new Error(validation.error.errors[0].message);
+      }
       let finalPhotoUrl = previewUrl || '';
 
       if (file) {
@@ -102,31 +126,22 @@ const AdminJogadores = () => {
         }
       }
 
-      const pAge = age ? parseInt(age) : null;
       const pNum = parseInt(shirtNumber);
 
+      const playerData = { 
+        name, 
+        team_id: teamId,
+        shirt_number: pNum,
+        position: position || null,
+        photo_url: finalPhotoUrl,
+        updated_at: new Date().toISOString()
+      };
+
       if (editingId) {
-        const { error } = await supabase.from('players').update({ 
-          name, 
-          team_id: teamId,
-          shirt_number: pNum,
-          age: pAge,
-          position: position || null,
-          photo_url: finalPhotoUrl,
-          updated_at: new Date().toISOString()
-        }).eq('id', editingId);
-        
+        const { error } = await supabase.from('players').update(playerData).eq('id', editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('players').insert([{ 
-          name, 
-          team_id: teamId,
-          shirt_number: pNum,
-          age: pAge,
-          position: position || null,
-          photo_url: finalPhotoUrl
-        }]);
-        
+        const { error } = await supabase.from('players').insert([playerData]);
         if (error) throw error;
       }
       cancelEdit();
@@ -155,7 +170,7 @@ const AdminJogadores = () => {
   );
 
   return (
-    <div className="animate-fade" style={{ maxWidth: '900px', margin: '0 auto' }}>
+    <div className="animate-fade container" style={{ maxWidth: '900px' }}>
       <h1 className="section-title"><Users /> Gerenciar Jogadores</h1>
       
       <form className="card" onSubmit={handleSave} style={{ marginBottom: '3rem', border: editingId ? '2px solid var(--primary-color)' : '1px solid var(--border-color)' }}>
@@ -163,10 +178,10 @@ const AdminJogadores = () => {
           {editingId ? '📝 Editar Jogador' : '➕ Novo Jogador'}
         </h3>
         
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
           <div className="form-group">
-            <label>Apelido (Nome na Camisa) *</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Zé" required />
+            <label>Nome Completo *</label>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: José Silva" required />
           </div>
           <div className="form-group">
             <label>Número da Camisa *</label>
@@ -174,7 +189,7 @@ const AdminJogadores = () => {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
           <div className="form-group">
             <label>Time *</label>
             <select value={teamId} onChange={e => setTeamId(e.target.value)} required>
@@ -198,21 +213,27 @@ const AdminJogadores = () => {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
           <div className="form-group">
-            <label>Idade</label>
-            <input type="number" value={age} onChange={e => setAge(e.target.value)} placeholder="Ex: 25" />
-          </div>
-          <div className="form-group">
-            <label>Foto do Jogador</label>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              {previewUrl && (
-                <img src={previewUrl} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: '50%' }} alt="Preview" />
-              )}
-              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" style={{ display: 'none' }} />
-              <button type="button" className="btn btn-secondary" onClick={() => fileInputRef.current?.click()} style={{ fontSize: '0.8rem' }}>
-                <Upload size={16} /> Escolher Foto
-              </button>
+            <label>Foto do Jogador (URL ou Upload)</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <input 
+                value={photoUrl} 
+                onChange={e => { setPhotoUrl(e.target.value); setPreviewUrl(e.target.value); }} 
+                placeholder="https://exemplo.com/foto.jpg" 
+              />
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                {previewUrl && (
+                  <div style={{ position: 'relative' }}>
+                    <img src={previewUrl} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: '50%', border: '2px solid var(--primary-color)' }} alt="Preview" />
+                    <button type="button" onClick={() => { setPreviewUrl(''); setPhotoUrl(''); }} style={{ position: 'absolute', top: -5, right: -5, background: 'var(--error)', color: 'white', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}><X size={10} /></button>
+                  </div>
+                )}
+                <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" style={{ display: 'none' }} />
+                <button type="button" className="btn btn-secondary" onClick={() => fileInputRef.current?.click()} style={{ fontSize: '0.8rem', flex: 1 }}>
+                  <Upload size={16} /> Ou Upload de Arquivo
+                </button>
+              </div>
             </div>
           </div>
         </div>

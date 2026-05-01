@@ -38,6 +38,7 @@ import { OrganizationProvider, useOrganizationContext } from './components/Organ
 import { AdminProvider } from './components/AdminContext';
 import { supabase } from './supabaseClient';
 import logoApd from './assets/logo.png';
+import ScrollToTop from './components/ScrollToTop';
 
 // ─── Season Selector (mini dropdown) ─────────────────────────
 const SeasonBadge = () => {
@@ -209,6 +210,7 @@ const CompetitionWrapper = ({ children }: { children: React.ReactNode }) => {
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <OrganizationProvider>
         <SeasonProvider>
           <div className="app-container">

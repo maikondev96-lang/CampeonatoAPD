@@ -41,6 +41,16 @@
   - [ ] Listagem de todos os times filiados.
   - [ ] Feed de Notícias (Blog institucional).
 
+### Phase 6: Refinamento UX, Responsividade e CRUD Admin (COMPLETED ✅)
+- **Status:** Entregue.
+- **Entregas:**
+  - Layout 100% responsivo (mobile-first, sem scroll horizontal indesejado).
+  - ScrollToTop integrado (reset de scroll em mudanças de rota).
+  - Validação de imagem via URL e Upload com feedback de erro (utilitário centralizado).
+  - Schema de jogadores simplificado e unificado (Zod).
+  - CRUD completo de jogadores no Admin (Editar/Excluir funcional).
+  - Refatoração mobile da Home, Jogos e Detalhes da Partida.
+
 ---
 
 ## Summary Status
@@ -52,3 +62,4 @@
 | 3 | Configurações e Identidade | IN PROGRESS 🏗️ |
 | 4 | Fluxo de Inscrição | PENDING ⏳ |
 | 5 | Conteúdo Institucional | PENDING ⏳ |
+| 6 | Refinamento UX e CRUD Admin | COMPLETED ✅ |
