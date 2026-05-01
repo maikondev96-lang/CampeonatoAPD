@@ -112,9 +112,6 @@ html {
   overscroll-behavior: none; /* Previne o efeito de puxar/bounce no mobile */
 }
 
-  overscroll-behavior: none;
-}
-
 body {
   margin: 0;
   padding: 0;
