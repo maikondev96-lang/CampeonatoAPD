@@ -17,6 +17,15 @@ export default function TournamentRosters() {
     if (season) fetchRosters();
   }, [season]);
 
+  useEffect(() => {
+    if (selectedPlayer) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [selectedPlayer]);
+
   const fetchRosters = async () => {
     if (!season) return;
     setLoading(true);
@@ -227,14 +236,17 @@ export default function TournamentRosters() {
           justify-content: center;
           z-index: 2000;
           padding: 20px;
+          overflow-y: auto;
         }
         .player-photo-modal-content {
           background: var(--card-bg);
           border-radius: 24px;
           width: 100%;
           max-width: 360px;
+          margin: auto; /* Centering fix for overflow-y: auto */
           overflow: hidden;
           animation: modalIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
         @keyframes modalIn {
           from { transform: scale(0.9); opacity: 0; }
