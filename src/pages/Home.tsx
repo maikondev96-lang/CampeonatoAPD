@@ -1,466 +1,390 @@
 import React, { useState, useEffect } from 'react';
-// Build trigger: Public Repo - v1.0.2
-import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Match, Standing } from '../types';
-import { Trophy, Calendar, Table, ChevronRight, Loader2, Goal, Star, HandHeart, Activity } from 'lucide-react';
+import { Trophy, Calendar, Users, ArrowRight, ChevronRight, Newspaper, Activity, Globe, Shield, X, Info } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useOrganizationContext } from '../components/OrganizationContext';
 import logoApd from '../assets/logo.png';
 
-interface HeroStat {
-  name: string;
-  team_name: string;
-  team_logo: string;
-  value: number;
-}
-
-const Home = () => {
-  const [activeRoundMatches, setActiveRoundMatches] = useState<Match[]>([]);
-  const [latestResults, setLatestResults] = useState<Match[]>([]);
-  const [latestRoundLabel, setLatestRoundLabel] = useState<string>('');
-  const [topTeams, setTopTeams] = useState<Standing[]>([]);
-  const [champion, setChampion] = useState<{ name: string; logo: string } | null>(null);
-  const [topScorer, setTopScorer] = useState<HeroStat | null>(null);
-  const [topAssist, setTopAssist] = useState<HeroStat | null>(null);
-  const [recentResults, setRecentResults] = useState<Record<string, ('W' | 'D' | 'L')[]>>({});
+export default function Home() {
+  const { organization } = useOrganizationContext();
+  const [news, setNews] = useState<any[]>([]);
+  const [competitions, setCompetitions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedNews, setSelectedNews] = useState<any>(null);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchHomeData();
+  }, []);
 
-  const fetchData = async () => {
-    // 1. Partidas
-    const { data: matches } = await supabase
-      .from('matches')
-      .select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)')
-      .order('date');
-
-    if (matches) {
-      // Ordenação inteligente: grupo (por rodada) -> semi -> 3º lugar -> final
-      const phaseOrder: Record<string, number> = { 'grupo': 1, 'semifinal': 2, 'terceiro_lugar': 3, 'final': 4 };
-      const sortedMatches = [...matches].sort((a, b) => {
-        if (phaseOrder[a.phase] !== phaseOrder[b.phase]) {
-          return phaseOrder[a.phase] - phaseOrder[b.phase];
-        }
-        if (a.phase === 'grupo' && a.round !== b.round) {
-          return (a.round || 0) - (b.round || 0);
-        }
-        // Se mesma fase/rodada, ordena por data e hora
-        const dateA = a.date || '9999-99-99';
-        const dateB = b.date || '9999-99-99';
-        if (dateA !== dateB) return dateA.localeCompare(dateB);
-        
-        const timeA = a.time || '99:99';
-        const timeB = b.time || '99:99';
-        return timeA.localeCompare(timeB);
-      });
-
-      const firstPending = sortedMatches.find(m => m.status === 'agendado');
-      if (firstPending) {
-        // Mostra todos os jogos daquela rodada que ainda estão agendados
-        const roundMatches = sortedMatches.filter(m => 
-          m.phase === firstPending.phase && 
-          m.round === firstPending.round && 
-          m.status === 'agendado'
-        );
-        setActiveRoundMatches(roundMatches);
-      } else {
-        setActiveRoundMatches([]);
-      }
-
-      const phaseOrder2: Record<string, number> = { 'grupo': 1, 'semifinal': 2, 'terceiro_lugar': 3, 'final': 4 };
-      const finished = [...matches].filter(m => m.status === 'finalizado').sort((a, b) => {
-        // Para último resultado, queremos o mais recente (oposto da ordem acima)
-        if (phaseOrder2[b.phase] !== phaseOrder2[a.phase]) return phaseOrder2[b.phase] - phaseOrder2[a.phase];
-        if (b.phase === 'grupo' && b.round !== a.round) return (b.round || 0) - (a.round || 0);
-        
-        const dateA = a.date || '';
-        const dateB = b.date || '';
-        if (dateA !== dateB) return dateB.localeCompare(dateA);
-        
-        const timeA = a.time || '';
-        const timeB = b.time || '';
-        return timeB.localeCompare(timeA);
-      });
-
-      if (finished.length > 0) {
-        const last = finished[0];
-        const roundResults = finished.filter(m => m.phase === last.phase && m.round === last.round);
-        setLatestResults(roundResults);
-        setLatestRoundLabel(last.phase === 'grupo' ? `Rodada ${last.round}` : last.phase.replace('_', ' '));
-      } else {
-        setLatestResults([]);
-        setLatestRoundLabel('');
-      }
-
-      // Campeão: vencedor da final
-      const finalMatch = matches.find(m => m.phase === 'final' && m.status === 'finalizado' && m.winner_id);
-      if (finalMatch) {
-        const isHomeWinner = finalMatch.winner_id === finalMatch.home_team_id;
-        setChampion({
-          name: isHomeWinner ? finalMatch.home_team?.name : finalMatch.away_team?.name,
-          logo: isHomeWinner ? finalMatch.home_team?.logo_url : finalMatch.away_team?.logo_url,
-        });
-      }
-
-      // Últimos jogos por time (grupo apenas, orderáveis por data)
-      const groupFinished = finished.filter(m => m.phase === 'grupo');
-      const resultsMap: Record<string, ('W' | 'D' | 'L')[]> = {};
-      groupFinished.forEach(m => {
-        const addResult = (teamId: string, result: 'W' | 'D' | 'L') => {
-          if (!resultsMap[teamId]) resultsMap[teamId] = [];
-          resultsMap[teamId].push(result);
-        };
-        if (m.home_score === m.away_score) {
-          addResult(m.home_team_id, 'D'); addResult(m.away_team_id, 'D');
-        } else if ((m.home_score ?? 0) > (m.away_score ?? 0)) {
-          addResult(m.home_team_id, 'W'); addResult(m.away_team_id, 'L');
-        } else {
-          addResult(m.home_team_id, 'L'); addResult(m.away_team_id, 'W');
-        }
-      });
-      // Guarda somente os últimos 5
-      Object.keys(resultsMap).forEach(id => {
-        resultsMap[id] = resultsMap[id].slice(-5);
-      });
-      setRecentResults(resultsMap);
+  const fetchHomeData = async () => {
+    setLoading(true);
+    try {
+      const [newsRes, compRes] = await Promise.all([
+        supabase.from('news').select('*').eq('is_published', true).order('is_featured', { ascending: false }).order('created_at', { ascending: false }).limit(6),
+        supabase.from('competitions').select('*, seasons(year, status)').eq('is_active', true)
+      ]);
+      if (newsRes.data) setNews(newsRes.data);
+      if (compRes.data) setCompetitions(compRes.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-
-    // 2. Classificação Automática (Baseada nos jogos buscados acima)
-    if (matches) {
-      const { data: teams } = await supabase.from('teams').select('*');
-      if (teams) {
-        const baseMap: Record<string, Standing> = {};
-        teams.forEach(t => {
-          baseMap[t.id] = { team_id: t.id, played: 0, wins: 0, draws: 0, losses: 0, goals_for: 0, goals_against: 0, goal_diff: 0, points: 0, team: t } as any;
-        });
-
-        const finished = matches.filter(m => m.status === 'finalizado' && m.phase === 'grupo');
-        finished.forEach(m => {
-          const home = baseMap[m.home_team_id];
-          const away = baseMap[m.away_team_id];
-          if (!home || !away) return;
-          home.played++; away.played++;
-          home.goals_for += m.home_score || 0; home.goals_against += m.away_score || 0;
-          away.goals_for += m.away_score || 0; away.goals_against += m.home_score || 0;
-          if (m.home_score === m.away_score) {
-            home.draws++; away.draws++; home.points += 1; away.points += 1;
-          } else if ((m.home_score ?? 0) > (m.away_score ?? 0)) {
-            home.wins++; away.losses++; home.points += 3;
-          } else {
-            away.wins++; home.losses++; away.points += 3;
-          }
-          home.goal_diff = home.goals_for - home.goals_against;
-          away.goal_diff = away.goals_for - away.goals_against;
-        });
-
-        const sorted = Object.values(baseMap).sort((a, b) => {
-          if (b.points !== a.points) return b.points - a.points;
-          if (b.goal_diff !== a.goal_diff) return b.goal_diff - a.goal_diff;
-          return b.goals_for - a.goals_for;
-        });
-        setTopTeams(sorted);
-      }
-    }
-
-    // 3. Artilheiro & Garçom
-    const [{ data: players }, { data: events }] = await Promise.all([
-      supabase.from('players').select('id, name, team_id, team:teams(name, logo_url)'),
-      supabase.from('match_events').select('player_id, assist_player_id, type')
-    ]);
-
-    if (players && events) {
-      const goalsMap: Record<string, number> = {};
-      const assistsMap: Record<string, number> = {};
-
-      events.forEach(ev => {
-        if (ev.type === 'gol' || ev.type === 'gol_penalti') goalsMap[ev.player_id] = (goalsMap[ev.player_id] || 0) + 1;
-        if (ev.assist_player_id) assistsMap[ev.assist_player_id] = (assistsMap[ev.assist_player_id] || 0) + 1;
-      });
-
-      const toStat = (map: Record<string, number>): HeroStat | null => {
-        const topId = Object.entries(map).sort((a, b) => b[1] - a[1])[0]?.[0];
-        if (!topId) return null;
-        const p = players.find(pl => pl.id === topId);
-        if (!p) return null;
-        return { name: p.name, team_name: (p.team as any)?.name || '', team_logo: (p.team as any)?.logo_url || '', value: map[topId] };
-      };
-
-      setTopScorer(toStat(goalsMap));
-      setTopAssist(toStat(assistsMap));
-    }
-
-    setLoading(false);
   };
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
+  const featuredNews = news.find(n => n.is_featured) || news[0];
+  const sideNews = news.filter(n => n.id !== featuredNews?.id);
+
+  if (!organization || loading) {
+    return (
+      <div className="home-loading-compact" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+        <Activity className="animate-spin" color="var(--primary-color)" size={32} />
+      </div>
+    );
+  }
 
   return (
-    <div className="animate-up container">
-      <div className="dashboard-grid">
+    <div className="home-dashboard animate-fade">
+      <div className="dashboard-container">
         
-        {/* ── COLUNA 1: Branding e Atalhos ── */}
-        <section className="hero-branding">
-          <div className="animate-up" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-            <img src={logoApd} alt="Copa do Mundo APD" className="hero-logo-monumental" style={{ width: '180px', height: '180px', margin: '0' }} />
-            <h1 className="hero-title-official" style={{ fontSize: '1.8rem', letterSpacing: '-1px' }}>Copa do Mundo APD</h1>
-            <p className="hero-desc" style={{ textAlign: 'center', maxWidth: '100%' }}>
-              A emoção do futebol amador em um torneio de nível mundial.
-            </p>
-          </div>
-
-          <div className="quick-nav-grid">
-            <Link to="/jogos" className="quick-card">
-              <div className="quick-card-icon" style={{ background: 'rgba(255, 214, 0, 0.1)' }}>
-                <Calendar size={20} color="#b89112" />
+        {/* ROW 1: HERO & STATS */}
+        <div className="dashboard-row top-row">
+          <section className="hero-compact">
+            <div className="hero-brand-inline">
+              <img src={organization.logo_url || logoApd} alt="" className="hero-logo-small" />
+              <div className="hero-text-small">
+                <h1>{organization.name}</h1>
+                <p>Portal Oficial das Competições</p>
               </div>
-              <h4>Jogos</h4>
-              <p>Rodadas, mata-mata e placares.</p>
-            </Link>
-
-            <Link to="/classificacao" className="quick-card">
-              <div className="quick-card-icon" style={{ background: 'rgba(0, 230, 118, 0.1)' }}>
-                <Table size={20} color="#00e676" />
-              </div>
-              <h4>Tabela</h4>
-              <p>Classificação e critérios.</p>
-            </Link>
-
-            <Link to="/artilharia" className="quick-card">
-              <div className="quick-card-icon" style={{ background: 'rgba(10, 25, 47, 0.05)' }}>
-                <Activity size={20} color="var(--primary-dark)" />
-              </div>
-              <h4>Estatísticas</h4>
-              <p>Artilharia e desempenho.</p>
-            </Link>
-          </div>
-        </section>
-
-        {/* ── LINHA 1: Calendário e G-4 ── */}
-        <section className="dashboard-section-row dashboard-main-col">
-          <div className="premium-card" style={{ height: '100%', marginBottom: 0 }}>
-            <div className="premium-card-header">
-              <div className="header-small-label">Calendário</div>
-              <h2 className="header-main-title">
-                {champion ? 'Fim de Jogo' : activeRoundMatches.length > 0 ? 'Próximos Confrontos' : 'Próxima Fase'}
-              </h2>
             </div>
-            <div className="premium-card-body" style={{ padding: '0.5rem' }}>
-               {champion ? (
-                 <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-                    <img src={logoApd} style={{ height: 100, width: 'auto', marginBottom: '1.5rem' }} alt="" />
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                      <img src={champion.logo} style={{ width: 80, height: 80, objectFit: 'contain' }} />
-                      <div style={{ fontWeight: 950, fontSize: '1.5rem', color: 'var(--primary-dark)' }}>{champion.name}</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--primary-color)', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '2px' }}>🏆 Campeão APD 2026 🏆</div>
-                    </div>
-                 </div>
-               ) : activeRoundMatches.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '1px', padding: '12px', borderBottom: '1px solid var(--border-color)' }}>
-                    {activeRoundMatches[0].phase === 'grupo' ? `Rodada ${activeRoundMatches[0].round}` : activeRoundMatches[0].phase.replace('_', ' ')}
+            <div className="hero-quick-actions">
+               <button className="btn-quick" onClick={() => document.getElementById('comp-grid')?.scrollIntoView({ behavior: 'smooth' })}>
+                 <Trophy size={16} /> CAMPEONATOS
+               </button>
+            </div>
+          </section>
+
+          <section className="stats-compact-grid">
+            <div className="mini-stat-card">
+              <Shield size={18} className="icon-green" />
+              <div className="stat-val">32</div>
+              <div className="stat-lbl">TIMES</div>
+            </div>
+            <div className="mini-stat-card">
+              <Users size={18} className="icon-yellow" />
+              <div className="stat-val">450+</div>
+              <div className="stat-lbl">ATLETAS</div>
+            </div>
+            <div className="mini-stat-card">
+              <Activity size={18} className="icon-blue" />
+              <div className="stat-val">1.2k</div>
+              <div className="stat-lbl">JOGOS</div>
+            </div>
+          </section>
+        </div>
+
+        {/* ROW 2: MAIN CONTENT (NEWS & COMPS) */}
+        <div className="dashboard-row main-content-row">
+          
+          {/* COLUNA ESQUERDA: NOTÍCIAS */}
+          <main className="news-bento">
+            <div className="bento-label"><Newspaper size={14} /> DESTAQUES DO PORTAL</div>
+            
+            {featuredNews && (
+              <div className="featured-card-compact" onClick={() => setSelectedNews(featuredNews)}>
+                <div className="featured-img-box">
+                  <img src={featuredNews.image_url} alt="" />
+                  <div className="featured-overlay">
+                    <span className="featured-tag">{featuredNews.category}</span>
+                    <h3>{featuredNews.title}</h3>
                   </div>
-                  {activeRoundMatches.map((m, idx) => (
-                    <Link
-                      to={`/jogos/${m.id}`}
-                      key={m.id}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 56px 1fr',
-                        alignItems: 'center',
-                        padding: '10px 16px',
-                        borderBottom: idx < activeRoundMatches.length - 1 ? '1px solid var(--border-color)' : 'none',
-                        textDecoration: 'none',
-                        gap: '8px',
-                        transition: 'background 0.15s',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-color)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      {/* Home Team: logo + name right-aligned */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', overflow: 'hidden' }}>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {m.home_team?.name.slice(0, 3).toUpperCase()}
-                        </span>
-                        <img src={m.home_team?.logo_url || logoApd} style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} alt="" />
-                      </div>
+                </div>
+              </div>
+            )}
 
-                      {/* Center: date + VS */}
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-                        <span style={{ fontSize: '0.55rem', fontWeight: 800, color: m.status === 'adiado' ? 'var(--error)' : 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
-                          {m.status === 'adiado' ? 'ADIADO' : m.date ? m.date.split('-').reverse().join('/') : '??/??'}
-                        </span>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-subtle)', background: 'var(--bg-color)', padding: '2px 6px', borderRadius: '4px' }}>VS</span>
-                      </div>
+            <div className="news-list-compact">
+              {sideNews.slice(0, 4).map(item => (
+                <div key={item.id} className="news-item-row" onClick={() => setSelectedNews(item)}>
+                  <img src={item.image_url} alt="" />
+                  <div className="news-item-info">
+                    <span className="item-tag">{item.category}</span>
+                    <h4>{item.title}</h4>
+                  </div>
+                  <ChevronRight size={14} className="arrow" />
+                </div>
+              ))}
+            </div>
+          </main>
 
-                      {/* Away Team: name + logo left-aligned */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', overflow: 'hidden' }}>
-                        <img src={m.away_team?.logo_url || logoApd} style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} alt="" />
-                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {m.away_team?.name.slice(0, 3).toUpperCase()}
+          {/* COLUNA DIREITA: CAMPEONATOS */}
+          <aside className="comps-bento" id="comp-grid">
+            <div className="bento-label"><Trophy size={14} /> CAMPEONATOS ATIVOS</div>
+            <div className="comps-list-vertical">
+              {competitions.map(comp => {
+                const activeSeason = comp.seasons?.find((s: any) => s.status === 'active') || comp.seasons?.[0];
+                return (
+                  <Link to={activeSeason ? `/competitions/${comp.slug}/${activeSeason.year}` : '#'} key={comp.id} className="comp-item-card">
+                    <div className="comp-logo-mini">
+                      <img src={comp.logo_url || logoApd} alt="" />
+                    </div>
+                    <div className="comp-details">
+                      <h3>{comp.name}</h3>
+                      <div className="comp-badge-row">
+                        <span className="badge-year">{activeSeason?.year}</span>
+                        <span className={`badge-status ${activeSeason?.status === 'active' ? 'active' : ''}`}>
+                          {activeSeason?.status === 'active' ? '● AO VIVO' : 'ENCERRADO'}
                         </span>
                       </div>
-                    </Link>
-                  ))}
-                </div>
-               ) : (
-                 <div className="empty-msg">Nenhum jogo agendado.</div>
-               )}
+                    </div>
+                    <ArrowRight size={16} className="go-icon" />
+                  </Link>
+                );
+              })}
+              {competitions.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', opacity: 0.5, fontSize: '0.8rem' }}>Nenhum campeonato ativo.</div>}
             </div>
-          </div>
-        </section>
 
-        <aside className="dashboard-section-row dashboard-aside-col">
-          <div className="premium-card" style={{ height: '100%', marginBottom: 0, padding: '0' }}>
-            <div className="premium-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div className="header-small-label">G-4 Zona de Classificação</div>
-              <Link to="/classificacao" style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--primary-color)', textTransform: 'uppercase' }}>Ver Tudo</Link>
+            <div className="about-card-compact" style={{ marginTop: '2rem', padding: '1rem', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', gap: '10px' }}>
+               <Info size={16} style={{ color: '#64748b', marginTop: '2px' }} />
+               <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0, lineHeight: 1.4 }}>{organization.description || "O portal oficial das maiores competições de futebol amador."}</p>
             </div>
-            <div className="premium-card-body" style={{ padding: '0' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
-                <thead>
-                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
-                    <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 900, color: 'var(--text-muted)', width: '40px' }}>#</th>
-                    <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 900, color: 'var(--text-muted)' }}>Equipe</th>
-                    <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 900, color: 'var(--text-muted)', width: '50px' }}>Pts</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {topTeams.slice(0, 4).map((t, idx) => (
-                    <tr key={t.team_id} style={{ borderBottom: idx < 3 ? '1px solid #f1f5f9' : 'none' }}>
-                      <td style={{ padding: '10px 12px', fontWeight: 900, color: idx === 0 ? 'var(--primary-color)' : 'var(--text-main)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <div style={{ width: '4px', height: '12px', background: 'var(--primary-color)', borderRadius: '2px' }} />
-                          {idx + 1}º
-                        </div>
-                      </td>
-                      <td style={{ padding: '10px 12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <img src={t.team?.logo_url} style={{ width: 24, height: 24, objectFit: 'contain' }} alt="" />
-                          <span style={{ fontWeight: 800 }}>{t.team?.name}</span>
-                        </div>
-                      </td>
-                      <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 900, color: 'var(--primary-dark)' }}>{t.points}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </aside>
+          </aside>
 
-        {/* ── LINHA 2: Resultados e Estatísticas ── */}
-        <section className="dashboard-section-row dashboard-results-col">
-          {latestResults.length > 0 && !champion && (
-            <div className="premium-card" style={{ marginBottom: 0 }}>
-              <div className="premium-card-header">
-                <div className="section-label-bar">
-                  <span className="header-main-title">Resultados</span>
-                </div>
-                <span className="header-small-label" style={{ background: 'var(--bg-color)', padding: '2px 8px', borderRadius: '20px' }}>{latestRoundLabel}</span>
-              </div>
-              <div>
-                {latestResults.map((m, idx) => {
-                  const homeWin = m.status === 'finalizado' && ((m.home_score || 0) > (m.away_score || 0) || ((m.home_score === m.away_score) && (m.home_penalties || 0) > (m.away_penalties || 0)));
-                  const awayWin = m.status === 'finalizado' && ((m.away_score || 0) > (m.home_score || 0) || ((m.home_score === m.away_score) && (m.away_penalties || 0) > (m.home_penalties || 0)));
-                  return (
-                    <Link
-                      to={`/jogos/${m.id}`}
-                      key={m.id}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 72px 1fr',
-                        alignItems: 'center',
-                        padding: '10px 16px',
-                        borderBottom: idx < latestResults.length - 1 ? '1px solid var(--border-color)' : 'none',
-                        transition: 'background 0.15s',
-                        textDecoration: 'none',
-                        gap: '8px',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-color)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      {/* Home Team */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', overflow: 'hidden' }}>
-                        <span style={{
-                          fontSize: '0.8rem', fontWeight: homeWin ? 900 : 500,
-                          color: homeWin ? 'var(--primary-dark)' : 'var(--text-subtle)',
-                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                        }}>{m.home_team?.name.slice(0, 3).toUpperCase()}</span>
-                        <img src={m.home_team?.logo_url} style={{ width: 24, height: 24, objectFit: 'contain', flexShrink: 0 }} alt="" />
-                      </div>
-
-                      {/* Score */}
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ fontSize: '1.1rem', fontWeight: 900, color: homeWin ? 'var(--primary-dark)' : 'var(--text-muted)', minWidth: '18px', textAlign: 'right' }}>{m.home_score}</span>
-                          
-                          {m.phase !== 'grupo' && m.home_penalties !== null ? (
-                            <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#64748b', margin: '0 2px', letterSpacing: '0.5px' }}>
-                              ({m.home_penalties}<span style={{ opacity: 0.5, margin: '0 2px' }}>×</span>{m.away_penalties})
-                            </span>
-                          ) : (
-                            <span style={{ color: 'var(--text-subtle)', fontWeight: 700, fontSize: '0.8rem' }}>–</span>
-                          )}
-
-                          <span style={{ fontSize: '1.1rem', fontWeight: 900, color: awayWin ? 'var(--primary-dark)' : 'var(--text-muted)', minWidth: '18px', textAlign: 'left' }}>{m.away_score}</span>
-                        </div>
-                      </div>
-
-                      {/* Away Team */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', overflow: 'hidden' }}>
-                        <img src={m.away_team?.logo_url} style={{ width: 24, height: 24, objectFit: 'contain', flexShrink: 0 }} alt="" />
-                        <span style={{
-                          fontSize: '0.8rem', fontWeight: awayWin ? 900 : 500,
-                          color: awayWin ? 'var(--primary-dark)' : 'var(--text-subtle)',
-                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                        }}>{m.away_team?.name.slice(0, 3).toUpperCase()}</span>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </section>
-
-        <aside className="dashboard-section-row dashboard-stats-col" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {topScorer && (
-            <div className="premium-card">
-              <div className="premium-card-header">
-                <div className="section-label-bar">
-                  <span className="header-main-title">Artilheiro</span>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem' }}>
-                <div style={{ width: 38, height: 38, borderRadius: '10px', background: 'var(--bg-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>⚽</div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 900, fontSize: '0.95rem', color: 'var(--primary-dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topScorer.name}</div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', marginTop: '2px' }}>{topScorer.value} gols • {topScorer.team_name}</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {topAssist && (
-            <div className="premium-card">
-              <div className="premium-card-header">
-                <div className="section-label-bar">
-                  <span className="header-main-title">Assistências</span>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem' }}>
-                <div style={{ width: 38, height: 38, borderRadius: '10px', background: 'var(--bg-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>🎯</div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 900, fontSize: '0.95rem', color: 'var(--primary-dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{topAssist.name}</div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', marginTop: '2px' }}>{topAssist.value} passes • {topAssist.team_name}</div>
-                </div>
-              </div>
-            </div>
-          )}
-        </aside>
-
+        </div>
       </div>
+
+      {/* MODAL DE NOTÍCIA */}
+      {selectedNews && (
+        <div className="modal-overlay" onClick={() => setSelectedNews(null)}>
+           <div className="news-modal-compact" onClick={e => e.stopPropagation()} style={{ background: 'white', width: '90%', maxWidth: '800px', maxHeight: '90vh', borderRadius: '24px', overflowY: 'auto', position: 'relative' }}>
+              <button className="modal-close" onClick={() => setSelectedNews(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(0,0,0,0.5)', color: 'white', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}><X size={20}/></button>
+              <div className="modal-img-box">
+                <div 
+                  className="modal-img-bg"
+                  style={{ backgroundImage: `url(${selectedNews.image_url})` }}
+                />
+                <img src={selectedNews.image_url} alt="" className="modal-img-main" />
+              </div>
+              <div className="modal-content" style={{ padding: '3rem' }}>
+                <span className="modal-tag" style={{ color: 'var(--primary-color)', fontWeight: 950, fontSize: '0.75rem', textTransform: 'uppercase' }}>{selectedNews.category}</span>
+                <h2 style={{ fontSize: '2.5rem', fontWeight: 950, margin: '1rem 0 2rem', lineHeight: 1.1 }}>{selectedNews.title}</h2>
+                <div className="modal-body-text" style={{ lineHeight: 1.8, fontSize: '1.1rem', whiteSpace: 'pre-wrap', color: '#334155' }}>{selectedNews.content}</div>
+              </div>
+           </div>
+        </div>
+      )}
+
+      <style>{`
+        .home-dashboard {
+          background: #f1f5f9;
+          min-height: 100vh;
+          padding: 24px;
+          width: 100%;
+        }
+
+        .dashboard-container {
+          max-width: 1400px;
+          margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+        }
+
+        /* GRID BASE */
+        .dashboard-row {
+          display: grid;
+          gap: 24px;
+          width: 100%;
+        }
+
+        /* HERO + STATS */
+        .top-row {
+          grid-template-columns: 2fr 1fr;
+          align-items: stretch;
+        }
+
+        /* MAIN */
+        .main-content-row {
+          grid-template-columns: 2fr 1fr;
+          align-items: stretch;
+        }
+
+        /* HERO */
+        .hero-compact {
+          background: #0f172a;
+          border-radius: 20px;
+          padding: 24px;
+          color: white;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 20px;
+          width: 100%;
+        }
+        .hero-brand-inline { display: flex; align-items: center; gap: 1rem; }
+        .hero-logo-small { width: 50px; height: 50px; background: white; border-radius: 50%; padding: 5px; }
+        .hero-text-small h1 { font-size: 1.25rem; font-weight: 950; margin: 0; }
+        .hero-text-small p { font-size: 0.75rem; opacity: 0.5; margin: 0; }
+        .btn-quick { background: var(--primary-color); border: none; padding: 0.5rem 1rem; border-radius: 10px; font-weight: 950; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+
+        /* STATS */
+        .stats-compact-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+          width: 100%;
+        }
+        .mini-stat-card { background: white; border-radius: 20px; padding: 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .mini-stat-card .stat-val { font-size: 1.25rem; font-weight: 950; color: #0f172a; margin: 5px 0 2px; }
+        .mini-stat-card .stat-lbl { font-size: 0.6rem; font-weight: 800; color: #64748b; letter-spacing: 1px; }
+        .icon-green { color: #16a34a; } .icon-yellow { color: #d97706; } .icon-blue { color: #0284c7; }
+
+        /* CARDS PADRÃO */
+        .news-bento,
+        .comps-bento {
+          background: white;
+          border-radius: 24px;
+          padding: 24px;
+          width: 100%;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+
+        .bento-label { font-size: 0.65rem; font-weight: 950; color: #64748b; letter-spacing: 1.5px; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px; text-transform: uppercase; }
+
+        /* FEATURED */
+        .featured-card-compact {
+          width: 100%;
+          height: 320px;
+          border-radius: 16px;
+          overflow: hidden;
+          cursor: pointer;
+          margin-bottom: 20px;
+          position: relative;
+        }
+        .featured-img-box { width: 100%; height: 100%; }
+        .featured-img-box img { width: 100%; height: 100%; object-fit: cover; }
+        .featured-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); display: flex; flex-direction: column; justify-content: flex-end; padding: 1.5rem; color: white; }
+        .featured-tag { background: var(--primary-color); color: black; font-weight: 950; font-size: 0.6rem; padding: 3px 8px; border-radius: 5px; width: fit-content; margin-bottom: 0.5rem; }
+        .featured-overlay h3 { font-size: 1.5rem; font-weight: 950; margin: 0; line-height: 1.1; }
+
+        /* LISTA */
+        .news-list-compact {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .news-item-row { display: flex; align-items: center; gap: 1rem; padding: 0.75rem; border-radius: 12px; cursor: pointer; transition: background 0.2s; }
+        .news-item-row:hover { background: #f8fafc; }
+        .news-item-row img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
+        .news-item-info { flex: 1; }
+        .item-tag { font-size: 0.55rem; font-weight: 900; color: var(--primary-color); text-transform: uppercase; }
+        .news-item-info h4 { font-size: 0.85rem; font-weight: 850; margin: 2px 0 0; color: #0f172a; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .news-item-row .arrow { opacity: 0.2; }
+        .news-item-row:hover .arrow { opacity: 1; transform: translateX(3px); color: var(--primary-color); }
+
+        /* COMPS */
+        .comps-list-vertical {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          flex: 1;
+        }
+
+        /* ITEM */
+        .comp-item-card {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 14px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          text-decoration: none;
+          color: inherit;
+          transition: all 0.2s;
+        }
+        .comp-item-card:hover {
+          transform: translateX(4px);
+          border-color: var(--primary-color);
+          background: white;
+        }
+        .comp-logo-mini { width: 40px; height: 40px; background: white; border-radius: 10px; padding: 5px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .comp-logo-mini img { width: 100%; height: 100%; object-fit: contain; }
+        .comp-details h3 { font-size: 0.9rem; font-weight: 950; margin: 0; color: #0f172a; }
+        .comp-badge-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+        .badge-year { font-size: 0.65rem; font-weight: 800; color: #64748b; }
+        .badge-status { font-size: 0.6rem; font-weight: 950; color: #94a3b8; }
+        .badge-status.active { color: #16a34a; }
+        .go-icon { opacity: 0.2; color: var(--primary-color); }
+        .comp-item-card:hover .go-icon { opacity: 1; }
+
+        /* MODAL (corrigido) */
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100vh;
+          background: rgba(0,0,0,0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 999;
+          backdrop-filter: blur(4px);
+        }
+
+        .modal-img-box {
+          position: relative;
+          width: 100%;
+          height: 400px;
+          overflow: hidden;
+          background: #000;
+        }
+
+        .modal-img-bg {
+          position: absolute;
+          inset: 0;
+          background-size: cover;
+          background-position: center;
+          filter: blur(30px) brightness(0.6);
+          transform: scale(1.2);
+          opacity: 0.8;
+        }
+
+        .modal-img-main {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          z-index: 2;
+        }
+
+        /* RESPONSIVO REAL */
+        @media (max-width: 1200px) {
+          .top-row,
+          .main-content-row {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .home-dashboard {
+            padding: 16px;
+          }
+
+          .hero-compact {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+
+          .stats-compact-grid {
+            grid-template-columns: repeat(3, 1fr);
+          }
+
+          .featured-card-compact {
+            height: 240px;
+          }
+        }
+      `}</style>
     </div>
   );
-};
-
-export default Home;
+}

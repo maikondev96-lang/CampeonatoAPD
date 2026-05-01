@@ -1,304 +1,281 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Match, MatchEvent } from '../types';
-import { Calendar, Loader2, ChevronRight, ChevronDown, ChevronUp, AlertCircle, Footprints } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Match, Stage, STAGE_TYPE_LABELS } from '../types';
+import { Calendar, Loader2, Target, Trophy, Clock } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { useSeasonContext } from '../components/SeasonContext';
 
 const Jogos = () => {
+  const { slug, year } = useParams<{ slug: string; year: string }>();
+  const { season, loading: ctxLoading } = useSeasonContext();
   const [jogos, setJogos] = useState<Match[]>([]);
-  const [events, setEvents] = useState<Record<string, MatchEvent[]>>({});
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [stages, setStages] = useState<Stage[]>([]);
   const [loading, setLoading] = useState(true);
-  const currentRoundRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchJogos();
-  }, []);
+    if (season) fetchJogos();
+  }, [season]);
 
   const fetchJogos = async () => {
-    const { data } = await supabase.from('matches').select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)');
-    if (data) {
-      const phaseOrder: Record<string, number> = { 'grupo': 1, 'semifinal': 2, 'terceiro_lugar': 3, 'final': 4 };
-      const sorted = [...data].sort((a, b) => {
-        if (phaseOrder[a.phase] !== phaseOrder[b.phase]) return phaseOrder[a.phase] - phaseOrder[b.phase];
-        if (a.phase === 'grupo' && a.round !== b.round) return (a.round || 0) - (b.round || 0);
-        
-        const dateA = a.date || '9999-99-99';
-        const dateB = b.date || '9999-99-99';
-        if (dateA !== dateB) return dateA.localeCompare(dateB);
-        
-        const timeA = a.time || '99:99';
-        const timeB = b.time || '99:99';
-        return timeA.localeCompare(timeB);
-      });
+    if (!season) return;
+    setLoading(true);
 
+    const { data: stagesData } = await supabase
+      .from('stages')
+      .select('*')
+      .eq('season_id', season.id)
+      .order('order_index');
+    setStages(stagesData || []);
+
+    const { data } = await supabase
+      .from('matches')
+      .select('*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*), stage:stages(id, name, type, order_index)')
+      .eq('season_id', season.id);
+      
+    if (data) {
+      const sorted = [...data].sort((a: any, b: any) => {
+        const orderA = a.stage?.order_index ?? 999;
+        const orderB = b.stage?.order_index ?? 999;
+        if (orderA !== orderB) return orderA - orderB;
+        if (a.round !== b.round) return (a.round || 0) - (b.round || 0);
+        return (a.date || '9999').localeCompare(b.date || '9999');
+      });
       setJogos(sorted);
-      // Find first non-finished match round
-      const firstNotFinished = sorted.find(j => j.status !== 'finalizado');
-      if (firstNotFinished) {
-        // Scroll to that round after render
-        setTimeout(() => {
-          const id = firstNotFinished.phase === 'grupo' ? `round-${firstNotFinished.round}` : `phase-${firstNotFinished.phase}`;
-          const el = document.getElementById(id);
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
-        }, 500);
-      }
     }
     setLoading(false);
   };
 
-  const toggleExpand = async (matchId: string) => {
-    if (expanded === matchId) {
-      setExpanded(null);
-      return;
+  if (loading || ctxLoading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" color="var(--primary-color)" size={32} /></div>;
+
+  const groups: { key: string; label: string; matches: Match[]; isKnockout: boolean }[] = [];
+  const groupStageIds = stages.filter(s => s.type === 'group').map(s => s.id);
+
+  const groupMatches = jogos.filter(j => j.stage_id && groupStageIds.includes(j.stage_id));
+  const roundMap: Record<number, Match[]> = {};
+  groupMatches.forEach(m => {
+    if (!roundMap[m.round]) roundMap[m.round] = [];
+    roundMap[m.round].push(m);
+  });
+  Object.entries(roundMap).sort((a, b) => Number(a[0]) - Number(b[0])).forEach(([round, matches]) => {
+    groups.push({ key: `round-${round}`, label: `RODADA ${round}`, matches, isKnockout: false });
+  });
+
+  const knockoutMatches = jogos.filter(j => j.stage_id && !groupStageIds.includes(j.stage_id));
+  const stageMap: Record<string, Match[]> = {};
+  knockoutMatches.forEach(m => {
+    if (!m.stage_id) return;
+    if (!stageMap[m.stage_id]) stageMap[m.stage_id] = [];
+    stageMap[m.stage_id].push(m);
+  });
+  stages.filter(s => s.type !== 'group').forEach(s => {
+    if (stageMap[s.id]) {
+      groups.push({ key: `stage-${s.id}`, label: (STAGE_TYPE_LABELS[s.type] || s.name).toUpperCase(), matches: stageMap[s.id], isKnockout: true });
     }
-
-    if (!events[matchId]) {
-      // BUG FIX: Supabase não aceita dois aliases para a mesma tabela (players).
-      // Solução: buscar eventos sem join e resolver nomes via lookup em memória.
-      const { data: evData } = await supabase
-        .from('match_events')
-        .select('*')
-        .eq('match_id', matchId)
-        .order('minute');
-
-      if (evData && evData.length > 0) {
-        const playerIds = [...new Set([
-          ...evData.map(e => e.player_id).filter(Boolean),
-          ...evData.map(e => e.assist_player_id).filter(Boolean)
-        ])];
-
-        const { data: pData } = await supabase
-          .from('players')
-          .select('id, name, team_id')
-          .in('id', playerIds);
-
-        const playerMap: Record<string, { id: string; name: string; team_id: string }> = {};
-        (pData || []).forEach(p => { playerMap[p.id] = p; });
-
-        const enriched = evData.map(ev => ({
-          ...ev,
-          player: playerMap[ev.player_id] || null,
-          assist_player: ev.assist_player_id ? playerMap[ev.assist_player_id] || null : null
-        }));
-
-        // Filtrar amarelos se houver vermelho indireto (Regra Brasileirão)
-        const filtered = enriched.filter(ev => {
-          if (ev.type === 'cartao_amarelo') {
-            return !enriched.some(other => 
-              other.player_id === ev.player_id && 
-              other.type === 'cartao_vermelho_indireto'
-            );
-          }
-          return true;
-        });
-
-        setEvents(prev => ({ ...prev, [matchId]: filtered }));
-      } else {
-        setEvents(prev => ({ ...prev, [matchId]: [] }));
-      }
-    }
-    setExpanded(matchId);
-  };
-
-  if (loading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
-
-  const groupedByRound = jogos.reduce((acc, match) => {
-    const r = match.round;
-    if (!acc[r]) acc[r] = [];
-    acc[r].push(match);
-    return acc;
-  }, {} as Record<number, Match[]>);
+  });
 
   return (
-    <div className="animate-fade">
-      <h1 className="section-title"><Calendar /> Calendário de Jogos</h1>
-      
-      {jogos.length === 0 ? <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Nenhum jogo cadastrado</p> : (
-        Object.entries(groupedByRound).map(([round, matches]) => (
-          <div key={round} id={`round-${round}`} style={{ marginBottom: '2.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-              <div style={{ width: '4px', height: '18px', background: 'var(--primary-color)', borderRadius: '2px' }}></div>
-              <h3 style={{ textTransform: 'uppercase', fontSize: '0.85rem', fontWeight: 900, color: 'var(--primary-dark)', letterSpacing: '1px' }}>
-                {matches[0].phase === 'grupo'
-                  ? `Rodada ${round}`
-                  : matches[0].phase === 'terceiro_lugar'
-                    ? 'Disputa de 3º Lugar'
-                    : matches[0].phase === 'semifinal'
-                      ? 'Semifinal'
-                      : matches[0].phase === 'final'
-                        ? 'Final'
-                        : String(matches[0].phase).toUpperCase()}
-              </h3>
-            </div>
-            
-            {matches.map((jogo, idx) => {
-              const phase = (jogo.phase || '').toLowerCase();
-              const getPlaceholder = (isHome: boolean) => {
-                if (phase === 'semifinal') {
-                  if (idx === 0) return isHome ? '1º Colocado' : '4º Colocado';
-                  return isHome ? '2º Colocado' : '3º Colocado';
-                }
-                if (phase === 'terceiro_lugar') return isHome ? 'A definir (Semi 1)' : 'A definir (Semi 2)';
-                if (phase === 'final') return isHome ? 'Vencedor Semi 1' : 'Vencedor Semi 2';
-                return 'A definir';
-              };
+    <div className="page-fluid animate-fade">
+      <div className="jogos-header">
+        <div className="header-badge"><Calendar size={14}/><span>TEMPORADA {year}</span></div>
+        <h1 className="main-title">Calendário de Jogos</h1>
+      </div>
 
-              const homeName = jogo.home_team?.name || getPlaceholder(true);
-              const awayName = jogo.away_team?.name || getPlaceholder(false);
-
-              const homeWin = jogo.status === 'finalizado' && ((jogo.home_score || 0) > (jogo.away_score || 0) || ((jogo.home_score === jogo.away_score) && (jogo.home_penalties || 0) > (jogo.away_penalties || 0)));
-              const awayWin = jogo.status === 'finalizado' && ((jogo.away_score || 0) > (jogo.home_score || 0) || ((jogo.home_score === jogo.away_score) && (jogo.away_penalties || 0) > (jogo.home_penalties || 0)));
-
-              return (
-                <div key={jogo.id} className="card card-hover" style={{ padding: 0, overflow: 'hidden', marginBottom: '0.75rem', border: '1px solid var(--border-color)' }}>
-                  <div 
-                    className="match-item" 
-                    onClick={() => toggleExpand(jogo.id)} 
-                    style={{ 
-                      cursor: 'pointer', 
-                      padding: '0.75rem 1.25rem',
-                      display: 'grid',
-                      gridTemplateColumns: '1fr auto 1fr',
-                      gap: '4px',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-end', minWidth: 0, flex: 1 }}>
-                      <span className={`team-name-premium ${homeWin ? 'is-winner' : awayWin ? 'is-loser' : ''}`} style={{ fontWeight: 800, fontSize: '0.9rem', color: '#020617', textAlign: 'right', flex: 1 }}>
-                        {homeName}
-                      </span>
-                      {jogo.home_team?.logo_url ? (
-                        <img src={jogo.home_team.logo_url} style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} alt="" />
-                      ) : (
-                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#64748b', fontWeight: 900, flexShrink: 0 }}>?</div>
-                      )}
-                    </div>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                      <div className="score-display-premium" style={{ background: 'transparent', boxShadow: 'none', border: 'none', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {jogo.status === 'finalizado' || jogo.status === 'ao_vivo' ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
-                              <span className={`score-number-premium ${homeWin ? 'is-winner' : ''}`}>{jogo.home_score}</span>
-                              {jogo.phase !== 'grupo' && jogo.home_penalties !== null ? (
-                                <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#64748b', margin: '0 4px', letterSpacing: '1px' }}>
-                                  ({jogo.home_penalties} <span style={{ opacity: 0.5, margin: '0 2px' }}>×</span> {jogo.away_penalties})
-                                </span>
-                              ) : (
-                                <span className="score-divider-premium" style={{ opacity: 0.3 }}>-</span>
-                              )}
-                              <span className={`score-number-premium ${awayWin ? 'is-winner' : ''}`}>{jogo.away_score}</span>
-                            </div>
-                          </div>
-                        ) : (
-                          <span style={{ fontSize: '1.1rem', fontWeight: 950, color: jogo.time ? 'var(--primary-color)' : 'var(--text-muted)', opacity: jogo.time ? 1 : 0.4 }}>
-                            {jogo.time ? jogo.time.slice(0, 5) : 'vs'}
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 900, color: jogo.status === 'adiado' ? 'var(--error)' : 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                          {jogo.status === 'adiado' ? '⚠️ Adiado' : jogo.date ? jogo.date.split('-').reverse().join('/') : 'Data a definir'}
-                        </span>
-                        {jogo.status === 'finalizado' ? (
-                           <span style={{ fontSize: '0.6rem', fontWeight: 950, color: 'var(--primary-color)', textTransform: 'uppercase' }}>Encerrado</span>
-                        ) : jogo.status === 'adiado' ? (
-                           <span style={{ fontSize: '0.55rem', fontWeight: 700, color: 'var(--error)', opacity: 0.8 }}>Data a definir</span>
-                        ) : !jogo.time && (
-                           <span style={{ fontSize: '0.55rem', fontWeight: 700, color: 'var(--text-muted)', opacity: 0.7 }}>Horário a definir</span>
-                        )}
-                      </div>
-                    </div>
-  
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-start', minWidth: 0, flex: 1 }}>
-                      {jogo.away_team?.logo_url ? (
-                        <img src={jogo.away_team.logo_url} style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} alt="" />
-                      ) : (
-                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#64748b', fontWeight: 900, flexShrink: 0 }}>?</div>
-                      )}
-                      <span className={`team-name-premium ${awayWin ? 'is-winner' : homeWin ? 'is-loser' : ''}`} style={{ fontWeight: 800, fontSize: '0.9rem', color: '#020617', textAlign: 'left', flex: 1 }}>
-                        {awayName}
-                      </span>
-                    </div>
-                  </div>
-
-                {expanded === jogo.id && (
-                  <div style={{ padding: '1.5rem', background: '#f8fafc', borderTop: '1px solid var(--border-color)', animation: 'fadeIn 0.2s ease-out' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-                      {/* Home Regular Events */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', textAlign: 'right' }}>
-                        {events[jogo.id]?.filter(e => e.type !== 'penalti_convertido' && e.type !== 'penalti_perdido' && e.player?.team_id === jogo.home_team_id).map(e => (
-                          <div key={e.id} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end', fontWeight: 800, color: '#0f172a' }}>
-                            <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', opacity: 0.6 }}>{e.minute ? `${e.minute}'` : ''}</span>
-                            <span>{e.player?.name} <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 600 }}>{e.type === 'gol_penalti' ? '(Pênalti)' : e.type === 'penalti_perdido_tempo_normal' ? '(Pênalti perdido)' : ''}</span></span>
-                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
-                              {(e.type === 'gol' || e.type === 'gol_penalti') && <span style={{ fontSize: '1rem' }}>⚽</span>}
-                              {e.type === 'penalti_perdido_tempo_normal' && <span style={{ fontSize: '1rem' }}>❌</span>}
-                              {e.type === 'cartao_amarelo' && <div style={{ width: 10, height: 14, background: '#ffd600', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
-                              {(e.type === 'cartao_vermelho_direto' || e.type === 'cartao_vermelho_indireto') && <div style={{ width: 10, height: 14, background: '#ff5252', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      {/* Away Regular Events */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                        {events[jogo.id]?.filter(e => e.type !== 'penalti_convertido' && e.type !== 'penalti_perdido' && e.player?.team_id === jogo.away_team_id).map(e => (
-                          <div key={e.id} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, color: '#0f172a' }}>
-                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px' }}>
-                              {(e.type === 'gol' || e.type === 'gol_penalti') && <span style={{ fontSize: '1rem' }}>⚽</span>}
-                              {e.type === 'penalti_perdido_tempo_normal' && <span style={{ fontSize: '1rem' }}>❌</span>}
-                              {e.type === 'cartao_amarelo' && <div style={{ width: 10, height: 14, background: '#ffd600', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
-                              {(e.type === 'cartao_vermelho_direto' || e.type === 'cartao_vermelho_indireto') && <div style={{ width: 10, height: 14, background: '#ff5252', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />}
-                            </span>
-                            <span>{e.player?.name} <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 600 }}>{e.type === 'gol_penalti' ? '(Pênalti)' : e.type === 'penalti_perdido_tempo_normal' ? '(Pênalti perdido)' : ''}</span></span>
-                            <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', opacity: 0.6 }}>{e.minute ? `${e.minute}'` : ''}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'center' }}>
-                      <Link 
-                        to={`/jogos/${jogo.id}`}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          padding: '0.6rem 1.5rem',
-                          background: 'white',
-                          border: '2px solid #0f172a',
-                          borderRadius: '12px',
-                          color: '#0f172a',
-                          fontSize: '0.75rem',
-                          fontWeight: 900,
-                          textTransform: 'uppercase',
-                          textDecoration: 'none',
-                          transition: 'all 0.2s ease',
-                          boxShadow: '0 4px 0 #0f172a'
-                        }}
-                        onMouseOver={e => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 6px 0 #0f172a';
-                        }}
-                        onMouseOut={e => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 4px 0 #0f172a';
-                        }}
-                      >
-                        Ver Lances Completos <span style={{ fontSize: '1rem' }}>›</span>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+      {jogos.length === 0 ? (
+        <div className="empty-state">
+          <p>Nenhum jogo cadastrado nesta temporada.</p>
         </div>
-      ))
-    )}
-  </div>
-);
+      ) : (
+        <div className="jogos-grid-fluid">
+          {groups.map(({ key, label, matches, isKnockout }) => (
+            <div key={key} className="round-section">
+              <div className={`round-pill-header ${isKnockout ? 'knockout' : ''}`}>
+                <div className="pill-content">
+                   {isKnockout ? <Trophy size={14}/> : <Target size={14}/>}
+                   <span>{label}</span>
+                </div>
+              </div>
+              
+              <div className="matches-column-list">
+                {matches.map((jogo, idx) => {
+                  const isLive = jogo.status === 'ao_vivo';
+                  const isFinished = jogo.status === 'finalizado';
+                  const homeWin = isFinished && (jogo.home_score || 0) > (jogo.away_score || 0);
+                  const awayWin = isFinished && (jogo.away_score || 0) > (jogo.home_score || 0);
+                  
+                  const stageType = (jogo as any).stage?.type || '';
+                  const getPlaceholder = (isHome: boolean) => {
+                    if (stageType === 'semi') {
+                      if (idx === 0) return isHome ? '1º Colocado' : '4º Colocado';
+                      return isHome ? '2º Colocado' : '3º Colocado';
+                    }
+                    if (stageType === 'third_place') return isHome ? 'Semi 1 (Perdedor)' : 'Semi 2 (Perdedor)';
+                    if (stageType === 'final') return isHome ? 'Semi 1 (Vencedor)' : 'Semi 2 (Vencedor)';
+                    return 'A DEFINIR';
+                  };
+
+                  const homeName = jogo.home_team?.name || getPlaceholder(true);
+                  const awayName = jogo.away_team?.name || getPlaceholder(false);
+                  
+                  return (
+                    <Link 
+                      key={jogo.id} 
+                      to={`/competitions/${slug}/${year}/jogos/${jogo.id}`}
+                      className={`premium-match-card ${isLive ? 'is-live' : ''} ${isFinished ? 'is-finished' : ''}`}
+                    >
+                      <div className="p-card-body">
+                        {/* TIME CASA */}
+                        <div className="p-team home">
+                          <span className={`p-team-name ${!jogo.home_team ? 'placeholder' : ''}`}>{homeName}</span>
+                          {jogo.home_team?.logo_url ? (
+                            <img src={jogo.home_team.logo_url} alt="" className="p-shield" />
+                          ) : (
+                            <div className="p-empty-logo">?</div>
+                          )}
+                        </div>
+
+                        {/* ÁREA CENTRAL PLACAR */}
+                        <div className="p-score-area">
+                          {isFinished || isLive ? (
+                            <div className="p-score-display">
+                              <span className={`p-num ${homeWin ? 'winner' : ''}`}>{jogo.home_score}</span>
+                              <span className="p-sep">-</span>
+                              <span className={`p-num ${awayWin ? 'winner' : ''}`}>{jogo.away_score}</span>
+                            </div>
+                          ) : (
+                            <div className="p-vs-box">VS</div>
+                          )}
+                          
+                          <div className="p-meta-info">
+                            {isFinished ? (
+                              <span className="p-status-tag finished">ENCERRADO</span>
+                            ) : isLive ? (
+                              <span className="p-status-tag live">AO VIVO</span>
+                            ) : (
+                              <div className="p-datetime">
+                                <span className="p-date">{jogo.date?.split('-').reverse().slice(0, 2).join('/')}</span>
+                                <span className="p-hour">{jogo.time?.slice(0, 5) || 'A DEF.'}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* TIME FORA */}
+                        <div className="p-team away">
+                          {jogo.away_team?.logo_url ? (
+                            <img src={jogo.away_team.logo_url} alt="" className="p-shield" />
+                          ) : (
+                            <div className="p-empty-logo">?</div>
+                          )}
+                          <span className={`p-team-name ${!jogo.away_team ? 'placeholder' : ''}`}>{awayName}</span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <style>{`
+        .jogos-header { margin-bottom: 3rem; }
+        .header-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--surface-alt); border-radius: 50px; color: var(--primary-color); font-size: 0.7rem; font-weight: 950; letter-spacing: 1px; margin-bottom: 1rem; border: 1px solid var(--border-color); }
+        .main-title { font-size: 2.5rem; font-weight: 950; color: var(--text-main); margin: 0; letter-spacing: -1.5px; }
+
+        .jogos-grid-fluid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+          gap: 3rem;
+          align-items: start;
+        }
+
+        .round-section { display: flex; flex-direction: column; gap: 1.5rem; }
+
+        .round-pill-header { display: flex; align-items: center; }
+        .pill-content {
+          display: flex; align-items: center; gap: 10px;
+          background: #f1f5f9; color: #475569;
+          padding: 8px 20px; border-radius: 50px;
+          font-size: 0.75rem; font-weight: 950; letter-spacing: 1.5px;
+          border: 1px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+        .round-pill-header.knockout .pill-content {
+          background: #fefce8; color: #854d0e; border-color: #fef08a;
+        }
+
+        .matches-column-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+        .premium-match-card {
+          background: var(--card-bg);
+          border: 1px solid var(--border-color);
+          border-radius: 20px;
+          padding: 1.25rem 1.5rem;
+          text-decoration: none;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+        }
+        .premium-match-card:hover {
+          transform: translateY(-4px) scale(1.01);
+          border-color: var(--primary-color);
+          box-shadow: 0 12px 30px rgba(0,0,0,0.06);
+        }
+        .premium-match-card.is-live { border-color: var(--error); border-width: 2px; }
+
+        .p-card-body {
+          display: grid;
+          grid-template-columns: 1fr 120px 1fr;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .p-team { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .p-team.home { justify-content: flex-end; text-align: right; }
+        .p-team.away { justify-content: flex-start; text-align: left; }
+
+        .p-shield { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
+        .p-team-name { font-size: 0.95rem; font-weight: 850; color: var(--text-main); line-height: 1.2; }
+        .p-team-name.placeholder { color: var(--text-muted); opacity: 0.5; font-style: italic; font-weight: 700; font-size: 0.8rem; }
+
+        .p-score-area { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 50px; }
+        .p-score-display { display: flex; align-items: center; gap: 12px; }
+        .p-num { font-size: 1.75rem; font-weight: 950; color: var(--text-muted); opacity: 0.5; }
+        .p-num.winner { color: var(--text-main); opacity: 1; }
+        .p-sep { color: var(--border-color); font-weight: 300; font-size: 1rem; }
+
+        .p-vs-box {
+          font-size: 0.75rem; font-weight: 950; color: var(--text-muted); opacity: 0.25;
+          padding: 4px 12px; background: var(--surface-alt); border-radius: 8px; letter-spacing: 2px;
+        }
+
+        .p-meta-info { margin-top: 6px; }
+        .p-status-tag { font-size: 0.6rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px; }
+        .p-status-tag.finished { background: #f1f5f9; color: #64748b; }
+        .p-status-tag.live { background: #fee2e2; color: #ef4444; animation: blink 1.2s infinite; }
+
+        .p-datetime { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+        .p-date { font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+        .p-hour { font-size: 0.8rem; font-weight: 950; color: var(--primary-color); }
+
+        .p-empty-logo { width: 36px; height: 36px; border-radius: 50%; background: var(--surface-alt); border: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--text-muted); }
+
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        .empty-state { text-align: center; padding: 6rem; background: var(--card-bg); border-radius: 24px; border: 1px dashed var(--border-color); }
+        .empty-state p { font-weight: 900; color: var(--text-muted); }
+
+        @media (max-width: 1400px) {
+          .jogos-grid-fluid { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 2rem; }
+        }
+
+        @media (max-width: 900px) {
+          .jogos-grid-fluid { grid-template-columns: 1fr; }
+          .main-title { font-size: 2rem; }
+        }
+      `}</style>
+    </div>
+  );
 };
 
 export default Jogos;

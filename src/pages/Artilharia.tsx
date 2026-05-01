@@ -4,6 +4,7 @@ import {
   Activity, Loader2, Medal, Users, Footprints, 
   ChevronDown, ChevronUp, Shield, Flame, Zap, ScrollText, AlertTriangle 
 } from 'lucide-react';
+import { useSeasonContext } from '../components/SeasonContext';
 
 interface PlayerStat {
   id: string;
@@ -14,6 +15,10 @@ interface PlayerStat {
   assistencias: number;
   yellow_cards: number;
   red_cards: number;
+  position?: string;
+  photo_url?: string;
+  goals_conceded?: number;
+  matches_played?: number;
 }
 
 interface TeamStat {
@@ -27,36 +32,48 @@ interface TeamStat {
 }
 
 const Artilharia = () => {
+  const { season, loading: ctxLoading } = useSeasonContext();
   const [playerStats, setPlayerStats] = useState<PlayerStat[]>([]);
   const [teamStats, setTeamStats] = useState<TeamStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
-  const [activeIndivTab, setActiveIndivTab] = useState<'gols' | 'assistencias'>('gols');
+  const [activeIndivTab, setActiveIndivTab] = useState<'gols' | 'assistencias' | 'goleiros'>('gols');
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    if (season) fetchStats();
+  }, [season]);
 
   const fetchStats = async () => {
+    if (!season) return;
     try {
+      // Get teams enrolled in this season
+      const { data: seasonTeamsData } = await supabase
+        .from('season_teams')
+        .select('team_id, team:teams(*)')
+        .eq('season_id', season.id);
+      const enrolledTeamIds = (seasonTeamsData || []).map(st => st.team_id);
+
       const [
         { data: players },
-        { data: teams },
         { data: matches },
         { data: events }
       ] = await Promise.all([
-        supabase.from('players').select('*, team:teams(*)'),
-        supabase.from('teams').select('*'),
-        supabase.from('matches').select('*').eq('status', 'finalizado'),
-        supabase.from('match_events').select('*')
+        supabase.from('players').select('*, team:teams(*)').in('team_id', enrolledTeamIds),
+        supabase.from('matches').select('*').eq('season_id', season.id).eq('status', 'finalizado'),
+        supabase.from('match_events').select('*, match:matches!inner(season_id)').eq('match.season_id', season.id)
       ]);
+      const teams = (seasonTeamsData || []).map((st: any) => st.team).filter(Boolean);
 
       if (players && teams && matches && events) {
         // --- Process Player Stats ---
         // --- Process Player Stats (Regra Brasileirão) ---
         const pMap: Record<string, PlayerStat> = {};
         players.forEach(p => {
-          pMap[p.id] = { id: p.id, name: p.name, team_name: p.team?.name || 'Sem Time', team_logo: p.team?.logo_url || '', gols: 0, assistencias: 0, yellow_cards: 0, red_cards: 0 };
+          pMap[p.id] = { 
+            id: p.id, name: p.name, team_name: p.team?.name || 'Sem Time', team_logo: p.team?.logo_url || '', 
+            gols: 0, assistencias: 0, yellow_cards: 0, red_cards: 0, position: p.position, photo_url: p.photo_url,
+            goals_conceded: 0, matches_played: 0 
+          };
         });
 
         // 1. Gols e Assistências (Geral)
@@ -105,10 +122,26 @@ const Artilharia = () => {
           if (tMap[m.home_team_id]) {
             tMap[m.home_team_id].goals_scored += m.home_score || 0;
             tMap[m.home_team_id].goals_conceded += m.away_score || 0;
+            
+            // Add matches and goals conceded to goalkeepers
+            players.filter(p => p.team_id === m.home_team_id && p.position === 'GOL').forEach(gk => {
+              if (pMap[gk.id]) {
+                pMap[gk.id].matches_played = (pMap[gk.id].matches_played || 0) + 1;
+                pMap[gk.id].goals_conceded = (pMap[gk.id].goals_conceded || 0) + (m.away_score || 0);
+              }
+            });
           }
           if (tMap[m.away_team_id]) {
             tMap[m.away_team_id].goals_scored += m.away_score || 0;
             tMap[m.away_team_id].goals_conceded += m.home_score || 0;
+            
+            // Add matches and goals conceded to goalkeepers
+            players.filter(p => p.team_id === m.away_team_id && p.position === 'GOL').forEach(gk => {
+              if (pMap[gk.id]) {
+                pMap[gk.id].matches_played = (pMap[gk.id].matches_played || 0) + 1;
+                pMap[gk.id].goals_conceded = (pMap[gk.id].goals_conceded || 0) + (m.home_score || 0);
+              }
+            });
           }
         });
 
@@ -148,7 +181,7 @@ const Artilharia = () => {
           onClick={() => toggleSection(id)}
           style={{ 
             width: '100%', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', 
-            alignItems: 'center', background: 'white', border: 'none', cursor: 'pointer' 
+            alignItems: 'center', background: 'var(--card-bg)', border: 'none', cursor: 'pointer', color: 'inherit' 
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -169,7 +202,7 @@ const Artilharia = () => {
         </button>
 
         {isExpanded && (
-          <div style={{ padding: '0 1.5rem 1.5rem', background: '#f8fafc', borderTop: '2px solid #edf2f7' }}>
+          <div style={{ padding: '0 1.5rem 1.5rem', background: 'var(--surface-alt)', borderTop: '2px solid var(--border-color)' }}>
             {extraHeader}
             <table className="standings-table" style={{ background: 'transparent' }}>
               <thead>
@@ -191,10 +224,18 @@ const Artilharia = () => {
     );
   };
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
+  if (loading || ctxLoading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
 
   const scorers = [...playerStats].sort((a, b) => b.gols - a.gols || b.assistencias - a.assistencias).map(s => ({ ...s, value: s.gols }));
   const assisters = [...playerStats].sort((a, b) => b.assistencias - a.assistencias || b.gols - a.gols).map(s => ({ ...s, value: s.assistencias }));
+  const goalkeepers = [...playerStats]
+    .filter(s => s.position === 'GOL' && (s.matches_played || 0) > 0)
+    .map(s => ({ 
+      ...s, 
+      value: ((s.goals_conceded || 0) / (s.matches_played || 1)).toFixed(2),
+      raw_value: ((s.goals_conceded || 0) / (s.matches_played || 1))
+    }))
+    .sort((a, b) => a.raw_value - b.raw_value);
   const bestAttack = [...teamStats].sort((a, b) => b.goals_scored - a.goals_scored).map(s => ({ ...s, value: s.goals_scored }));
   const bestDefense = [...teamStats].sort((a, b) => a.goals_conceded - b.goals_conceded).map(s => ({ ...s, value: s.goals_conceded }));
   
@@ -211,10 +252,16 @@ const Artilharia = () => {
       <td style={{ fontWeight: 900, color: 'var(--text-muted)' }}>{idx + 1}º</td>
       <td>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {p.team_logo && <img src={p.team_logo} style={{ width: 24, height: 24, objectFit: 'contain' }} />}
+          {p.photo_url ? (
+            <img src={p.photo_url} style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: '50%' }} />
+          ) : p.team_logo ? (
+            <img src={p.team_logo} style={{ width: 36, height: 36, objectFit: 'contain' }} />
+          ) : null}
           <div>
             <div style={{ fontWeight: 800, color: 'var(--primary-dark)' }}>{p.name}</div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700 }}>{p.team_name}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700 }}>
+              {p.team_name} {p.position && `• ${p.position}`}
+            </div>
           </div>
         </div>
       </td>
@@ -260,35 +307,42 @@ const Artilharia = () => {
   );
 
   return (
-    <div className="animate-fade container" style={{ maxWidth: '800px' }}>
-      <h1 className="section-title"><Zap /> Centro de Estatísticas</h1>
+    <div className="page-fluid animate-fade">
+      <h1 className="section-title"><Zap /> Centro de Estatísticas {season && <span style={{ fontSize: '0.6em', color: 'var(--text-muted)', fontWeight: 600 }}>{season.year}</span>}</h1>
       
       <div style={{ marginBottom: '2rem' }}>
         <p style={{ fontWeight: 800, color: 'var(--text-muted)', marginBottom: '1rem', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '1px' }}>Destaques Individuais</p>
         
         <Section 
           id="ranking" 
-          title={activeIndivTab === 'gols' ? 'Artilharia' : 'Assistências'} 
-          icon={activeIndivTab === 'gols' ? () => <span>⚽</span> : Footprints} 
-          color={activeIndivTab === 'gols' ? '#059669' : '#b89112'} 
-          data={activeIndivTab === 'gols' ? scorers : assisters} 
+          title={activeIndivTab === 'gols' ? 'Artilharia' : activeIndivTab === 'assistencias' ? 'Assistências' : 'Melhor Goleiro'} 
+          icon={activeIndivTab === 'gols' ? () => <span>⚽</span> : activeIndivTab === 'assistencias' ? Footprints : Shield} 
+          color={activeIndivTab === 'gols' ? '#059669' : activeIndivTab === 'assistencias' ? '#b89112' : '#3b82f6'} 
+          data={activeIndivTab === 'gols' ? scorers : activeIndivTab === 'assistencias' ? assisters : goalkeepers} 
           renderItem={renderPlayer} 
-          valueLabel={activeIndivTab === 'gols' ? 'Gols' : 'Assists'}
+          valueLabel={activeIndivTab === 'gols' ? 'Gols' : activeIndivTab === 'assistencias' ? 'Assists' : 'Média (Gols/Jogo)'}
           extraHeader={
-            <div className="tabs-container" style={{ marginBottom: '1rem', marginTop: '1rem', width: '100%' }}>
+            <div className="tabs-container" style={{ marginBottom: '1rem', marginTop: '1rem', width: '100%', gap: '4px' }}>
               <button
                 onClick={(e) => { e.stopPropagation(); setActiveIndivTab('gols'); }}
                 className={`tab-btn ${activeIndivTab === 'gols' ? 'active' : ''}`}
-                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem', fontSize: '0.75rem' }}
               >
                 ⚽ GOLS
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); setActiveIndivTab('assistencias'); }}
                 className={`tab-btn ${activeIndivTab === 'assistencias' ? 'active' : ''}`}
-                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem', fontSize: '0.75rem' }}
               >
-                <Footprints size={16} /> ASSISTÊNCIAS
+                <Footprints size={14} /> ASSISTS
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setActiveIndivTab('goleiros'); }}
+                className={`tab-btn ${activeIndivTab === 'goleiros' ? 'active' : ''}`}
+                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem', fontSize: '0.75rem' }}
+              >
+                <Shield size={14} /> GOLEIROS
               </button>
             </div>
           }

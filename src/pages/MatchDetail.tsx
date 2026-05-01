@@ -23,7 +23,7 @@ const MatchDetail = () => {
       // 1. Dados da Partida
       const { data: mData, error: mError } = await supabase
         .from('matches')
-        .select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)')
+        .select('*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*)')
         .eq('id', id)
         .single();
 
@@ -71,7 +71,7 @@ const MatchDetail = () => {
       // 3. Histórico Time da Casa
       const { data: hHistory } = await supabase
         .from('matches')
-        .select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)')
+        .select('*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*)')
         .or(`home_team_id.eq.${mData.home_team_id},away_team_id.eq.${mData.home_team_id}`)
         .eq('status', 'finalizado')
         .neq('id', id)
@@ -82,7 +82,7 @@ const MatchDetail = () => {
       // 4. Histórico Time de Fora
       const { data: aHistory } = await supabase
         .from('matches')
-        .select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)')
+        .select('*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*)')
         .or(`home_team_id.eq.${mData.away_team_id},away_team_id.eq.${mData.away_team_id}`)
         .eq('status', 'finalizado')
         .neq('id', id)
@@ -187,7 +187,7 @@ const MatchDetail = () => {
                     flexDirection: isHome ? 'row' : 'row-reverse',
                     alignItems: 'center',
                     padding: '8px 12px',
-                    borderBottom: '1px solid #f1f5f9',
+                    borderBottom: '1px solid var(--border-color)',
                     fontSize: '0.85rem',
                     gap: '10px'
                   }}>
@@ -212,8 +212,8 @@ const MatchDetail = () => {
                       gap: '4px',
                       overflow: 'hidden'
                     }}>
-                      <span style={{ fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {event.player?.name}
+                      <span style={{ fontWeight: 800, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {event.player?.shirt_number ? `${event.player.shirt_number} - ` : ''}{event.player?.name}
                         {event.type === 'gol_penalti' && (
                           <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600, marginLeft: '4px' }}>(Pênalti)</span>
                         )}
@@ -223,7 +223,7 @@ const MatchDetail = () => {
                       </span>
                       {event.assist_player && (
                         <span style={{ fontSize: '0.75rem', color: '#64748b', whiteSpace: 'nowrap' }}>
-                          ({event.assist_player.name})
+                          ({event.assist_player.shirt_number ? `${event.assist_player.shirt_number} - ` : ''}{event.assist_player.name})
                         </span>
                       )}
                     </div>
@@ -260,7 +260,7 @@ const MatchDetail = () => {
                                 ) : (
                                   <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.5rem', fontWeight: 900 }}>?</div>
                                 )}
-                                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>{event.player?.name || 'Jogador'}</span>
+                                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-main)' }}>{event.player?.shirt_number ? `${event.player.shirt_number} - ` : ''}{event.player?.name || 'Jogador'}</span>
                                 <span style={{ fontSize: '0.75rem', fontWeight: 600, color: statusColor }}>{statusText}</span>
                               </div>
                             ) : <div></div>}
@@ -269,7 +269,7 @@ const MatchDetail = () => {
                             {!isHome ? (
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', paddingLeft: '15px' }}>
                                 <span style={{ fontSize: '0.75rem', fontWeight: 600, color: statusColor }}>{statusText}</span>
-                                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>{event.player?.name || 'Jogador'}</span>
+                                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-main)' }}>{event.player?.shirt_number ? `${event.player.shirt_number} - ` : ''}{event.player?.name || 'Jogador'}</span>
                                 {teamLogo ? (
                                   <img src={teamLogo} style={{ width: 20, height: 20, objectFit: 'contain' }} alt="logo" />
                                 ) : (

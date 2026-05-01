@@ -1,191 +1,245 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Match } from '../types';
-import { Trophy, Loader2, Star, ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Match, Stage } from '../types';
+import { Trophy, Loader2, Star, ChevronRight, Shield, Award, Target } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
 import logoApd from '../assets/logo.png';
+import { useSeasonContext } from '../components/SeasonContext';
 
 const Fases = () => {
+  const { slug, year } = useParams<{ slug: string; year: string }>();
+  const { season, loading: ctxLoading } = useSeasonContext();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchFases();
-  }, []);
+    if (season) fetchFases();
+  }, [season]);
 
   const fetchFases = async () => {
+    if (!season) return;
+    setLoading(true);
+
     const { data } = await supabase.from('matches')
-      .select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)')
-      .in('phase', ['semifinal', 'terceiro_lugar', 'final'])
+      .select('*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*), stage:stages(*)')
+      .eq('season_id', season.id)
       .order('created_at');
-    if (data) setMatches(data);
+    
+    if (data) {
+      const knockoutMatches = data.filter((m: any) => m.stage && m.stage.type !== 'group');
+      setMatches(knockoutMatches);
+    }
     setLoading(false);
   };
 
-  const semiFinals = matches.filter(m => m.phase === 'semifinal');
-  const thirdPlace = matches.find(m => m.phase === 'terceiro_lugar');
-  const final = matches.find(m => m.phase === 'final');
+  const semiFinals = matches.filter((m: any) => m.stage?.type === 'semi');
+  const thirdPlace = matches.find((m: any) => m.stage?.type === 'third_place');
+  const final = matches.find((m: any) => m.stage?.type === 'final');
 
-  const MatchCard = ({ match, placeholderHome, placeholderAway, isFinal = false, isThird = false }: { match?: Match, placeholderHome: string, placeholderAway: string, isFinal?: boolean, isThird?: boolean }) => {
+  const BracketCard = ({ match, placeholderHome, placeholderAway, type }: { match?: Match, placeholderHome: string, placeholderAway: string, type: 'semi' | 'final' | 'third' }) => {
     const isPlaceholder = !match;
-    
-    const content = (
-      <div className={`bracket-match ${!isPlaceholder ? 'card-hover' : ''} ${isFinal ? 'final-card-gold' : ''} ${isThird ? 'bronze-card' : ''}`} style={{ 
-        cursor: isPlaceholder ? 'default' : 'pointer',
-        opacity: isPlaceholder ? 0.7 : 1,
-        borderStyle: isPlaceholder ? 'dashed' : 'solid',
-        width: '100%',
-        margin: '0'
-      }}>
-        {isFinal && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#b89112', fontWeight: 900, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
-            <Trophy size={14} /> Grande Final <Star size={12} fill="#b89112" />
-          </div>
-        )}
+    const isFinished = match?.status === 'finalizado';
+    const homeWin = isFinished && (match.home_score || 0) >= (match.away_score || 0);
+    const awayWin = isFinished && (match.away_score || 0) > (match.home_score || 0);
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginTop: '1rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
-            <div className={`bracket-team ${match?.winner_id === match?.home_team_id ? 'winner' : ''}`} style={{ border: 'none', padding: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
-                {match?.home_team ? (
-                  <img src={match.home_team.logo_url} style={{ width: 24, height: 24, objectFit: 'contain' }} alt="" />
-                ) : <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: 'var(--text-muted)' }}>?</div>}
-                <span className={`team-name-premium ${!isPlaceholder && match.status === 'finalizado' && match.winner_id === match.home_team_id ? 'is-winner' : !isPlaceholder && match.status === 'finalizado' && match.winner_id === match.away_team_id ? 'is-loser' : ''}`} style={{ fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{match?.home_team?.name || placeholderHome}</span>
-              </div>
-            </div>
-            <div className={`bracket-team ${match?.winner_id === match?.away_team_id ? 'winner' : ''}`} style={{ border: 'none', padding: 0, marginTop: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
-                {match?.away_team ? (
-                  <img src={match.away_team.logo_url} style={{ width: 24, height: 24, objectFit: 'contain' }} alt="" />
-                ) : <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: 'var(--text-muted)' }}>?</div>}
-                <span className={`team-name-premium ${!isPlaceholder && match.status === 'finalizado' && match.winner_id === match.away_team_id ? 'is-winner' : !isPlaceholder && match.status === 'finalizado' && match.winner_id === match.home_team_id ? 'is-loser' : ''}`} style={{ fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{match?.away_team?.name || placeholderAway}</span>
-              </div>
-            </div>
-          </div>
+    const cardContent = (
+      <div className={`epic-bracket-card ${type} ${isPlaceholder ? 'is-placeholder' : ''}`}>
+        <div className="card-header">
+           {type === 'final' && <span className="final-label"><Trophy size={14}/> GRANDE FINAL <Star size={10} fill="currentColor"/></span>}
+           {type === 'semi' && <span className="semi-label">SEMIFINAL</span>}
+           {type === 'third' && <span className="third-label">DISPUTA DE 3º LUGAR</span>}
+        </div>
 
-          <div className="score-display-premium" style={{ minWidth: '40px', padding: 0 }}>
-            {!isPlaceholder && (match.status === 'finalizado' || match.status === 'ao_vivo') ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div className="score-wrapper-premium">
-                  {match.home_penalties != null && <span className={`penalty-score-premium ${(match.home_penalties ?? 0) > (match.away_penalties ?? 0) ? 'is-winner' : ''}`} style={{ left: '-25px', top: '2px' }}>({match.home_penalties})</span>}
-                  <span className={`score-number-premium ${match.status === 'finalizado' && (match.home_score || 0) >= (match.away_score || 0) ? 'is-winner' : ''}`}>{match.home_score}</span>
-                </div>
-                <div className="score-wrapper-premium">
-                  {match.away_penalties != null && <span className={`penalty-score-premium ${(match.away_penalties ?? 0) > (match.home_penalties ?? 0) ? 'is-winner' : ''}`} style={{ left: '-25px', top: '2px' }}>({match.away_penalties})</span>}
-                  <span className={`score-number-premium ${match.status === 'finalizado' && (match.away_score || 0) >= (match.home_score || 0) ? 'is-winner' : ''}`}>{match.away_score}</span>
-                </div>
-              </div>
-            ) : <span style={{ opacity: 0.2 }}>-</span>}
+        <div className="card-teams">
+          <div className={`epic-team ${isFinished && !homeWin ? 'loser' : ''}`}>
+            <div className="team-info">
+              {match?.home_team?.logo_url ? (
+                <img src={match.home_team.logo_url} alt="" className="team-logo" />
+              ) : <div className="team-logo-placeholder">?</div>}
+              <span className="team-name">{match?.home_team?.name || placeholderHome}</span>
+            </div>
+            {isFinished && <span className="team-score">{match.home_score}</span>}
+          </div>
+          <div className="team-divider"></div>
+          <div className={`epic-team ${isFinished && !awayWin ? 'loser' : ''}`}>
+            <div className="team-info">
+              {match?.away_team?.logo_url ? (
+                <img src={match.away_team.logo_url} alt="" className="team-logo" />
+              ) : <div className="team-logo-placeholder">?</div>}
+              <span className="team-name">{match?.away_team?.name || placeholderAway}</span>
+            </div>
+            {isFinished && <span className="team-score">{match.away_score}</span>}
           </div>
         </div>
 
-        {!isPlaceholder && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', borderTop: '1px solid #f1f5f9', paddingTop: '0.5rem' }}>
-            <span style={{ fontSize: '0.6rem', fontWeight: 800, color: match.status === 'adiado' ? 'var(--error)' : 'var(--text-muted)', textTransform: 'uppercase' }}>
-              {match.status === 'adiado' ? '⚠️ Adiado' : match.date ? match.date.split('-').reverse().join('/') : 'Data a definir'}
-            </span>
-            <span style={{ fontSize: '0.6rem', fontWeight: 900, color: match.status === 'finalizado' ? 'var(--text-muted)' : match.status === 'adiado' ? 'var(--error)' : 'var(--primary-color)', textTransform: 'uppercase' }}>
-              {match.status === 'finalizado' ? 'Encerrado' : match.status === 'adiado' ? 'Data a definir' : match.time ? match.time.slice(0, 5) : 'Horário a definir'}
-            </span>
+        {!isPlaceholder && !isFinished && (
+          <div className="card-footer">
+            <span className="date-info">{match.date?.split('-').reverse().join('/') || 'A DEFINIR'}</span>
+            <span className="time-info">{match.time?.slice(0, 5) || 'A DEFINIR'}</span>
           </div>
         )}
       </div>
     );
 
-    if (isPlaceholder) return content;
-    return <Link to={`/jogos/${match.id}`} style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>{content}</Link>;
+    if (isPlaceholder) return cardContent;
+    return <Link to={`/competitions/${slug}/${year}/jogos/${match.id}`} className="card-link-wrapper">{cardContent}</Link>;
   };
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
+  if (loading || ctxLoading) return <div className="fases-loader"><Loader2 className="animate-spin" size={48} color="var(--primary-color)"/></div>;
 
   return (
-    <div className="animate-fade container">
-      <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-        <h1 className="section-title" style={{ justifyContent: 'center', marginBottom: '1rem' }}><Trophy /> Fase Final</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '1rem', fontWeight: 500 }}>A jornada rumo ao topo da Copa do Mundo APD.</p>
-      </div>
+    <div className="page-fluid epic-fases-page animate-fade">
+      <div className="epic-background-glow"></div>
+      
+      <header className="epic-header">
+        <div className="header-icon"><Trophy size={32}/></div>
+        <h1 className="epic-title">Fase Final <span>{year}</span></h1>
+        <p className="epic-subtitle">Onde as lendas são escritas e a história é feita.</p>
+      </header>
 
-      <div className="bracket-container">
-        
-        {/* COLUNA ESQUERDA: SEMIFINAL 1 */}
-        <div className="bracket-column" style={{ justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px' }}>Semifinal 1</div>
-          </div>
-          <MatchCard 
-            match={semiFinals[0]} 
-            placeholderHome="1º Colocado" 
-            placeholderAway="4º Colocado" 
-          />
+      <div className="epic-bracket-layout">
+        <div className="bracket-col side-col left">
+          <BracketCard match={semiFinals[0]} placeholderHome="1º COLOCADO" placeholderAway="4º COLOCADO" type="semi" />
         </div>
 
-        {/* COLUNA CENTRAL: GRANDE FINAL E 3º LUGAR */}
-        <div className="bracket-column" style={{ gap: '3rem' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 900, color: '#b89112', textTransform: 'uppercase', letterSpacing: '3px', marginBottom: '1.5rem' }}>O Palco Principal</div>
-            <MatchCard 
-              match={final} 
-              placeholderHome="Vencedor Semi 1" 
-              placeholderAway="Vencedor Semi 2" 
-              isFinal
-            />
-          </div>
-
-          <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#cd7f32', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '1rem' }}>Disputa de 3º Lugar</div>
-            <MatchCard 
-              match={thirdPlace} 
-              placeholderHome="A definir (Semi 1)" 
-              placeholderAway="A definir (Semi 2)" 
-              isThird
-            />
-          </div>
-        </div>
-
-        {/* COLUNA DIREITA: SEMIFINAL 2 */}
-        <div className="bracket-column" style={{ justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px' }}>Semifinal 2</div>
-          </div>
-          <MatchCard 
-            match={semiFinals[1]} 
-            placeholderHome="2º Colocado" 
-            placeholderAway="3º Colocado" 
-          />
-        </div>
-      </div>
-
-      {/* CAMPEÃO CELEBRAÇÃO */}
-      {final?.status === 'finalizado' && final.winner_id && (
-        <div className="premium-card animate-up" style={{ 
-          background: 'linear-gradient(135deg, var(--primary-dark), #1e293b)', 
-          border: 'none',
-          textAlign: 'center', 
-          padding: '4rem 2rem',
-          marginTop: '6rem',
-          color: '#fff'
-        }}>
-          <img src={logoApd} style={{ height: 120, width: 'auto', marginBottom: '3rem', filter: 'drop-shadow(0 0 40px rgba(255, 255, 255, 0.4))' }} alt="" />
-          
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '3rem', flexWrap: 'wrap' }}>
-            <img 
-              src={final.winner_id === final.home_team_id ? final.home_team?.logo_url : final.away_team?.logo_url} 
-              style={{ width: 150, height: 150, objectFit: 'contain', filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.5))' }} 
-              alt=""
-            />
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ color: '#ffd700', fontSize: '1.1rem', fontWeight: 950, letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '1rem' }}>🏆 Grande Campeão 🏆</div>
-              <h1 style={{ fontSize: 'clamp(3rem, 10vw, 5rem)', fontWeight: 950, letterSpacing: '-3px', lineHeight: 0.9, margin: 0 }}>
-                {final.winner_id === final.home_team_id ? final.home_team?.name : final.away_team?.name}
-              </h1>
-              <p style={{ marginTop: '1.5rem', opacity: 0.5, fontSize: '0.9rem', fontWeight: 700 }}>Copa do Mundo APD • Edição 2026</p>
+        <div className="bracket-col center-col">
+          <div className="main-stage">
+            <div className="final-wrapper">
+              <div className="trophy-glow"></div>
+              <BracketCard match={final} placeholderHome="VENCEDOR SEMI 1" placeholderAway="VENCEDOR SEMI 2" type="final" />
+            </div>
+            <div className="third-place-wrapper">
+              <BracketCard match={thirdPlace} placeholderHome="PERDEDOR SEMI 1" placeholderAway="PERDEDOR SEMI 2" type="third" />
             </div>
           </div>
         </div>
+
+        <div className="bracket-col side-col right">
+          <BracketCard match={semiFinals[1]} placeholderHome="2º COLOCADO" placeholderAway="3º COLOCADO" type="semi" />
+        </div>
+      </div>
+
+      {final?.status === 'finalizado' && final.winner_id && (
+        <div className="champion-celebration animate-up">
+           <div className="champion-content">
+              <div className="champion-badge">GRANDE CAMPEÃO</div>
+              <img src={final.winner_id === final.home_team_id ? final.home_team?.logo_url : final.away_team?.logo_url} alt="" className="champion-shield" />
+              <h2 className="champion-name">{final.winner_id === final.home_team_id ? final.home_team?.name : final.away_team?.name}</h2>
+              <div className="celebration-footer">COPA DO MUNDO APD • {year}</div>
+           </div>
+        </div>
       )}
+
+      <style>{`
+        .epic-fases-page {
+          min-height: calc(100vh - 120px);
+          position: relative;
+          overflow: hidden;
+          padding: 1rem 2rem;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+
+        .epic-background-glow {
+          position: absolute;
+          top: 0; left: 50%; transform: translateX(-50%);
+          width: 80%; height: 60%;
+          background: radial-gradient(circle at center, rgba(var(--primary-rgb), 0.08) 0%, transparent 70%);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .epic-header { text-align: center; margin-bottom: 1.5rem; position: relative; z-index: 1; }
+        .header-icon { color: var(--primary-color); margin-bottom: 0.5rem; }
+        .epic-title { font-size: 2.2rem; font-weight: 950; letter-spacing: -1.5px; margin: 0; color: var(--text-main); line-height: 1; }
+        .epic-title span { color: var(--primary-color); font-size: 0.5em; display: inline-block; margin-left: 8px; opacity: 0.8; }
+        .epic-subtitle { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; margin-top: 0.5rem; }
+
+        .epic-bracket-layout {
+          display: grid;
+          grid-template-columns: 1fr 1.4fr 1fr;
+          align-items: center;
+          gap: 1rem;
+          position: relative;
+          z-index: 1;
+          max-width: 1200px;
+          margin: 0 auto;
+          width: 100%;
+        }
+
+        .bracket-col { display: flex; flex-direction: column; justify-content: center; }
+        .main-stage { display: flex; flex-direction: column; gap: 1.5rem; width: 100%; max-width: 400px; margin: 0 auto; }
+        .final-wrapper { position: relative; z-index: 2; transform: scale(1.05); }
+        .trophy-glow {
+          position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+          width: 140%; height: 140%;
+          background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 70%);
+          pointer-events: none;
+        }
+
+        .epic-bracket-card {
+          background: rgba(255,255,255, 0.8);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(0,0,0, 0.05);
+          border-radius: 16px;
+          padding: 1rem;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+          position: relative;
+          transition: all 0.2s ease;
+        }
+        .epic-bracket-card:hover { transform: translateY(-2px); border-color: var(--primary-color); }
+        .epic-bracket-card.final { background: linear-gradient(145deg, #ffffff, #fffdf0); border: 2px solid #fef08a; padding: 1.25rem; }
+        .epic-bracket-card.is-placeholder { border-style: dashed; opacity: 0.6; }
+
+        .card-header { margin-bottom: 0.75rem; display: flex; justify-content: center; }
+        .final-label { font-size: 0.65rem; font-weight: 950; color: #854d0e; letter-spacing: 1.5px; display: flex; align-items: center; gap: 6px; }
+        .semi-label { font-size: 0.55rem; font-weight: 950; color: #64748b; letter-spacing: 1.2px; opacity: 0.5; }
+        .third-label { font-size: 0.55rem; font-weight: 950; color: #9a3412; letter-spacing: 1.2px; opacity: 0.7; }
+
+        .card-teams { display: flex; flex-direction: column; gap: 0.5rem; }
+        .epic-team { display: flex; align-items: center; justify-content: space-between; }
+        .epic-team.loser { opacity: 0.3; filter: grayscale(1); }
+        .team-info { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .team-logo { width: 24px; height: 24px; object-fit: contain; }
+        .team-logo-placeholder { width: 24px; height: 24px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #94a3b8; }
+        .team-name { font-size: 0.85rem; font-weight: 850; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .team-score { font-size: 1.2rem; font-weight: 950; color: var(--text-main); }
+        .final .team-name { font-size: 0.95rem; }
+        .final .team-score { font-size: 1.6rem; color: var(--primary-dark); }
+
+        .team-divider { height: 1px; background: rgba(0,0,0, 0.02); width: 100%; }
+
+        .card-footer { margin-top: 0.6rem; display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0, 0.02); padding-top: 0.5rem; }
+        .date-info { font-size: 0.55rem; font-weight: 800; color: var(--text-muted); }
+        .time-info { font-size: 0.55rem; font-weight: 900; color: var(--primary-color); }
+
+        .champion-celebration {
+          margin-top: 2rem;
+          background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+          border-radius: 20px;
+          padding: 1.5rem;
+          text-align: center;
+          color: white;
+          width: 100%;
+          max-width: 800px;
+          margin-left: auto; margin-right: auto;
+        }
+        .champion-badge { display: inline-block; padding: 4px 12px; background: #eab308; color: #422006; border-radius: 50px; font-weight: 950; font-size: 0.65rem; letter-spacing: 2px; margin-bottom: 1rem; }
+        .champion-shield { width: 80px; height: 80px; object-fit: contain; margin-bottom: 0.75rem; }
+        .champion-name { font-size: 2.2rem; font-weight: 950; letter-spacing: -1.5px; margin: 0; line-height: 1; }
+        .celebration-footer { margin-top: 1rem; opacity: 0.4; font-weight: 800; font-size: 0.65rem; letter-spacing: 1.5px; }
+
+        .fases-loader { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+
+        @media (max-width: 1000px) {
+          .epic-bracket-layout { grid-template-columns: 1fr; gap: 2rem; }
+          .main-stage { order: -1; }
+          .epic-fases-page { overflow-y: auto; height: auto; }
+        }
+      `}</style>
     </div>
   );
 };
 
 export default Fases;
-

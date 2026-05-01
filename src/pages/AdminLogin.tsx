@@ -1,25 +1,29 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Lock, Loader2 } from 'lucide-react';
+import { Shield, Lock, Loader2, Mail } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
 const AdminLogin = () => {
+  const [email, setEmail] = useState('admin@apd.com.br');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    // For a simple app, a hardcoded or env-based password is often used 
-    // when full User management is not required.
-    if (password === 'admin123') {
-      localStorage.setItem('isAdminAuthenticated', 'true');
-      navigate('/admin');
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      setError('E-mail ou senha incorretos.');
     } else {
-      setError('Senha incorreta');
+      navigate('/admin');
     }
     setLoading(false);
   };
@@ -45,6 +49,23 @@ const AdminLogin = () => {
         </div>
 
         <form onSubmit={handleLogin}>
+          <div className="form-group" style={{ textAlign: 'left', marginBottom: '1rem' }}>
+            <label style={{ fontWeight: 900, fontSize: '0.8rem', color: 'var(--primary-dark)' }}>E-MAIL</label>
+            <div style={{ position: 'relative' }}>
+              <Mail 
+                size={18} 
+                style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} 
+              />
+              <input 
+                type="email" 
+                value={email} 
+                onChange={e => setEmail(e.target.value)} 
+                placeholder="admin@apd.com.br" 
+                style={{ paddingLeft: '2.5rem' }}
+                autoFocus
+              />
+            </div>
+          </div>
           <div className="form-group" style={{ textAlign: 'left' }}>
             <label style={{ fontWeight: 900, fontSize: '0.8rem', color: 'var(--primary-dark)' }}>SENHA DE ACESSO</label>
             <div style={{ position: 'relative' }}>
@@ -58,7 +79,6 @@ const AdminLogin = () => {
                 onChange={e => setPassword(e.target.value)} 
                 placeholder="Digite a senha..." 
                 style={{ paddingLeft: '2.5rem' }}
-                autoFocus
               />
             </div>
             {error && <p style={{ color: 'var(--error)', fontSize: '0.8rem', marginTop: '0.5rem' }}>{error}</p>}

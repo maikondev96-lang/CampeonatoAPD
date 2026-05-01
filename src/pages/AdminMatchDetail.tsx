@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Match, MatchEvent, Player } from '../types';
 import { Save, ChevronLeft, Plus, Trash2, Loader2, RotateCcw, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { checkAndGenerateNextStages } from '../services/automation';
 
 const AdminMatchDetail = () => {
   const { id } = useParams();
@@ -54,7 +55,7 @@ const AdminMatchDetail = () => {
     try {
       const { data: mData } = await supabase
         .from('matches')
-        .select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)')
+        .select('*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*)')
         .eq('id', id)
         .single();
 
@@ -70,7 +71,8 @@ const AdminMatchDetail = () => {
         const { data: pData } = await supabase
           .from('players')
           .select('*')
-          .in('team_id', [mData.home_team_id, mData.away_team_id]);
+          .in('team_id', [mData.home_team_id, mData.away_team_id])
+          .order('shirt_number', { ascending: true });
         setPlayers(pData || []);
         await refreshEvents();
       }
@@ -135,17 +137,17 @@ const AdminMatchDetail = () => {
 
     setSaving(true);
     const isPenaltyTied = match?.phase !== 'grupo' && homeScore === awayScore;
-    let winnerId = null;
+    let winnerId: string | null = null;
 
-    if (homeScore > awayScore) winnerId = match?.home_team_id;
-    else if (awayScore > homeScore) winnerId = match?.away_team_id;
+    if (homeScore > awayScore) winnerId = match?.home_team_id || null;
+    else if (awayScore > homeScore) winnerId = match?.away_team_id || null;
     else if (isPenaltyTied) {
       if (homePens === awayPens) {
         alert('Pênaltis empatados! Defina um vencedor nos pênaltis.');
         setSaving(false);
         return;
       }
-      winnerId = homePens > awayPens ? match?.home_team_id : match?.away_team_id;
+      winnerId = homePens > awayPens ? (match?.home_team_id || null) : (match?.away_team_id || null);
     }
 
     const { error } = await supabase.from('matches').update({
@@ -158,38 +160,11 @@ const AdminMatchDetail = () => {
     }).eq('id', id);
 
     if (!error && match) {
-      // Propagação automática para mata-mata
-      if (match.phase === 'semifinal') {
-        const loserId = winnerId === match.home_team_id ? match.away_team_id : match.home_team_id;
-        
-        // Buscar todas as semis para saber a ordem (Semi 1 ou Semi 2)
-        const { data: semis } = await supabase
-          .from('matches')
-          .select('id')
-          .eq('phase', 'semifinal')
-          .order('id', { ascending: true });
-
-        if (semis && semis.length >= 2) {
-          const semiIndex = semis.findIndex(s => s.id === id);
-          if (semiIndex !== -1) {
-            // Atualizar Final
-            const { data: finalMatches } = await supabase.from('matches').select('id').eq('phase', 'final').limit(1);
-            if (finalMatches && finalMatches.length > 0) {
-              const updateFinal: any = {};
-              if (semiIndex === 0) updateFinal.home_team_id = winnerId;
-              else updateFinal.away_team_id = winnerId;
-              await supabase.from('matches').update(updateFinal).eq('id', finalMatches[0].id);
-            }
-
-            // Atualizar 3º Lugar
-            const { data: thirdMatches } = await supabase.from('matches').select('id').eq('phase', 'terceiro_lugar').limit(1);
-            if (thirdMatches && thirdMatches.length > 0) {
-              const updateThird: any = {};
-              if (semiIndex === 0) updateThird.home_team_id = loserId;
-              else updateThird.away_team_id = loserId;
-              await supabase.from('matches').update(updateThird).eq('id', thirdMatches[0].id);
-            }
-          }
+      // Propagação automática para mata-mata ou finais e correções
+      if (match.season_id) {
+        const autoRes = await checkAndGenerateNextStages(match.season_id);
+        if (autoRes.generated) {
+          alert('🎉 Fases seguintes (Mata-Mata ou Finais) foram atualizadas ou geradas automaticamente com base no resultado!');
         }
       }
 
@@ -225,28 +200,9 @@ const AdminMatchDetail = () => {
 
       if (mError) throw new Error('Erro ao resetar partida: ' + mError.message);
 
-      // 2.1. Limpar propagação se for semifinal
-      if (match && match.phase === 'semifinal') {
-        const { data: semis } = await supabase.from('matches').select('id').eq('phase', 'semifinal').order('id', { ascending: true });
-        if (semis) {
-          const semiIndex = semis.findIndex(s => s.id === id);
-          if (semiIndex !== -1) {
-            const { data: finalMatches } = await supabase.from('matches').select('id').eq('phase', 'final').limit(1);
-            if (finalMatches && finalMatches.length > 0) {
-              const updateFinal: any = {};
-              if (semiIndex === 0) updateFinal.home_team_id = null;
-              else updateFinal.away_team_id = null;
-              await supabase.from('matches').update(updateFinal).eq('id', finalMatches[0].id);
-            }
-            const { data: thirdMatches } = await supabase.from('matches').select('id').eq('phase', 'terceiro_lugar').limit(1);
-            if (thirdMatches && thirdMatches.length > 0) {
-              const updateThird: any = {};
-              if (semiIndex === 0) updateThird.home_team_id = null;
-              else updateThird.away_team_id = null;
-              await supabase.from('matches').update(updateThird).eq('id', thirdMatches[0].id);
-            }
-          }
-        }
+      // 2.1. Limpar propagação via automation se existirem finais já configuradas e essa partida foi resetada
+      if (match && match.season_id) {
+        await checkAndGenerateNextStages(match.season_id);
       }
 
       // 3. Recarrega dados
@@ -303,7 +259,7 @@ const AdminMatchDetail = () => {
             </span>
           </div>
           <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-subtle)' }}>
-            {match.phase === 'grupo' ? `Rodada ${match.round}` : match.phase.replace('_', ' ').toUpperCase()}
+            {match.phase === 'grupo' ? `Rodada ${match.round}` : (match.phase?.replace('_', ' ').toUpperCase() || 'MATA-MATA')}
           </span>
         </div>
 
@@ -316,7 +272,7 @@ const AdminMatchDetail = () => {
               <div style={{
                 width: '80px', height: '80px', fontSize: '2.5rem', fontWeight: 900, 
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'var(--primary-dark)', color: '#fff', 
+                background: 'var(--brand-dark)', color: '#fff', 
                 borderRadius: '14px', marginTop: '1rem', marginInline: 'auto'
               }}>
                 {homeScore}
@@ -331,7 +287,7 @@ const AdminMatchDetail = () => {
               <div style={{
                 width: '80px', height: '80px', fontSize: '2.5rem', fontWeight: 900, 
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'var(--primary-dark)', color: '#fff', 
+                background: 'var(--brand-dark)', color: '#fff', 
                 borderRadius: '14px', marginTop: '1rem', marginInline: 'auto'
               }}>
                 {awayScore}
@@ -350,7 +306,7 @@ const AdminMatchDetail = () => {
                     width: '80px', height: '70px', fontSize: '2.5rem', fontWeight: 900, 
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     borderRadius: '12px', border: '3px solid #fbbf24',
-                    background: '#fff', color: '#b45309',
+                    background: 'var(--card-bg)', color: '#b45309',
                     boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
                   }}>
                   {homePens}
@@ -514,7 +470,7 @@ const EventForm = ({ players, onAdd, disabled }: { players: Player[], onAdd: (p:
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
         <select value={pId} onChange={e => setPId(e.target.value)} style={{ flex: 2, fontSize: '0.82rem', padding: '0.4rem 0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
           <option value="">Autor do Lance...</option>
-          {players.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          {players.map(p => <option key={p.id} value={p.id}>{p.shirt_number ? `${p.shirt_number} - ` : ''}{p.name}</option>)}
         </select>
         <select value={type} onChange={e => { setType(e.target.value); if (e.target.value !== 'gol') setAssistId(''); }} style={{ flex: 1, fontSize: '0.82rem', padding: '0.4rem 0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
           <option value="gol">⚽ Gol (Tempo Normal)</option>
@@ -533,14 +489,14 @@ const EventForm = ({ players, onAdd, disabled }: { players: Player[], onAdd: (p:
         <div style={{ marginBottom: '0.5rem' }}>
           <select value={assistId} onChange={e => setAssistId(e.target.value)} style={{ width: '100%', fontSize: '0.82rem', padding: '0.4rem 0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
             <option value="">Assistência (Opcional)...</option>
-            {players.filter(p => p.id !== pId).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {players.filter(p => p.id !== pId).map(p => <option key={p.id} value={p.id}>{p.shirt_number ? `${p.shirt_number} - ` : ''}{p.name}</option>)}
           </select>
         </div>
       )}
 
       <div style={{ display: 'flex', gap: '0.5rem' }}>
         <input type="number" placeholder="Min" value={min} min={1} onChange={e => setMin(e.target.value)} style={{ flex: 1, fontSize: '0.82rem', padding: '0.4rem 0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)' }} />
-        <button type="submit" disabled={disabled} style={{ flex: 2, padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--primary-dark)', color: '#fff', fontWeight: 700, fontSize: '0.8rem', cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
+        <button type="submit" disabled={disabled} style={{ flex: 2, padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--brand-dark)', color: '#fff', fontWeight: 700, fontSize: '0.8rem', cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
           {disabled ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Lançar
         </button>
       </div>
@@ -570,7 +526,7 @@ const EventRow = ({ ev, players, onDelete }: { ev: any, players: Player[], onDel
         </span>
         <div>
           <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary-dark)' }}>
-            {player?.name}
+            {player?.shirt_number ? `${player.shirt_number} - ` : ''}{player?.name}
             {ev.minute && <span style={{ fontWeight: 500, color: 'var(--text-subtle)', marginLeft: '4px' }}>{ev.minute}'</span>}
             {isRedDirect && <span style={{ color: 'var(--error)', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>DIRETO</span>}
             {isRedIndirect && <span style={{ color: 'var(--error)', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>2º AMARELO</span>}
@@ -581,7 +537,7 @@ const EventRow = ({ ev, players, onDelete }: { ev: any, players: Player[], onDel
           </div>
           {assistPlayer && (
             <div style={{ fontSize: '0.7rem', color: 'var(--text-subtle)', marginTop: '1px' }}>
-              🤝 {assistPlayer.name}
+              🤝 {assistPlayer.shirt_number ? `${assistPlayer.shirt_number} - ` : ''}{assistPlayer.name}
             </div>
           )}
         </div>

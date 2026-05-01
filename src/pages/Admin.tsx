@@ -1,229 +1,103 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useSeasonContext } from '../components/SeasonContext';
+import { useOrganizationContext } from '../components/OrganizationContext';
+import { Trophy, Plus, Settings, ChevronRight, Globe, Layers, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Shield, Users, Calendar, Settings, ArrowRight, Trophy, Loader2, CheckCircle2, AlertCircle, Zap } from 'lucide-react';
-import { supabase } from '../supabaseClient';
+import logoApd from '../assets/logo.png';
 
-interface TournamentStatus {
-  total_grupo: number;
-  finished_grupo: number;
-  bracket_gerado: boolean;
-  finais_geradas: boolean;
-}
+export default function AdminHub() {
+  const { organization } = useOrganizationContext();
+  const { competitions, loading } = useSeasonContext();
 
-const Admin = () => {
-  const [status, setStatus] = useState<TournamentStatus | null>(null);
-  const [loadingStatus, setLoadingStatus] = useState(true);
-  const [generatingBracket, setGeneratingBracket] = useState(false);
-  const [bracketResult, setBracketResult] = useState<{ success: boolean; message: string } | null>(null);
-
-  const loadStatus = async () => {
-    setLoadingStatus(true);
-    try {
-      const [{ count: total }, { count: finished }, { data: meta }] = await Promise.all([
-        supabase.from('matches').select('id', { count: 'exact', head: true }).eq('phase', 'grupo'),
-        supabase.from('matches').select('id', { count: 'exact', head: true }).eq('phase', 'grupo').eq('status', 'finalizado'),
-        supabase.from('tournament_meta').select('key, value_bool'),
-      ]);
-
-      const bracketGerado = meta?.find(m => m.key === 'bracket_gerado')?.value_bool ?? false;
-      const finaisGeradas = meta?.find(m => m.key === 'finais_geradas')?.value_bool ?? false;
-
-      setStatus({
-        total_grupo: total ?? 0,
-        finished_grupo: finished ?? 0,
-        bracket_gerado: bracketGerado,
-        finais_geradas: finaisGeradas,
-      });
-    } catch (err) {
-      console.error('Erro ao carregar status do torneio:', err);
-    } finally {
-      setLoadingStatus(false);
-    }
-  };
-
-  useEffect(() => { loadStatus(); }, []);
-
-  const handleGenerateBracket = async () => {
-    setGeneratingBracket(true);
-    setBracketResult(null);
-    try {
-      const { data, error } = await supabase.rpc('generate_knockout_bracket');
-      if (error) throw error;
-      setBracketResult({ success: data?.success, message: data?.message });
-      if (data?.success) await loadStatus();
-    } catch (err: any) {
-      setBracketResult({ success: false, message: err.message || 'Erro ao gerar bracket.' });
-    } finally {
-      setGeneratingBracket(false);
-    }
-  };
-
-  const groupProgress = status ? Math.round((status.finished_grupo / (status.total_grupo || 1)) * 100) : 0;
+  if (loading) return <div style={{ textAlign: 'center', padding: '5rem' }}>Carregando Campeonatos...</div>;
 
   return (
-    <div className="animate-fade" style={{ maxWidth: '960px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ marginBottom: '2.5rem' }}>
-        <h1 className="section-title" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <Settings size={28} /> Painel de Controle
-        </h1>
-        <p style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.95rem' }}>
-          Gestão completa da Copa do Mundo APD.
-        </p>
-      </div>
-
-      {/* Cards de módulos */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem', marginBottom: '2.5rem' }}>
-        <Link to="/admin/times" className="card card-hover" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-color)' }}>
-          <div style={{ background: 'var(--primary-dark)', color: 'white', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Shield size={24} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--primary-dark)', marginBottom: '0.35rem' }}>Times</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, lineHeight: 1.4 }}>Cadastre seleções e gerencie escudos.</p>
-          </div>
-          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary-color)', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase' }}>
-            Acessar <ArrowRight size={14} />
-          </div>
-        </Link>
-
-        <Link to="/admin/jogadores" className="card card-hover" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-color)' }}>
-          <div style={{ background: 'var(--primary-dark)', color: 'white', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Users size={24} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--primary-dark)', marginBottom: '0.35rem' }}>Jogadores</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, lineHeight: 1.4 }}>Gerencie o elenco e vincule atletas.</p>
-          </div>
-          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary-color)', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase' }}>
-            Acessar <ArrowRight size={14} />
-          </div>
-        </Link>
-
-        <Link to="/admin/jogos" className="card card-hover" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1rem', border: '1px solid var(--border-color)' }}>
-          <div style={{ background: 'var(--primary-dark)', color: 'white', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Calendar size={24} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--primary-dark)', marginBottom: '0.35rem' }}>Jogos</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, lineHeight: 1.4 }}>Lance resultados e gerencie o calendário.</p>
-          </div>
-          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary-color)', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase' }}>
-            Acessar <ArrowRight size={14} />
-          </div>
-        </Link>
-      </div>
-
-      {/* ── Automação do Torneio ── */}
-      <div className="premium-card" style={{ marginBottom: '1.5rem' }}>
-        <div className="premium-card-header" style={{ padding: '1rem 1.25rem' }}>
-          <div className="section-label-bar">
-            <span className="header-main-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Zap size={16} color="var(--primary-color)" /> Automação do Torneio
-            </span>
-          </div>
-        </div>
-
-        <div style={{ padding: '1.25rem' }}>
-          {/* Progress da fase de grupos */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Fase de Grupos
-              </span>
-              {loadingStatus ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <span style={{ fontSize: '0.8rem', fontWeight: 900, color: groupProgress === 100 ? 'var(--primary-color)' : 'var(--text-muted)' }}>
-                  {status?.finished_grupo ?? 0} / {status?.total_grupo ?? 0} jogos
-                </span>
-              )}
-            </div>
-            <div style={{ background: 'var(--bg-color)', borderRadius: '4px', height: '6px', overflow: 'hidden' }}>
-              <div style={{
-                background: groupProgress === 100 ? 'var(--primary-color)' : 'var(--secondary-color)',
-                width: `${groupProgress}%`,
-                height: '100%',
-                borderRadius: '4px',
-                transition: 'width 0.4s ease',
-              }} />
-            </div>
-          </div>
-
-          {/* Status flags */}
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 700 }}>
-              {status?.bracket_gerado
-                ? <CheckCircle2 size={16} color="var(--primary-color)" />
-                : <AlertCircle size={16} color="var(--secondary-color)" />}
-              <span style={{ color: status?.bracket_gerado ? 'var(--primary-color)' : 'var(--text-muted)' }}>
-                {status?.bracket_gerado ? 'Semifinais geradas' : 'Semifinais pendentes'}
-              </span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 700 }}>
-              {status?.finais_geradas
-                ? <CheckCircle2 size={16} color="var(--primary-color)" />
-                : <AlertCircle size={16} color="var(--secondary-color)" />}
-              <span style={{ color: status?.finais_geradas ? 'var(--primary-color)' : 'var(--text-muted)' }}>
-                {status?.finais_geradas ? 'Final e 3º lugar gerados' : 'Final e 3º lugar pendentes'}
-              </span>
-            </div>
-          </div>
-
-          {/* Botão de geração */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <button
-              onClick={handleGenerateBracket}
-              disabled={generatingBracket || status?.bracket_gerado === true}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.5rem',
-                background: status?.bracket_gerado ? 'var(--bg-color)' : 'var(--primary-dark)',
-                color: status?.bracket_gerado ? 'var(--text-muted)' : '#fff',
-                border: 'none', borderRadius: '10px',
-                padding: '0.65rem 1.25rem',
-                fontWeight: 800, fontSize: '0.85rem',
-                cursor: generatingBracket || status?.bracket_gerado ? 'not-allowed' : 'pointer',
-                transition: 'opacity 0.2s',
-                opacity: generatingBracket ? 0.7 : 1,
-              }}
-            >
-              {generatingBracket
-                ? <><Loader2 size={16} className="animate-spin" /> Gerando...</>
-                : status?.bracket_gerado
-                  ? <><CheckCircle2 size={16} /> Bracket já gerado</>
-                  : <><Trophy size={16} /> Gerar Mata-Mata</>
-              }
-            </button>
-
-            {bracketResult && (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '0.4rem',
-                fontSize: '0.82rem', fontWeight: 700,
-                color: bracketResult.success ? 'var(--primary-color)' : 'var(--error)',
-              }}>
-                {bracketResult.success
-                  ? <CheckCircle2 size={15} />
-                  : <AlertCircle size={15} />
-                }
-                {bracketResult.message}
-              </div>
-            )}
-          </div>
-
-          <p style={{ marginTop: '1rem', fontSize: '0.72rem', color: 'var(--text-subtle)', fontWeight: 600, lineHeight: 1.5 }}>
-            🤖 <strong>Automático:</strong> o bracket também é gerado automaticamente quando o último jogo da fase de grupos for finalizado. A Final e o 3º Lugar são gerados automaticamente após as duas semifinais serem concluídas.
+    <div className="animate-fade">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+        <div>
+          <h1 className="section-title" style={{ margin: 0 }}>
+             <Globe /> HUB ADMINISTRATIVO
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '4px' }}>
+            {organization?.name} — Gestão Multi-Competição
           </p>
         </div>
+        <Link to="/admin/new-championship" className="btn btn-primary">
+          <Plus size={18} /> Novo Campeonato
+        </Link>
       </div>
 
-      {/* Aviso */}
-      <div style={{ padding: '1rem 1.25rem', background: 'var(--bg-color)', borderRadius: '12px', border: '1px dashed var(--border-color)', textAlign: 'center' }}>
-        <p style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.82rem' }}>
-          Qualquer alteração realizada aqui impacta em tempo real o portal público dos torcedores.
-        </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
+        {competitions.map((comp) => {
+          const activeSeason = comp.seasons?.find(s => s.status === 'active') || comp.seasons?.[0];
+          
+          return (
+            <div key={comp.id} className="premium-card" style={{ padding: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                <div style={{ width: '80px', height: '80px', background: 'var(--surface-alt)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '1.5rem', overflow: 'hidden' }}>
+                  <img src={comp.logo_url || logoApd} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                   <span style={{ 
+                     fontSize: '0.6rem', 
+                     fontWeight: 900, 
+                     padding: '2px 8px', 
+                     borderRadius: '20px', 
+                     background: comp.is_active ? 'rgba(34,197,94,0.1)' : 'rgba(100,116,139,0.1)',
+                     color: comp.is_active ? 'var(--success)' : 'var(--text-muted)',
+                     textTransform: 'uppercase'
+                   }}>
+                     {comp.is_active ? 'Ativo' : 'Arquivado'}
+                   </span>
+                </div>
+              </div>
+
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 950, marginBottom: '0.5rem' }}>{comp.name}</h3>
+              
+              <div style={{ display: 'flex', gap: '1rem', color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '1.5rem' }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Layers size={14} /> Temporada {activeSeason?.year || 'N/A'}
+                 </div>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Activity size={14} /> {comp.type.toUpperCase()}
+                 </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <Link to={`/admin/${comp.slug}/${activeSeason?.year || 2026}`} className="btn btn-primary" style={{ width: '100%', fontSize: '0.8rem' }}>
+                  Gerenciar
+                </Link>
+                <Link to={`/admin/competitions`} className="btn btn-secondary" style={{ width: '100%', fontSize: '0.8rem' }}>
+                  Configurar
+                </Link>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* FOOTER HUB */}
+      <div style={{ marginTop: '4rem', padding: '2rem', background: 'var(--surface-alt)', borderRadius: '16px', textAlign: 'center' }}>
+         <Settings size={32} color="var(--text-muted)" style={{ marginBottom: '1rem', opacity: 0.5 }} />
+         <h4 style={{ fontWeight: 900 }}>Configurações da Organização</h4>
+         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', maxWidth: '400px', margin: '0 auto 1.5rem' }}>
+            Edite a identidade visual, logo e cores globais da {organization?.short_name || 'Associação'}.
+         </p>
+         <button className="btn btn-secondary">Acessar Configurações Globais</button>
+      </div>
+
+      <div style={{ marginTop: '2rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+         <Link to="/admin/news" className="premium-card card-hover" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ width: '40px', height: '40px', background: 'var(--primary-light)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-dark)' }}>
+               <Globe size={20} />
+            </div>
+            <div style={{ flex: 1 }}>
+               <h4 style={{ fontWeight: 900, fontSize: '0.9rem' }}>Motor de Notícias (GE)</h4>
+               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Publique destaques e novidades na Home.</p>
+            </div>
+            <ChevronRight size={16} color="var(--text-muted)" />
+         </Link>
       </div>
     </div>
   );
-};
-
-export default Admin;
+}

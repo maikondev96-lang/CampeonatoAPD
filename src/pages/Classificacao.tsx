@@ -1,75 +1,91 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Standing } from '../types';
 import { Table, Loader2 } from 'lucide-react';
+import { useSeasonContext } from '../components/SeasonContext';
 
 const Classificacao = () => {
+  const { season, loading: ctxLoading } = useSeasonContext();
   const [standings, setStandings] = useState<Standing[]>([]);
   const [recentResults, setRecentResults] = useState<Record<string, ('W' | 'D' | 'L')[]>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchStandings();
-  }, []);
+    if (season) fetchStandings();
+  }, [season]);
 
   const fetchStandings = async () => {
+    if (!season) return;
+    setLoading(true);
+
     const [standingsRes, matchesRes, teamsRes] = await Promise.all([
-      supabase.from('standings').select('*, team:teams(*)'),
+      supabase.from('standings').select('*, team:teams(*)').eq('season_id', season.id),
       supabase.from('matches')
-        .select('home_team_id, away_team_id, home_score, away_score, phase, status')
+        .select('home_team_id, away_team_id, home_score, away_score, stage_id, status')
+        .eq('season_id', season.id)
         .eq('status', 'finalizado')
-        .eq('phase', 'grupo')
         .order('date', { ascending: true }),
-      supabase.from('teams').select('*').order('name')
+      supabase.from('season_teams')
+        .select('team:teams(*)')
+        .eq('season_id', season.id)
     ]);
+
+    // Get group stage IDs
+    const { data: stages } = await supabase
+      .from('stages')
+      .select('id')
+      .eq('season_id', season.id)
+      .eq('type', 'group');
+    const groupStageIds = (stages || []).map(s => s.id);
 
     let finalStandings: Standing[] = [];
 
     if (teamsRes.data) {
-      // Cria base com todos os times
       const baseMap: Record<string, Standing> = {};
-      teamsRes.data.forEach(t => {
+      teamsRes.data.forEach((st: any) => {
+        const t = st.team;
+        if (!t) return;
         baseMap[t.id] = {
           team_id: t.id,
+          season_id: season.id,
           played: 0, wins: 0, draws: 0, losses: 0,
           goals_for: 0, goals_against: 0, goal_diff: 0,
           points: 0,
           team: t
-        } as any;
+        };
       });
 
-      // Calcula pontos a partir dos jogos finalizados
-      if (matchesRes.data) {
-        matchesRes.data.forEach(m => {
-          const home = baseMap[m.home_team_id];
-          const away = baseMap[m.away_team_id];
-          if (!home || !away) return;
+      // Filter only group stage matches
+      const groupMatches = (matchesRes.data || []).filter(m =>
+        groupStageIds.includes(m.stage_id)
+      );
 
-          home.played++;
-          away.played++;
-          home.goals_for += m.home_score || 0;
-          home.goals_against += m.away_score || 0;
-          away.goals_for += m.away_score || 0;
-          away.goals_against += m.home_score || 0;
+      groupMatches.forEach(m => {
+        const home = baseMap[m.home_team_id];
+        const away = baseMap[m.away_team_id];
+        if (!home || !away) return;
 
-          if (m.home_score === m.away_score) {
-            home.draws++;
-            away.draws++;
-            home.points += 1;
-            away.points += 1;
-          } else if ((m.home_score ?? 0) > (m.away_score ?? 0)) {
-            home.wins++;
-            away.losses++;
-            home.points += 3;
-          } else {
-            away.wins++;
-            home.losses++;
-            away.points += 3;
-          }
-          home.goal_diff = home.goals_for - home.goals_against;
-          away.goal_diff = away.goals_for - away.goals_against;
-        });
-      }
+        home.played++;
+        away.played++;
+        home.goals_for += m.home_score || 0;
+        home.goals_against += m.away_score || 0;
+        away.goals_for += m.away_score || 0;
+        away.goals_against += m.home_score || 0;
+
+        if (m.home_score === m.away_score) {
+          home.draws++; away.draws++;
+          home.points += 1; away.points += 1;
+        } else if ((m.home_score ?? 0) > (m.away_score ?? 0)) {
+          home.wins++; away.losses++;
+          home.points += 3;
+        } else {
+          away.wins++; home.losses++;
+          away.points += 3;
+        }
+        home.goal_diff = home.goals_for - home.goals_against;
+        away.goal_diff = away.goals_for - away.goals_against;
+      });
 
       finalStandings = Object.values(baseMap).sort((a, b) => {
         if (b.points !== a.points) return b.points - a.points;
@@ -77,14 +93,10 @@ const Classificacao = () => {
         if (b.goals_for !== a.goals_for) return b.goals_for - a.goals_for;
         return (a.team?.name || '').localeCompare(b.team?.name || '');
       });
-    }
-    
-    setStandings(finalStandings);
 
-    // Calcula últimos jogos por time
-    if (matchesRes.data) {
+      // Recent results
       const resultsMap: Record<string, ('W' | 'D' | 'L')[]> = {};
-      matchesRes.data.forEach(m => {
+      groupMatches.forEach(m => {
         const addResult = (teamId: string, result: 'W' | 'D' | 'L') => {
           if (!resultsMap[teamId]) resultsMap[teamId] = [];
           resultsMap[teamId].push(result);
@@ -99,22 +111,23 @@ const Classificacao = () => {
       });
       setRecentResults(resultsMap);
     }
-
+    
+    setStandings(finalStandings);
     setLoading(false);
   };
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
+  if (loading || ctxLoading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
 
   const dotColor = (r: 'W' | 'D' | 'L') =>
     r === 'W' ? '#059669' : r === 'L' ? '#dc2626' : '#94a3b8';
 
   return (
-    <div className="animate-fade">
-      <h1 className="section-title"><Table /> Classificação</h1>
+    <div className="page-fluid animate-fade">
+      <h1 className="section-title"><Table /> Classificação {season && <span style={{ fontSize: '0.6em', color: 'var(--text-muted)', fontWeight: 600 }}>{season.year}</span>}</h1>
 
       <div className="card" style={{ padding: 0, overflowX: 'auto', border: '2px solid var(--border-color)', WebkitOverflowScrolling: 'touch' }}>
         {standings.length === 0 && !loading ? (
-          <p style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontWeight: 700 }}>Carregando dados da tabela...</p>
+          <p style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontWeight: 700 }}>Nenhum dado de classificação disponível.</p>
         ) : (
           <table className="standings-table" style={{ fontSize: undefined }}>
             <thead>
@@ -149,7 +162,7 @@ const Classificacao = () => {
                       </span>
                     </td>
                     <td>
-                      <div className="team-cell">
+                      <Link to={`/time/${s.team_id}`} className="team-cell" style={{ textDecoration: 'none', cursor: 'pointer' }}>
                         <span style={{
                           width: '6px', height: '24px',
                           background: idx < 4 ? 'var(--primary-color)' : '#94a3b8',
@@ -157,7 +170,7 @@ const Classificacao = () => {
                         }}></span>
                         <img src={s.team?.logo_url} className="team-logo" style={{ width: 32, height: 32 }} alt="" />
                         <span style={{ fontWeight: 950, fontSize: '1rem', color: 'var(--primary-dark)' }}>{s.team?.name}</span>
-                      </div>
+                      </Link>
                     </td>
                     <td className="number-cell points" style={{ fontSize: '1.2rem', fontWeight: 950 }}>{s.points}</td>
                     <td className="number-cell">{s.played}</td>

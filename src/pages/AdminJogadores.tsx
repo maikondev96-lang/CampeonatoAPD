@@ -1,30 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { Team, Player } from '../types';
-import { Plus, Users, Trash2, Loader2, Edit2, Save, ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { Plus, Users, Trash2, Loader2, Edit2, Save, ChevronDown, ChevronUp, Search, Upload, Image as ImageIcon, X } from 'lucide-react';
+import { useSeasonContext } from '../components/SeasonContext';
 
 const AdminJogadores = () => {
+  const { season, loading: ctxLoading } = useSeasonContext();
   const [times, setTimes] = useState<Team[]>([]);
   const [jogadores, setJogadores] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
+  
   const [name, setName] = useState('');
   const [teamId, setTeamId] = useState('');
+  const [shirtNumber, setShirtNumber] = useState('');
+  const [age, setAge] = useState('');
+  const [position, setPosition] = useState<any>('');
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (season) fetchData();
+  }, [season]);
 
   const fetchData = async () => {
-    const [tRes, jRes] = await Promise.all([
-      supabase.from('teams').select('*').order('name'),
-      supabase.from('players').select('*, teams(name)').order('name')
+    if (!season) return;
+    setLoading(true);
+
+    const [stRes, jRes] = await Promise.all([
+      supabase.from('season_teams').select('team:teams(*)').eq('season_id', season.id),
+      supabase.from('players').select('*, teams(name)').order('shirt_number', { ascending: true })
     ]);
     
-    if (!tRes.error) setTimes(tRes.data || []);
+    if (!stRes.error && stRes.data) {
+      setTimes(stRes.data.map(st => st.team as unknown as Team).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name)));
+    }
     if (!jRes.error) setJogadores(jRes.data || []);
     setLoading(false);
   };
@@ -34,6 +49,11 @@ const AdminJogadores = () => {
     setEditingId(j.id);
     setName(j.name);
     setTeamId(j.team_id);
+    setShirtNumber(j.shirt_number?.toString() || '');
+    setAge(j.age?.toString() || '');
+    setPosition(j.position || '');
+    setPreviewUrl(j.photo_url || '');
+    setFile(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -41,39 +61,81 @@ const AdminJogadores = () => {
     setEditingId(null);
     setName('');
     setTeamId('');
+    setShirtNumber('');
+    setAge('');
+    setPosition('');
+    setPreviewUrl('');
+    setFile(null);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !teamId) return alert('Preencha o nome e selecione o time');
+    if (!name || !teamId || !shirtNumber) return alert('Apelido, Time e Número são obrigatórios.');
     
     setSaving(true);
     
-    if (editingId) {
-      const { error } = await supabase.from('players').update({ name, team_id: teamId }).eq('id', editingId);
-      if (error) alert('Erro ao atualizar jogador');
-      else {
-        setEditingId(null);
-        setName('');
-        setTeamId('');
-        fetchData();
+    try {
+      let finalPhotoUrl = previewUrl || '';
+
+      if (file) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `player-photos/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('logos')
+          .upload(filePath, file);
+
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('logos')
+            .getPublicUrl(filePath);
+          finalPhotoUrl = publicUrl;
+        }
       }
-    } else {
-      // Suporte para múltiplos nomes separados por vírgula ou nova linha
-      const names = name.split(/[,\n]/).map(n => n.trim()).filter(n => n !== '');
-      
-      if (names.length === 0) return alert('Insira ao menos um nome');
-      
-      const newPlayers = names.map(n => ({ name: n, team_id: teamId }));
-      
-      const { error } = await supabase.from('players').insert(newPlayers);
-      if (error) alert('Erro ao salvar jogadores');
-      else {
-        setName('');
-        fetchData();
+
+      const pAge = age ? parseInt(age) : null;
+      const pNum = parseInt(shirtNumber);
+
+      if (editingId) {
+        const { error } = await supabase.from('players').update({ 
+          name, 
+          team_id: teamId,
+          shirt_number: pNum,
+          age: pAge,
+          position: position || null,
+          photo_url: finalPhotoUrl,
+          updated_at: new Date().toISOString()
+        }).eq('id', editingId);
+        
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('players').insert([{ 
+          name, 
+          team_id: teamId,
+          shirt_number: pNum,
+          age: pAge,
+          position: position || null,
+          photo_url: finalPhotoUrl
+        }]);
+        
+        if (error) throw error;
       }
+      cancelEdit();
+      fetchData();
+    } catch (err: any) {
+      alert(err.message || 'Erro ao salvar jogador');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
@@ -83,10 +145,9 @@ const AdminJogadores = () => {
     if (!error) fetchData();
   };
 
-  // Group players by team
   const groupedPlayers = times.map(time => ({
     ...time,
-    players: jogadores.filter(j => j.team_id === time.id)
+    players: jogadores.filter(j => j.team_id === time.id).sort((a, b) => (a.shirt_number || 0) - (b.shirt_number || 0))
   })).filter(t => 
     searchTerm === '' || 
     t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -97,36 +158,65 @@ const AdminJogadores = () => {
     <div className="animate-fade" style={{ maxWidth: '900px', margin: '0 auto' }}>
       <h1 className="section-title"><Users /> Gerenciar Jogadores</h1>
       
-      {/* Formulário */}
       <form className="card" onSubmit={handleSave} style={{ marginBottom: '3rem', border: editingId ? '2px solid var(--primary-color)' : '1px solid var(--border-color)' }}>
         <h3 style={{ marginBottom: '1.5rem', fontSize: '1.1rem', fontWeight: 950, color: 'var(--primary-dark)' }}>
           {editingId ? '📝 Editar Jogador' : '➕ Novo Jogador'}
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
-          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-            <label>{editingId ? 'Nome do Jogador' : 'Nome(s) do(s) Jogador(es)'}</label>
-            {editingId ? (
-              <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Pelé" />
-            ) : (
-              <textarea 
-                value={name} 
-                onChange={e => setName(e.target.value)} 
-                placeholder="Insira os nomes separados por vírgula ou pule uma linha. Ex: Pelé, Ronaldo, Neymar"
-                style={{ width: '100%', minHeight: '100px', padding: '0.8rem', borderRadius: '8px', border: '2px solid var(--border-color)', fontWeight: 700, resize: 'vertical' }}
-              />
-            )}
-            {!editingId && <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem', fontWeight: 800 }}>DICA: Você pode colar uma lista inteira de nomes aqui.</p>}
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+          <div className="form-group">
+            <label>Apelido (Nome na Camisa) *</label>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Zé" required />
           </div>
           <div className="form-group">
-            <label>Time</label>
-            <select value={teamId} onChange={e => setTeamId(e.target.value)}>
+            <label>Número da Camisa *</label>
+            <input type="number" value={shirtNumber} onChange={e => setShirtNumber(e.target.value)} placeholder="10" required />
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+          <div className="form-group">
+            <label>Time *</label>
+            <select value={teamId} onChange={e => setTeamId(e.target.value)} required>
               <option value="">Selecione um time</option>
               {times.map(t => (
                 <option key={t.id} value={t.id}>{t.name}</option>
               ))}
             </select>
           </div>
+          <div className="form-group">
+            <label>Posição</label>
+            <select value={position} onChange={e => setPosition(e.target.value)}>
+              <option value="">Selecione...</option>
+              <option value="GOL">Goleiro (GOL)</option>
+              <option value="ZAG">Zagueiro (ZAG)</option>
+              <option value="LAT">Lateral (LAT)</option>
+              <option value="VOL">Volante (VOL)</option>
+              <option value="MEI">Meio-Campo (MEI)</option>
+              <option value="ATA">Atacante (ATA)</option>
+            </select>
+          </div>
         </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+          <div className="form-group">
+            <label>Idade</label>
+            <input type="number" value={age} onChange={e => setAge(e.target.value)} placeholder="Ex: 25" />
+          </div>
+          <div className="form-group">
+            <label>Foto do Jogador</label>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              {previewUrl && (
+                <img src={previewUrl} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: '50%' }} alt="Preview" />
+              )}
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" style={{ display: 'none' }} />
+              <button type="button" className="btn btn-secondary" onClick={() => fileInputRef.current?.click()} style={{ fontSize: '0.8rem' }}>
+                <Upload size={16} /> Escolher Foto
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button className="btn btn-primary" style={{ flex: 2, justifyContent: 'center', height: '48px' }} disabled={saving}>
             {saving ? <Loader2 className="animate-spin" /> : editingId ? <Save size={18} /> : <Plus />} 
@@ -150,8 +240,10 @@ const AdminJogadores = () => {
         />
       </div>
 
-      {loading ? (
+      {loading || ctxLoading ? (
         <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>
+      ) : !season ? (
+        <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)' }}>Nenhuma temporada ativa selecionada.</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {groupedPlayers.map(time => (
@@ -160,7 +252,7 @@ const AdminJogadores = () => {
                 onClick={() => setExpandedTeamId(expandedTeamId === time.id ? null : time.id)}
                 style={{ 
                   width: '100%', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', 
-                  alignItems: 'center', background: 'white', border: 'none', cursor: 'pointer' 
+                  alignItems: 'center', background: 'var(--card-bg)', border: 'none', cursor: 'pointer', color: 'inherit' 
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -174,17 +266,21 @@ const AdminJogadores = () => {
               </button>
 
               {expandedTeamId === time.id && (
-                <div style={{ padding: '0.5rem 1.5rem 1.5rem', background: '#f8fafc', borderTop: '1px solid var(--border-color)' }}>
+                <div style={{ padding: '0.5rem 1.5rem 1.5rem', background: 'var(--surface-alt)', borderTop: '1px solid var(--border-color)' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '0.75rem', marginTop: '1rem' }}>
                     {time.players.length === 0 ? (
                       <p style={{ gridColumn: '1/-1', textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontWeight: 700 }}>Nenhum jogador neste time</p>
                     ) : (
                       time.players.map(j => (
                         <div key={j.id} style={{ 
-                          background: 'white', padding: '0.75rem 1rem', borderRadius: '10px', 
+                          background: 'var(--card-bg)', padding: '0.75rem 1rem', borderRadius: '10px', 
                           border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' 
                         }}>
-                          <span style={{ fontWeight: 800, color: 'var(--primary-dark)' }}>{j.name}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontWeight: 900, color: 'var(--primary-dark)' }}>{j.shirt_number || '-'}</span>
+                            <span style={{ fontWeight: 800, color: 'var(--text-main)' }}>{j.name}</span>
+                            {j.position && <span style={{ fontSize: '0.7rem', background: 'var(--bg-color)', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>{j.position}</span>}
+                          </div>
                           <div style={{ display: 'flex', gap: '0.25rem' }}>
                             <button onClick={(e) => handleEdit(e, j)} style={{ color: 'var(--primary-dark)', background: 'none', padding: '6px' }}>
                               <Edit2 size={16} />
