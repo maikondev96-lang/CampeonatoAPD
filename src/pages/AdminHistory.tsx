@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { History as HistoryIcon, Plus, Save, Trash2, Loader2, Edit, AlertCircle, Trophy, Star } from 'lucide-react';
+import { History as HistoryIcon, Plus, Save, Trash2, Loader2, Edit, AlertCircle, Trophy, Star, Clock } from 'lucide-react';
 
 export default function AdminHistory() {
   const [activeTab, setActiveTab] = useState<'timeline' | 'champions'>('timeline');
