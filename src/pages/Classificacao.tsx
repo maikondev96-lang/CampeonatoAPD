@@ -123,9 +123,12 @@ const Classificacao = () => {
       });
       setRecentResults(resultsMap);
     }
-    
-    setStandings(finalStandings);
-    setLoading(false);
+      setStandings(finalStandings);
+    } catch (error) {
+      console.error("Error fetching standings:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading || ctxLoading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
