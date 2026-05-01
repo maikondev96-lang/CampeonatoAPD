@@ -56,7 +56,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Dark Theme ── */
+/* â”€â”€ Dark Theme â”€â”€ */
 [data-theme="dark"] {
   --bg-color: #060d18;
   --card-bg: #0d1626;
@@ -104,7 +104,13 @@ button {
   font-family: inherit;
 }
 
-/* ─────────── LAYOUT BASE (FULL WIDTH) ─────────── */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ LAYOUT BASE (FULL WIDTH) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 html, body, #root {
   width: 100%;
   min-height: 100%;
@@ -146,7 +152,7 @@ main {
 .h-auto { height: auto; }
 .object-cover { object-fit: cover; }
 
-/* ─────────── NAVBAR ─────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ NAVBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .navbar {
   background-color: #0f172a;
   padding: 0;
@@ -493,10 +499,12 @@ main {
 .card {
   background: var(--card-bg);
   border-radius: var(--radius);
-  padding: 1.25rem;
+  padding: 1rem; /* 16px */
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Quick Nav Cards - compact horizontal rows */
@@ -1403,7 +1411,7 @@ input:focus, select:focus {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── BREAKPOINTS RESPONSIVOS ── */
+/* â”€â”€ BREAKPOINTS RESPONSIVOS â”€â”€ */
 
 /* Tablet (768px+) */
 @media (min-width: 768px) {
@@ -1662,7 +1670,7 @@ input:focus, select:focus {
   }
 }
 
-/* ─── Season Selector ─── */
+/* â”€â”€â”€ Season Selector â”€â”€â”€ */
 .season-selector {
   position: relative;
   display: flex;
@@ -1781,3 +1789,73 @@ input:focus, select:focus {
   border-color: var(--primary-color);
 }
 
+
+/* ----------- ADMIN LAYOUT RESPONSIVO ----------- */
+.admin-layout-root { display: flex; min-height: 100vh; width: 100%; }
+.admin-sidebar { width: 280px; background: var(--card-bg); border-right: 1px solid var(--border-color); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; flex-shrink: 0; }
+.admin-main { flex: 1; width: 100%; max-width: 100%; overflow-x: hidden; padding: 0 2.5rem 2.5rem; }
+
+@media (max-width: 1024px) {
+  .admin-layout-root { flex-direction: column; margin-top: 0; }
+  .admin-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); padding: 0.75rem; flex-direction: row; overflow-x: auto; white-space: nowrap; position: sticky; top: 56px; z-index: 50; gap: 0.5rem; scrollbar-width: none; }
+  .admin-sidebar::-webkit-scrollbar { display: none; }
+  .sidebar-header-box { display: none !important; }
+  .sidebar-nav-item { padding: 0.6rem 1rem !important; flex-shrink: 0; }
+  .admin-main { padding: 1.5rem 1rem; width: 100%; max-width: 100%; overflow-x: hidden; }
+}
+
+@media (max-width: 768px) {
+  .admin-layout-root {
+    flex-direction: column;
+  }
+  .admin-sidebar {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    white-space: nowrap;
+    position: sticky;
+    top: 56px; /* Ajustado para respeitar a Navbar de 56px, original era 0 */
+    z-index: 1000;
+  }
+  .admin-main {
+    width: 100%;
+    padding: 12px;
+  }
+}
+
+/* FIX MODAL NOTICIAS */
+.news-modal-compact { 
+  scroll-behavior: smooth; 
+  -webkit-overflow-scrolling: touch; 
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+.modal-img-box { height: clamp(250px, 40vh, 450px) !important; }
+.modal-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@media (max-width: 768px) {
+  .modal-content { padding: 1.5rem !important; }
+  .modal-content h2 { font-size: 1.75rem !important; }
+}
+
+/* ----------- UTILITÁRIOS DE GRID RESPONSIVO ----------- */
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+
+@media (max-width: 1024px) {
+  .grid-4, .grid-3 { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+}
+
+@media (max-width: 640px) {
+  .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; gap: 1rem; }
+  .section-title { font-size: 1.5rem !important; }
+}
+
+@media (max-width: 768px) { .container { width: 100%; max-width: 100%; padding: 0 12px; } }

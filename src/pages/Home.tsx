@@ -17,6 +17,14 @@ export default function Home() {
   useEffect(() => {
     fetchHomeData();
   }, []);
+  
+  useEffect(() => {
+    if (selectedNews) {
+      window.scrollTo(0, 0);
+      const modal = document.querySelector('.news-modal-compact');
+      if (modal) modal.scrollTop = 0;
+    }
+  }, [selectedNews]);
 
   const fetchHomeData = async () => {
     setLoading(true);

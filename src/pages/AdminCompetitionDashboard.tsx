@@ -141,84 +141,85 @@ export default function AdminCompetitionDashboard() {
       </div>
 
       {/* STATS GRID */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
-        <div className="premium-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ background: 'rgba(34,197,94,0.1)', padding: '0.75rem', borderRadius: '12px' }}><Shield color="var(--success)" /></div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 950 }}>{stats.teamsCount}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700 }}>TIMES</div>
+      {/* STATS GRID */}
+      <div className="grid-4" style={{ marginBottom: '3rem' }}>
+        <div className="premium-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ background: 'rgba(34,197,94,0.1)', padding: '0.6rem', borderRadius: '12px', flexShrink: 0 }}><Shield size={20} color="var(--success)" /></div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: '1.25rem', fontWeight: 950 }}>{stats.teamsCount}</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 800 }}>TIMES</div>
           </div>
         </div>
-        <div className="premium-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ background: 'rgba(59,130,246,0.1)', padding: '0.75rem', borderRadius: '12px' }}><Users color="var(--primary-color)" /></div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 950 }}>{stats.playersCount}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700 }}>JOGADORES</div>
+        <div className="premium-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ background: 'rgba(59,130,246,0.1)', padding: '0.6rem', borderRadius: '12px', flexShrink: 0 }}><Users size={20} color="var(--primary-color)" /></div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: '1.25rem', fontWeight: 950 }}>{stats.playersCount}</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 800 }}>ATLETAS</div>
           </div>
         </div>
-        <div className="premium-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ background: 'rgba(168,85,247,0.1)', padding: '0.75rem', borderRadius: '12px' }}><Calendar color="#a855f7" /></div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 950 }}>{stats.matchesCount}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700 }}>JOGOS</div>
+        <div className="premium-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ background: 'rgba(168,85,247,0.1)', padding: '0.6rem', borderRadius: '12px', flexShrink: 0 }}><Calendar size={20} color="#a855f7" /></div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: '1.25rem', fontWeight: 950 }}>{stats.matchesCount}</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 800 }}>JOGOS</div>
           </div>
         </div>
-        <div className="premium-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ background: 'rgba(239,68,68,0.1)', padding: '0.75rem', borderRadius: '12px' }}><ClipboardList color="var(--error)" /></div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 950 }}>{stats.pendingApprovals}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700 }}>PENDENTES</div>
+        <div className="premium-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ background: 'rgba(239,68,68,0.1)', padding: '0.6rem', borderRadius: '12px', flexShrink: 0 }}><ClipboardList size={20} color="var(--error)" /></div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: '1.25rem', fontWeight: 950 }}>{stats.pendingApprovals}</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 800 }}>PENDENTES</div>
           </div>
         </div>
       </div>
 
       {/* QUICK ACCESS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-        <div className="premium-card" style={{ padding: '2rem' }}>
-          <h3 style={{ fontWeight: 950, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div className="grid-2">
+        <div className="premium-card" style={{ padding: '1.5rem' }}>
+          <h3 style={{ fontWeight: 950, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem' }}>
             <Clock size={20} color="var(--primary-color)" /> AÇÕES RÁPIDAS
           </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <Link to={`/admin/${slug}/${year}/jogos`} className="btn btn-secondary" style={{ justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            <Link to={`/admin/${slug}/${year}/jogos`} className="btn btn-secondary" style={{ justifyContent: 'space-between', padding: '0.6rem 1rem' }}>
               Lançar Resultados <ArrowRight size={16} />
             </Link>
-            <Link to={`/admin/${slug}/${year}/inscricoes`} className="btn btn-secondary" style={{ justifyContent: 'space-between' }}>
+            <Link to={`/admin/${slug}/${year}/inscricoes`} className="btn btn-secondary" style={{ justifyContent: 'space-between', padding: '0.6rem 1rem' }}>
               Aprovar Times <ArrowRight size={16} />
             </Link>
-            <Link to={`/admin/${slug}/${year}/times`} className="btn btn-secondary" style={{ justifyContent: 'space-between' }}>
+            <Link to={`/admin/${slug}/${year}/times`} className="btn btn-secondary" style={{ justifyContent: 'space-between', padding: '0.6rem 1rem' }}>
               Gerenciar Elencos <ArrowRight size={16} />
             </Link>
-            <Link to={`/admin/${slug}/${year}/sorteio`} className="btn btn-secondary" style={{ justifyContent: 'space-between' }}>
+            <Link to={`/admin/${slug}/${year}/sorteio`} className="btn btn-secondary" style={{ justifyContent: 'space-between', padding: '0.6rem 1rem' }}>
               Sorteio de Grupos <ArrowRight size={16} />
             </Link>
             <button 
               className="btn btn-primary" 
-              style={{ marginTop: '0.5rem', background: 'var(--brand-dark)', color: 'var(--primary-color)', border: '1px solid var(--primary-color)' }}
+              style={{ marginTop: '0.5rem', background: 'var(--brand-dark)', color: 'var(--primary-color)', border: '1px solid var(--primary-color)', padding: '0.8rem' }}
               onClick={handleGenerateTournament}
               disabled={loading}
             >
-              {loading ? <Loader2 className="animate-spin" /> : <Wand2 size={18} />} Gerar Tabela Completa
+              {loading ? <Loader2 className="animate-spin" size={18} /> : <Wand2 size={18} />} Gerar Tabela Completa
             </button>
             <button 
               className="btn btn-secondary" 
-              style={{ marginTop: '0.5rem', background: 'rgba(234,179,8,0.1)', color: '#ca8a04', border: '1px solid #ca8a04' }}
+              style={{ marginTop: '0.5rem', background: 'rgba(234,179,8,0.1)', color: '#ca8a04', border: '1px solid #ca8a04', padding: '0.8rem' }}
               onClick={handleAdvanceToKnockout}
               disabled={loading}
             >
-              {loading ? <Loader2 className="animate-spin" /> : <TrophyIcon size={18} />} Finalizar Grupos e Gerar Mata-Mata
+              {loading ? <Loader2 className="animate-spin" size={18} /> : <TrophyIcon size={18} />} Finalizar Grupos e Gerar Mata-Mata
             </button>
           </div>
         </div>
 
-        <div className="premium-card" style={{ padding: '2rem', background: 'linear-gradient(135deg, var(--surface-alt) 0%, var(--card-bg) 100%)' }}>
-          <h3 style={{ fontWeight: 950, marginBottom: '1rem' }}>STATUS DA COMPETIÇÃO</h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--success)', fontWeight: 800, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+        <div className="premium-card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, var(--surface-alt) 0%, var(--card-bg) 100%)' }}>
+          <h3 style={{ fontWeight: 950, marginBottom: '1rem', fontSize: '1.1rem' }}>STATUS DA COMPETIÇÃO</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--success)', fontWeight: 800, fontSize: '0.85rem', marginBottom: '1.25rem' }}>
              <CheckCircle size={18} /> INSCRIÇÕES ABERTAS
           </div>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
             O link de inscrição pública está ativo. Você tem {stats.pendingApprovals} solicitações aguardando revisão.
           </p>
-          <button className="btn btn-primary" style={{ width: '100%' }}>Configurar Inscrições</button>
+          <button className="btn btn-primary" style={{ width: '100%', padding: '0.8rem' }}>Configurar Inscrições</button>
         </div>
       </div>
     </div>

@@ -39,34 +39,28 @@ const AdminLayout = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: 'calc(100vh - 80px)', marginTop: '20px' }}>
+    <div className="admin-layout-root">
       {/* Sidebar Contextual */}
-      <aside style={{ 
-        width: '260px', 
-        background: 'var(--card-bg)', 
-        borderRight: '1px solid var(--border-color)',
-        padding: '1.5rem 1rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.5rem'
-      }}>
-        <Link to="/admin" style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '8px', 
-          fontSize: '0.8rem', 
-          fontWeight: 700, 
-          color: 'var(--text-muted)',
-          marginBottom: '1.5rem',
-          textDecoration: 'none'
-        }}>
-          <ChevronLeft size={16} /> VOLTAR AO HUB
-        </Link>
+      <aside className="admin-sidebar">
+        <div className="sidebar-header-box">
+          <Link to="/admin" style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px', 
+            fontSize: '0.8rem', 
+            fontWeight: 700, 
+            color: 'var(--text-muted)',
+            marginBottom: '1.5rem',
+            textDecoration: 'none'
+          }}>
+            <ChevronLeft size={16} /> VOLTAR AO HUB
+          </Link>
 
-        <div style={{ marginBottom: '2rem' }}>
-           <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary-color)', textTransform: 'uppercase', marginBottom: '4px' }}>Gerenciando</div>
-           <div style={{ fontSize: '1rem', fontWeight: 950 }}>{activeCompetition?.name}</div>
-           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Temporada {activeSeason?.year}</div>
+          <div style={{ marginBottom: '2rem' }}>
+             <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary-color)', textTransform: 'uppercase', marginBottom: '4px' }}>Gerenciando</div>
+             <div style={{ fontSize: '1rem', fontWeight: 950 }}>{activeCompetition?.name}</div>
+             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Temporada {activeSeason?.year}</div>
+          </div>
         </div>
 
         {menuItems.map((item) => {
@@ -75,6 +69,7 @@ const AdminLayout = () => {
             <Link 
               key={item.path}
               to={item.path} 
+              className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
               style={{ 
                 display: 'flex',
                 alignItems: 'center',
@@ -95,7 +90,7 @@ const AdminLayout = () => {
           );
         })}
 
-        <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
+        <div className="sidebar-header-box" style={{ marginTop: 'auto', paddingTop: '2rem' }}>
            <Link to={`/competitions/${slug}`} target="_blank" className="btn btn-secondary" style={{ width: '100%', fontSize: '0.75rem', gap: '8px' }}>
               Ver Site Público <ExternalLink size={14} />
            </Link>
@@ -103,7 +98,7 @@ const AdminLayout = () => {
       </aside>
 
       {/* Conteúdo Contextual */}
-      <main style={{ flex: 1, padding: '0 2.5rem 2.5rem' }}>
+      <main className="admin-main">
          <Outlet />
       </main>
     </div>

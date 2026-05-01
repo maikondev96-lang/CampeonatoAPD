@@ -183,7 +183,7 @@ const AdminJogadores = () => {
           {editingId ? '📝 Editar Jogador' : '➕ Novo Jogador'}
         </h3>
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+        <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
           <div className="form-group">
             <label>Nome Completo *</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: José Silva" required />
@@ -194,7 +194,7 @@ const AdminJogadores = () => {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+        <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
           <div className="form-group">
             <label>Time *</label>
             <select value={teamId} onChange={e => setTeamId(e.target.value)} required>
@@ -218,7 +218,7 @@ const AdminJogadores = () => {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+        <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
           <div className="form-group">
             <label>Foto do Jogador (URL ou Upload)</label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
