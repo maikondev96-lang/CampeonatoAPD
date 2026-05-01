@@ -201,13 +201,10 @@ const Fases = () => {
 
       <style>{`
         .epic-fases-page {
-          min-height: calc(100vh - 120px);
           position: relative;
           overflow: hidden;
-          padding: 1rem 2rem;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
+          padding: 16px;
+          background: var(--bg-color);
         }
 
         .epic-background-glow {
@@ -258,17 +255,17 @@ const Fases = () => {
         }
 
         .epic-bracket-card {
-          background: rgba(255,255,255, 0.8);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(0,0,0, 0.05);
-          border-radius: 16px;
-          padding: 1rem;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+          background: var(--card-bg);
+          border: 1px solid var(--border-color);
+          border-radius: 6px;
+          padding: 8px 10px;
           position: relative;
           transition: all 0.2s ease;
+          width: 100%;
+          min-width: 220px;
         }
-        .epic-bracket-card:hover { transform: translateY(-2px); border-color: var(--primary-color); }
-        .epic-bracket-card.final { background: linear-gradient(145deg, #ffffff, #fffdf0); border: 2px solid #fef08a; padding: 1.25rem; }
+        .epic-bracket-card:hover { background: var(--card-hover); }
+        .epic-bracket-card.final { border: 2px solid #eab308; background: #fffcf0; }
         .epic-bracket-card.is-placeholder { border-style: dashed; opacity: 0.6; }
 
         .card-header { margin-bottom: 0.75rem; display: flex; justify-content: center; }
@@ -276,18 +273,18 @@ const Fases = () => {
         .semi-label { font-size: 0.55rem; font-weight: 950; color: #64748b; letter-spacing: 1.2px; opacity: 0.5; }
         .third-label { font-size: 0.55rem; font-weight: 950; color: #9a3412; letter-spacing: 1.2px; opacity: 0.7; }
 
-        .card-teams { display: flex; flex-direction: column; gap: 0.5rem; }
+        .card-teams { display: flex; flex-direction: column; gap: 4px; }
         .epic-team { display: flex; align-items: center; justify-content: space-between; }
-        .epic-team.loser { opacity: 0.3; filter: grayscale(1); }
-        .team-info { display: flex; align-items: center; gap: 8px; min-width: 0; }
-        .team-logo { width: 24px; height: 24px; object-fit: contain; }
-        .team-logo-placeholder { width: 24px; height: 24px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #94a3b8; }
-        .team-name { font-size: 0.85rem; font-weight: 850; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .team-score { font-size: 1.2rem; font-weight: 950; color: var(--text-main); }
-        .final .team-name { font-size: 0.95rem; }
-        .final .team-score { font-size: 1.6rem; color: var(--primary-dark); }
-
-        .team-divider { height: 1px; background: rgba(0,0,0, 0.02); width: 100%; }
+        .epic-team.loser { opacity: 0.4; }
+        .team-info { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+        .team-logo { width: 16px; height: 16px; object-fit: contain; }
+        .team-logo-placeholder { width: 16px; height: 16px; background: var(--surface-alt); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; color: var(--text-muted); border: 1px dashed var(--border-color); }
+        .team-name { font-size: 0.75rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .team-score { font-size: 0.85rem; font-weight: 800; color: var(--text-main); margin-left: 8px; }
+        .final .team-name { font-size: 0.85rem; font-weight: 800; }
+        .final .team-score { font-size: 1rem; color: var(--primary-dark); }
+        
+        .team-divider { display: none; }
 
         .card-footer { margin-top: 0.6rem; display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0, 0.02); padding-top: 0.5rem; }
         .date-info { font-size: 0.55rem; font-weight: 800; color: var(--text-muted); }

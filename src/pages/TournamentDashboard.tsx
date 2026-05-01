@@ -103,40 +103,44 @@ const TournamentDashboard = () => {
 
   const renderMatchRow = (m: Match) => {
     const isFinished = m.status === 'finalizado';
+    const isLive = m.status === 'ao_vivo';
+    const homeWin = isFinished && (m.home_score || 0) > (m.away_score || 0);
+    const awayWin = isFinished && (m.away_score || 0) > (m.home_score || 0);
+
     return (
-      <div key={m.id} className="premium-match-row" onClick={() => navigate(`/competitions/${slug}/${year}/jogos/${m.id}`)}>
-        <div className="match-row-content">
-          {/* LADO CASA */}
-          <div className="team-container home">
-            <span className="team-name-full">{m.home_team?.name}</span>
-            <span className="team-name-short">{m.home_team?.short_name || m.home_team?.name?.slice(0,3).toUpperCase()}</span>
-            <img src={m.home_team?.logo_url} alt="" className="team-shield" />
-          </div>
+      <Link key={m.id} to={`/competitions/${slug}/${year}/jogos/${m.id}`} className="fs-match-row">
+        <div className="fs-match-time">
+          {isFinished ? (
+            <span className="fs-status finished">Fim</span>
+          ) : isLive ? (
+            <span className="fs-status live">Ao Vivo</span>
+          ) : (
+            <span className="fs-time">{m.time?.slice(0, 5) || 'A Def.'}</span>
+          )}
+          {!isFinished && !isLive && <span className="fs-date">{m.date?.split('-').reverse().slice(0, 2).join('/')}</span>}
+        </div>
 
-          {/* PLACAR / INFO */}
-          <div className="score-container">
-            {isFinished ? (
-              <div className="score-box-final">
-                <span className={m.home_score! > m.away_score! ? 'is-winner' : ''}>{m.home_score}</span>
-                <span className="score-divider">:</span>
-                <span className={m.away_score! > m.home_score! ? 'is-winner' : ''}>{m.away_score}</span>
-              </div>
+        <div className="fs-match-teams">
+          <div className="fs-team">
+            {m.home_team?.logo_url ? (
+              <img src={m.home_team.logo_url} alt="" className="fs-team-logo" />
             ) : (
-              <div className="match-time-info">
-                <span className="m-date">{m.date?.split('-').reverse().join('/')}</span>
-                <span className="m-hour">{m.time?.slice(0, 5) || 'A DEF.'}</span>
-              </div>
+              <div className="fs-team-logo-placeholder">?</div>
             )}
+            <span className={`fs-team-name ${!m.home_team ? 'placeholder' : ''} ${homeWin ? 'winner' : ''}`}>{m.home_team?.name || 'A Definir'}</span>
+            <span className={`fs-team-score ${homeWin ? 'winner' : ''}`}>{isFinished || isLive ? m.home_score : '-'}</span>
           </div>
-
-          {/* LADO FORA */}
-          <div className="team-container away">
-            <img src={m.away_team?.logo_url} alt="" className="team-shield" />
-            <span className="team-name-full">{m.away_team?.name}</span>
-            <span className="team-name-short">{m.away_team?.short_name || m.away_team?.name?.slice(0,3).toUpperCase()}</span>
+          <div className="fs-team mt-1">
+            {m.away_team?.logo_url ? (
+              <img src={m.away_team.logo_url} alt="" className="fs-team-logo" />
+            ) : (
+              <div className="fs-team-logo-placeholder">?</div>
+            )}
+            <span className={`fs-team-name ${!m.away_team ? 'placeholder' : ''} ${awayWin ? 'winner' : ''}`}>{m.away_team?.name || 'A Definir'}</span>
+            <span className={`fs-team-score ${awayWin ? 'winner' : ''}`}>{isFinished || isLive ? m.away_score : '-'}</span>
           </div>
         </div>
-      </div>
+      </Link>
     );
   };
 
@@ -200,73 +204,62 @@ const TournamentDashboard = () => {
 
         {/* COLUNA 2: CALENDÁRIO E RESULTADOS (CENTRAL) */}
         <div className="bento-col-center">
-          <div className="premium-card bento-card">
-            <div className="premium-card-header">
-               <div className="section-label-bar"><span className="header-small-label">PRÓXIMOS CONFRONTOS</span></div>
-            </div>
-            <div className="card-body-full">
+          <div className="fs-comps-section">
+            <div className="fs-section-header">PRÓXIMOS CONFRONTOS</div>
+            <div className="fs-matches-list">
                {nextMatches.length > 0 ? (
                  <>
-                   {currentRound && <div className="round-separator"><span>{currentRound}</span></div>}
-                   <div className="matches-vertical-list">{nextMatches.map(renderMatchRow)}</div>
+                   {currentRound && <div className="fs-round-header"><span>{currentRound}</span></div>}
+                   {nextMatches.map(renderMatchRow)}
                  </>
-               ) : ( <p className="empty-text">Nenhum jogo agendado.</p> )}
+               ) : ( <p className="empty-state">Nenhum jogo agendado.</p> )}
             </div>
           </div>
 
-          <div className="premium-card bento-card">
-            <div className="premium-card-header">
-               <div className="section-label-bar"><span className="header-small-label">ÚLTIMAS PARTIDAS</span></div>
-            </div>
-            <div className="card-body-full">
+          <div className="fs-comps-section">
+            <div className="fs-section-header">ÚLTIMAS PARTIDAS</div>
+            <div className="fs-matches-list">
                {recentResults.length > 0 ? (
-                 <div className="matches-vertical-list">{recentResults.map(renderMatchRow)}</div>
-               ) : ( <p className="empty-text">Aguardando início.</p> )}
+                 recentResults.map(renderMatchRow)
+               ) : ( <p className="empty-state">Aguardando início.</p> )}
             </div>
           </div>
         </div>
 
         {/* COLUNA 3: TABELA E STATS (DIREITA) */}
         <div className="bento-col-right">
-          <div className="premium-card bento-card">
-            <div className="premium-card-header">
-               <div className="section-label-bar"><span className="header-small-label">G-4 CLASSIFICAÇÃO</span></div>
-               <Link to={`/competitions/${slug}/${year}/classificacao`} className="view-all-link">VER TUDO</Link>
+          <div className="fs-comps-section">
+            <div className="fs-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+               <span>G-4 CLASSIFICAÇÃO</span>
+               <Link to={`/competitions/${slug}/${year}/classificacao`} style={{ color: 'var(--primary-color)', fontSize: '0.65rem' }}>VER TUDO</Link>
             </div>
-            <div className="card-body-full">
-                <div className="standings-g4-list">
-                  {topStandings.map((s, idx) => (
-                    <div key={s.team_id} className={`standings-g4-item ${idx < 4 ? 'is-advancing' : ''}`}>
-                      <div className="g4-pos">{idx + 1}º</div>
-                      <div className="g4-team">
-                        <img src={s.team?.logo_url} alt="" />
-                        <span>{s.team?.name}</span>
-                      </div>
-                      <div className="g4-pts">{s.points}<span>PTS</span></div>
-                    </div>
-                  ))}
+            <div className="fs-standings-mini">
+              {topStandings.map((s, idx) => (
+                <div key={s.team_id} className="fs-match-row">
+                  <div className={`fs-pos ${idx < 4 ? 'qualified' : ''}`}>{idx + 1}.</div>
+                  <div className="fs-team" style={{ flex: 1, paddingLeft: '8px' }}>
+                    <img src={s.team?.logo_url} alt="" className="fs-team-logo" />
+                    <span className="fs-team-name">{s.team?.name}</span>
+                  </div>
+                  <div className="fs-team-score winner">{s.points}</div>
                 </div>
+              ))}
             </div>
           </div>
 
-          <div className="stats-mini-group">
+          <div className="fs-comps-section">
+            <div className="fs-section-header">DESTAQUES</div>
             {topScorer && (
-              <div className="premium-card highlight-card scorer bento-card">
-                <div className="premium-card-header"><span className="header-small-label">ARTILHEIRO</span></div>
-                <div className="stats-body">
-                   <img src={topScorer.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${topScorer.name}`} alt="" />
-                   <div><h4>{topScorer.name}</h4><p><span>{topScorer.value} gols</span> • {topScorer.team_name}</p></div>
-                </div>
-              </div>
-            )}
-
-            {topAssist && (
-              <div className="premium-card highlight-card assist bento-card">
-                <div className="premium-card-header"><span className="header-small-label">ASSISTÊNCIAS</span></div>
-                <div className="stats-body">
-                   <img src={topAssist.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${topAssist.name}`} alt="" />
-                   <div><h4>{topAssist.name}</h4><p><span>{topAssist.value} passes</span> • {topAssist.team_name}</p></div>
-                </div>
+              <div className="fs-match-row" style={{ padding: '12px' }}>
+                 <img src={topScorer.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${topScorer.name}`} alt="" style={{ width: 40, height: 40, borderRadius: 20, objectFit: 'cover', marginRight: 12 }} />
+                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                   <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>{topScorer.name}</span>
+                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{topScorer.team_name}</span>
+                 </div>
+                 <div style={{ textAlign: 'right' }}>
+                   <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--primary-dark)' }}>{topScorer.value}</span>
+                   <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block' }}>Gols</span>
+                 </div>
               </div>
             )}
           </div>
@@ -335,92 +328,111 @@ const TournamentDashboard = () => {
         .item-text h4 { font-size: 0.95rem; font-weight: 900; color: var(--text-main); margin: 0; }
         .item-text p { font-size: 0.75rem; color: var(--text-muted); margin: 2px 0 0; }
 
-        /* NOVA LINHA DE JOGO PREMIUM */
-        .premium-match-row {
-          padding: 1rem 1.5rem;
-          cursor: pointer;
+        /* ESTILOS REAPROVEITADOS DO FLASHSCORE */
+        .fs-comps-section {
+          background: var(--card-bg);
+          width: 100%;
+          display: flex;
+          flex-direction: column;
           border-bottom: 1px solid var(--border-color);
-          transition: all 0.2s ease;
-        }
-        .premium-match-row:hover { background: var(--surface-alt); }
-        .premium-match-row:last-child { border-bottom: none; }
-
-        .match-row-content {
-          display: grid;
-          grid-template-columns: 1fr 100px 1fr;
-          align-items: center;
-          gap: 1rem;
         }
 
-        .team-container { display: flex; align-items: center; gap: 12px; min-width: 0; }
-        .team-container.home { justify-content: flex-end; text-align: right; }
-        .team-container.away { justify-content: flex-start; text-align: left; }
+        .fs-section-header {
+          background: var(--secondary-color);
+          padding: 6px 16px;
+          font-size: 0.65rem;
+          font-weight: 800;
+          color: var(--primary-dark);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          border-bottom: 1px solid var(--border-color);
+          border-top: 1px solid var(--border-color);
+        }
 
-        .team-shield { width: 32px; height: 32px; object-fit: contain; flex-shrink: 0; }
-        .team-name-full { font-weight: 850; font-size: 1rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .team-name-short { display: none; font-weight: 950; font-size: 0.9rem; color: var(--text-main); }
+        .fs-round-header {
+          background: #fdf3c7;
+          padding: 4px 16px;
+          font-size: 0.65rem;
+          font-weight: 800;
+          color: #0d1e25;
+          text-align: center;
+          border-bottom: 1px solid var(--border-color);
+        }
 
-        .score-container { display: flex; justify-content: center; }
-        .score-box-final {
-          color: var(--text-main);
-          padding: 6px 14px;
-          font-weight: 950;
-          font-size: 1.25rem;
+        .fs-match-row {
           display: flex;
           align-items: center;
-          gap: 12px;
-          letter-spacing: 1px;
+          padding: 8px 12px;
+          border-bottom: 1px solid var(--border-color);
+          text-decoration: none;
+          color: inherit;
+          transition: background 0.15s;
+          cursor: pointer;
         }
-        .score-divider { opacity: 0.4; font-size: 0.8rem; }
-        .is-winner { color: var(--primary-color); text-shadow: 0 0 8px rgba(var(--primary-rgb), 0.4); }
+        .fs-match-row:hover { background: var(--card-hover); }
+        .fs-match-row:last-child { border-bottom: none; }
 
-        .match-time-info {
-          display: flex; flex-direction: column; align-items: center; gap: 2px;
-          padding: 4px 10px; background: var(--surface-alt); border-radius: 8px;
+        .fs-match-time {
+          width: 50px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          border-right: 1px solid var(--border-color);
+          padding-right: 12px;
+          margin-right: 12px;
+          flex-shrink: 0;
         }
-        .match-time-info .m-date { font-size: 0.65rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; }
-        .match-time-info .m-hour { font-size: 0.8rem; font-weight: 950; color: var(--primary-color); }
 
-        .round-separator { text-align: center; margin: 1rem 0; position: relative; display: flex; align-items: center; justify-content: center; }
-        .round-separator::before { content: ''; position: absolute; left: 0; right: 0; height: 1px; background: var(--border-color); }
-        .round-separator span { background: var(--card-bg); padding: 0 12px; position: relative; font-size: 0.7rem; font-weight: 950; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; }
+        .fs-time { font-size: 0.75rem; font-weight: 500; color: var(--text-main); }
+        .fs-date { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+        .fs-status { font-size: 0.7rem; font-weight: 700; }
+        .fs-status.finished { color: var(--text-muted); }
+        .fs-status.live { color: var(--accent-color); animation: blink 1.5s infinite; }
 
-        /* ESTILO G-4 AVANÇANDO */
-        .standings-g4-list { display: flex; flex-direction: column; gap: 4px; padding: 0.5rem; }
-        .standings-g4-item {
-          display: flex; align-items: center; gap: 12px; padding: 0.85rem 1rem;
-          background: var(--surface-alt); border-radius: 12px; position: relative;
-          transition: all 0.2s ease; border: 1px solid transparent;
+        .fs-match-teams {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
         }
-        .standings-g4-item.is-advancing {
-          background: var(--card-bg); border-left: 4px solid #22c55e;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        }
-        .g4-pos { font-size: 0.8rem; font-weight: 950; color: var(--text-muted); width: 24px; }
-        .is-advancing .g4-pos { color: var(--text-main); }
-        .g4-team { flex: 1; display: flex; align-items: center; gap: 10px; }
-        .g4-team img { width: 24px; height: 24px; object-fit: contain; }
-        .g4-team span { font-size: 0.9rem; font-weight: 850; color: var(--text-main); }
-        .g4-pts { text-align: right; font-weight: 950; font-size: 1.1rem; color: var(--primary-color); display: flex; flex-direction: column; line-height: 1; }
-        .g4-pts span { font-size: 0.6rem; color: var(--text-subtle); font-weight: 800; }
 
-        .stats-body { padding: 1.25rem; display: flex; align-items: center; gap: 1rem; }
-        .stats-body img { width: 50px; height: 50px; border-radius: 12px; object-fit: cover; background: var(--surface-alt); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .stats-body h4 { font-weight: 900; font-size: 1rem; color: var(--text-main); margin: 0; }
-        .stats-body p { font-size: 0.75rem; color: var(--text-muted); margin: 2px 0 0; }
-        .stats-body p span { font-weight: 800; color: var(--text-main); }
-
-        @media (max-width: 1400px) {
-          .team-name-full { display: none; }
-          .team-name-short { display: block; }
-          .match-row-content { grid-template-columns: 1fr 100px 1fr; }
+        .fs-team {
+          display: flex;
+          align-items: center;
+          width: 100%;
         }
+        .fs-team.mt-1 { margin-top: 6px; }
+
+        .fs-team-logo { width: 18px; height: 18px; object-fit: contain; margin-right: 8px; }
+        .fs-team-logo-placeholder { width: 18px; height: 18px; border-radius: 50%; background: var(--surface-alt); border: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: var(--text-muted); margin-right: 8px; }
+
+        .fs-team-name { flex: 1; font-size: 0.85rem; font-weight: 500; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fs-team-name.winner { font-weight: 800; }
+        .fs-team-name.placeholder { color: var(--text-muted); font-style: italic; font-weight: 400; font-size: 0.75rem; }
+
+        .fs-team-score { font-size: 0.9rem; font-weight: 500; color: var(--text-main); margin-left: 8px; }
+        .fs-team-score.winner { font-weight: 800; color: var(--primary-dark); }
+
+        .fs-pos {
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 4px;
+          font-weight: 800;
+          font-size: 0.7rem;
+          color: var(--text-muted);
+        }
+        .fs-pos.qualified { background: #0284c7; color: white; }
+
+        .empty-state { padding: 2rem; text-align: center; color: var(--text-muted); font-size: 0.85rem; }
+
 
         @media (max-width: 1200px) {
-          .bento-dashboard-grid { grid-template-columns: 1fr; }
+          .bento-dashboard-grid { grid-template-columns: 1fr; gap: 0; }
           .bento-col-portal { position: relative; top: 0; }
-          .team-name-full { display: block; }
-          .team-name-short { display: none; }
+          .portal-hero-card { border-radius: 0; border-left: none; border-right: none; }
         }
       `}</style>
     </div>
