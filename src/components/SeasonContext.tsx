@@ -31,11 +31,12 @@ export const SeasonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Busca inicial ultra-leve apenas para listar no menu
   const init = async () => {
     try {
       const { data: comps, error } = await supabase
         .from('competitions')
-        .select('*, seasons(*, champion_team:teams!champion_team_id(id, name, logo_url, short_name), runner_up_team:teams!runner_up_team_id(id, name, logo_url, short_name))')
+        .select('id, name, slug, logo_url, is_active')
         .eq('is_active', true)
         .order('name');
 
@@ -55,36 +56,37 @@ export const SeasonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   const selectCompetition = useCallback(async (slug: string, year?: number) => {
-    // Tenta achar na lista local primeiro
-    let comp = competitions.find(c => c.slug === slug);
-    
-    // Se não achar e ainda estiver carregando, espera um pouco ou busca direto
-    if (!comp) {
-      const { data } = await supabase
+    setLoading(true);
+    try {
+      // Busca detalhes completos apenas da competição selecionada
+      const { data: comp, error } = await supabase
         .from('competitions')
         .select('*, seasons(*, champion_team:teams!champion_team_id(id, name, logo_url, short_name), runner_up_team:teams!runner_up_team_id(id, name, logo_url, short_name))')
         .eq('slug', slug)
         .single();
-      if (data) comp = data;
-    }
 
-    if (!comp) return;
-    
-    setCompetition(comp);
-    const allSeasons = (comp.seasons || []).sort((a: any, b: any) => b.year - a.year);
-    setSeasons(allSeasons);
+      if (error || !comp) return;
+      
+      setCompetition(comp);
+      const allSeasons = (comp.seasons || []).sort((a: any, b: any) => b.year - a.year);
+      setSeasons(allSeasons);
 
-    if (year) {
-      const target = allSeasons.find(s => s.year === year);
-      if (target) {
-        setSeason(target);
-        return;
+      if (year) {
+        const target = allSeasons.find(s => s.year === year);
+        if (target) {
+          setSeason(target);
+          return;
+        }
       }
-    }
 
-    const active = allSeasons.find((s: any) => s.status === 'active') || allSeasons[0] || null;
-    setSeason(active);
-  }, [competitions]);
+      const active = allSeasons.find((s: any) => s.status === 'active') || allSeasons[0] || null;
+      setSeason(active);
+    } catch (err) {
+      console.error('Error selecting competition:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const selectSeason = useCallback(async (year: number) => {
     if (!competition || season?.year === year) return;
@@ -92,16 +94,14 @@ export const SeasonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (s) setSeason(s);
   }, [competition, season, seasons]);
 
-  // Aplicar tema dinâmico (Fase 3: Identidade Visual)
+  // Tema dinâmico
   useEffect(() => {
     const root = document.documentElement;
     if (competition?.settings_json?.primary_color) {
       const color = competition.settings_json.primary_color;
       root.style.setProperty('--primary-color', color);
-      // Gera uma versão semi-transparente para o hover/fundo (15 em hex é aprox 8% de opacidade)
       root.style.setProperty('--primary-light', `${color}15`);
     } else {
-      // Reseta para o padrão do index.css se não houver contexto de competição
       root.style.removeProperty('--primary-color');
       root.style.removeProperty('--primary-light');
     }

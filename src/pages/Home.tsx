@@ -4,7 +4,7 @@ import { Trophy, Calendar, Users, ArrowRight, ChevronRight, Newspaper, Activity,
 import { Link } from 'react-router-dom';
 import { useOrganizationContext } from '../components/OrganizationContext';
 import logoApd from '../assets/logo.png';
-import { getSmartData } from '../utils/smartCache';
+import { getSmartData, useSmartData } from '../utils/smartCache';
 import { createPortal } from 'react-dom';
 
 // SUB-COMPONENTE NEWS MODAL (PROFISSIONAL)
@@ -39,16 +39,28 @@ const NewsModal = ({ news, onClose }: { news: any, onClose: () => void }) => {
 
 export default function Home() {
   const { organization } = useOrganizationContext();
-  const [news, setNews] = useState<any[]>([]);
-  const [competitions, setCompetitions] = useState<any[]>([]);
-  const [stats, setStats] = useState({ teams: 32, players: 450, matches: 1200 });
-  const [loading, setLoading] = useState(true);
+  const { data: homeData, loading: cacheLoading } = useSmartData('home_data', async () => {
+    const [newsRes, compRes, teamsCount, playersCount, matchesCount] = await Promise.all([
+      supabase.from('news').select('*').eq('is_published', true).order('is_featured', { ascending: false }).order('created_at', { ascending: false }).limit(6),
+      supabase.from('competitions').select('*, seasons(year, status)').eq('is_active', true),
+      supabase.from('teams').select('*', { count: 'exact', head: true }),
+      supabase.from('players').select('*', { count: 'exact', head: true }),
+      supabase.from('matches').select('*', { count: 'exact', head: true })
+    ]);
+
+    return {
+      news: newsRes.data || [],
+      competitions: compRes.data || [],
+      stats: {
+        teams: teamsCount.count || 32,
+        players: playersCount.count || 450,
+        matches: matchesCount.count || 1200
+      }
+    };
+  });
+
   const [selectedNews, setSelectedNews] = useState<any>(null);
 
-  useEffect(() => {
-    fetchHomeData();
-  }, []);
-  
   useEffect(() => {
     if (selectedNews) {
       document.body.style.overflow = 'hidden';
@@ -58,39 +70,11 @@ export default function Home() {
     return () => { document.body.style.overflow = 'unset'; };
   }, [selectedNews]);
 
-  const fetchHomeData = async () => {
-    setLoading(true);
-    try {
-      // 1. Usa SmartCache para carregar os dados da Home (composite)
-      const data = await getSmartData('home_data', async () => {
-        const [newsRes, compRes, teamsCount, playersCount, matchesCount] = await Promise.all([
-          supabase.from('news').select('*').eq('is_published', true).order('is_featured', { ascending: false }).order('created_at', { ascending: false }).limit(6),
-          supabase.from('competitions').select('*, seasons(year, status)').eq('is_active', true),
-          supabase.from('teams').select('*', { count: 'exact', head: true }),
-          supabase.from('players').select('*', { count: 'exact', head: true }),
-          supabase.from('matches').select('*', { count: 'exact', head: true })
-        ]);
-
-        return {
-          news: newsRes.data || [],
-          competitions: compRes.data || [],
-          stats: {
-            teams: teamsCount.count || 32,
-            players: playersCount.count || 450,
-            matches: matchesCount.count || 1200
-          }
-        };
-      });
-      
-      setNews(data.news);
-      setCompetitions(data.competitions);
-      setStats(data.stats);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Aliases para manter compatibilidade com o JSX existente
+  const news = homeData?.news || [];
+  const competitions = homeData?.competitions || [];
+  const stats = homeData?.stats || { teams: 32, players: 450, matches: 1200 };
+  const loading = !homeData && cacheLoading;
 
   const featuredNews = news.find(n => n.is_featured) || news[0];
   const sideNews = news.filter(n => n.id !== featuredNews?.id);

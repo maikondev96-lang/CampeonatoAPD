@@ -1,77 +1,64 @@
 import React from 'react';
 import { History as HistoryIcon, Star, Trophy, Users, Flag, Loader2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { Season } from '../types';
+import { getSmartData, useSmartData } from '../utils/smartCache';
 
 // Fallback hardcoded (caso a tabela não exista ou esteja vazia)
 const fallbackTimeline = [
-  { year: '2026', title: 'O Portal Profissional', desc: 'Refatoração completa para o modelo institucional GE.', icon: HistoryIcon, color: 'var(--primary-color)' },
-  { year: '2025', title: 'Associação APD', desc: 'Formalização da Associação Peladeiros de Domingo.', icon: Users, color: '#22c55e' },
-  { year: '2024', title: 'Expansão Tecnológica', desc: 'Lançamento da primeira versão do portal web.', icon: Star, color: '#3b82f6' },
-  { year: '2023', title: 'Torneio Oficial', desc: 'A primeira Copa APD com 8 equipes.', icon: Trophy, color: '#eab308' },
-  { year: '2022', title: 'A Semente', desc: 'Início das peladas de domingo.', icon: Flag, color: '#64748b' }
+  { year: '2026', title: 'O Portal Profissional', description: 'Refatoração completa para o modelo institucional GE.', icon_name: 'HistoryIcon', color: 'var(--primary-color)' },
+  { year: '2025', title: 'Associação APD', description: 'Formalização da Associação Peladeiros de Domingo.', icon_name: 'Users', color: '#22c55e' },
+  { year: '2024', title: 'Expansão Tecnológica', description: 'Lançamento da primeira versão do portal web.', icon_name: 'Star', color: '#3b82f6' },
+  { year: '2023', title: 'Torneio Oficial', description: 'A primeira Copa APD com 8 equipes.', icon_name: 'Trophy', color: '#eab308' },
+  { year: '2022', title: 'A Semente', description: 'Início das peladas de domingo.', icon_name: 'Flag', color: '#64748b' }
 ];
 
 const iconMap: any = { 'HistoryIcon': HistoryIcon, 'Star': Star, 'Trophy': Trophy, 'Users': Users, 'Flag': Flag };
 
 export default function InstitutionalHistory() {
-  const [allChampions, setAllChampions] = React.useState<any[]>([]);
-  const [timeline, setTimeline] = React.useState<any[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const { data: historyData, loading: cacheLoading } = useSmartData('history_full', async () => {
+    // 1. Busca Campeões Automáticos
+    const { data: autoChamps } = await supabase
+      .from('seasons')
+      .select('*, competition:competitions(name), champion_team:teams!champion_team_id(*), runner_up_team:teams!runner_up_team_id(*)')
+      .eq('status', 'finished');
+    
+    // 2. Busca Campeões Manuais
+    const { data: manualChamps } = await supabase.from('hall_of_fame').select('*');
 
-  React.useEffect(() => {
-    fetchData();
-  }, []);
+    // 3. Busca Timeline
+    const { data: timeData } = await supabase.from('history_timeline').select('*').order('year', { ascending: false });
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      // 1. Busca Campeões Automáticos (do sistema)
-      const { data: autoChamps } = await supabase
-        .from('seasons')
-        .select('*, competition:competitions(name), champion_team:teams!champion_team_id(*), runner_up_team:teams!runner_up_team_id(*)')
-        .eq('status', 'finished');
-      
-      // 2. Busca Campeões Manuais (do Hall of Fame)
-      const { data: manualChamps } = await supabase.from('hall_of_fame').select('*');
+    const normalizedAuto = (autoChamps || []).map(s => ({
+      id: s.id,
+      year: s.year,
+      competition_name: s.competition?.name,
+      champion_name: s.champion_team?.name,
+      champion_logo: s.champion_team?.logo_url,
+      runner_up_name: s.runner_up_team?.name,
+      runner_up_logo: s.runner_up_team?.logo_url,
+      is_auto: true
+    }));
 
-      // 3. Normaliza e mescla
-      const normalizedAuto = (autoChamps || []).map(s => ({
-        id: s.id,
-        year: s.year,
-        competition_name: s.competition?.name,
-        champion_name: s.champion_team?.name,
-        champion_logo: s.champion_team?.logo_url,
-        runner_up_name: s.runner_up_team?.name,
-        runner_up_logo: s.runner_up_team?.logo_url,
-        is_auto: true
-      }));
+    const normalizedManual = (manualChamps || []).map(h => ({
+      id: h.id,
+      year: parseInt(h.year),
+      competition_name: h.competition_name,
+      champion_name: h.champion_name,
+      champion_logo: h.champion_logo_url,
+      runner_up_name: h.runner_up_name,
+      runner_up_logo: h.runner_up_logo_url,
+      is_auto: false
+    }));
 
-      const normalizedManual = (manualChamps || []).map(h => ({
-        id: h.id,
-        year: parseInt(h.year),
-        competition_name: h.competition_name,
-        champion_name: h.champion_name,
-        champion_logo: h.champion_logo_url,
-        runner_up_name: h.runner_up_name,
-        runner_up_logo: h.runner_up_logo_url,
-        is_auto: false
-      }));
+    return {
+      champions: [...normalizedAuto, ...normalizedManual].sort((a, b) => b.year - a.year),
+      timeline: timeData && timeData.length > 0 ? timeData : fallbackTimeline
+    };
+  });
 
-      const merged = [...normalizedAuto, ...normalizedManual].sort((a, b) => b.year - a.year);
-      setAllChampions(merged);
-
-      // 4. Busca Timeline
-      const { data: timeData } = await supabase.from('history_timeline').select('*').order('year', { ascending: false });
-      setTimeline(timeData && timeData.length > 0 ? timeData : fallbackTimeline);
-
-    } catch (err) {
-      console.warn("Erro ao carregar dados dinâmicos.");
-      setTimeline(fallbackTimeline);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const allChampions = historyData?.champions || [];
+  const timeline = historyData?.timeline || fallbackTimeline;
+  const loading = !historyData && cacheLoading;
 
   return (
     <div className="animate-fade" style={{ maxWidth: '900px', margin: '0 auto', paddingBottom: '5rem' }}>

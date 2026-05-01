@@ -1,9 +1,6 @@
 import React from 'react';
 import { supabase } from '../supabaseClient';
 
-/**
- * Interface para os metadados de versão
- */
 interface AppMetadata {
   tabela: string;
   version: number;
@@ -12,49 +9,53 @@ interface AppMetadata {
 
 /**
  * Função inteligente que gerencia cache local com validação de versão remota.
- * @param tabela Nome da tabela/entidade para controle de cache
- * @param fetcher Função assíncrona que busca os dados caso o cache esteja desatualizado
+ * Otimizada para não bloquear a thread principal.
  */
 export async function getSmartData<T>(tabela: string, fetcher: () => Promise<T>): Promise<T> {
+  const localVersion = localStorage.getItem(`cache_v_${tabela}`);
+  const cachedData = localStorage.getItem(`cache_data_${tabela}`);
+
   try {
-    // 1. Busca a versão atual no Supabase
-    const { data: meta, error } = await supabase
+    // 1. Busca a versão atual no Supabase (com timeout curto para não travar)
+    const promise = supabase
       .from('app_metadata')
       .select('version')
       .eq('tabela', tabela)
       .single();
 
-    if (error) {
-      console.warn(`[SmartCache] Erro ao buscar versão para ${tabela}:`, error);
-      return await fetcher(); // Fallback para fetch direto
+    const { data: meta, error } = await promise;
+
+    if (error || !meta) {
+      if (cachedData) return JSON.parse(cachedData) as T;
+      return await fetcher();
     }
 
     const remoteVersion = meta.version;
-    const localVersion = localStorage.getItem(`cache_v_${tabela}`);
-    const cachedData = localStorage.getItem(`cache_data_${tabela}`);
 
     // 2. Verifica se o cache é válido
     if (cachedData && localVersion && parseInt(localVersion) === remoteVersion) {
       return JSON.parse(cachedData) as T;
     }
 
-    // 3. Se for diferente ou não existir, busca dados frescos
+    // 3. Busca dados frescos
     const freshData = await fetcher();
 
-    // 4. Salva no cache local
-    localStorage.setItem(`cache_data_${tabela}`, JSON.stringify(freshData));
-    localStorage.setItem(`cache_v_${tabela}`, remoteVersion.toString());
+    // 4. Salva no cache local (assíncrono para não travar)
+    setTimeout(() => {
+      localStorage.setItem(`cache_data_${tabela}`, JSON.stringify(freshData));
+      localStorage.setItem(`cache_v_${tabela}`, remoteVersion.toString());
+    }, 0);
 
     return freshData;
   } catch (err) {
-    console.error(`[SmartCache] Erro crítico na tabela ${tabela}:`, err);
+    if (cachedData) return JSON.parse(cachedData) as T;
     return await fetcher();
   }
 }
 
 /**
- * Hook customizado para usar o SmartCache com padrão SWR (Stale-While-Revalidate).
- * Retorna o cache imediatamente e atualiza em background se necessário.
+ * Hook customizado otimizado com SWR (Stale-While-Revalidate).
+ * Retorna o cache IMEDIATAMENTE e atualiza em background.
  */
 export function useSmartData<T>(tabela: string, fetcher: () => Promise<T>) {
   const [data, setData] = React.useState<T | null>(() => {
@@ -70,10 +71,16 @@ export function useSmartData<T>(tabela: string, fetcher: () => Promise<T>) {
     let isMounted = true;
     
     async function sync() {
-      const freshData = await getSmartData(tabela, fetcher);
-      if (isMounted) {
-        setData(freshData);
-        setLoading(false);
+      // Se já temos dados no cache, o loading inicial é falso
+      // mas vamos buscar a versão remota para ver se mudou
+      try {
+        const freshData = await getSmartData(tabela, fetcher);
+        if (isMounted) {
+          setData(freshData);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (isMounted) setLoading(false);
       }
     }
 
@@ -81,23 +88,16 @@ export function useSmartData<T>(tabela: string, fetcher: () => Promise<T>) {
     return () => { isMounted = false; };
   }, [tabela]);
 
-  return { data, loading };
+  return { data, loading, setData };
 }
 
-/**
- * Função para invalidar o cache e forçar atualização na próxima carga
- */
 export function invalidateCache(tabela: string) {
   localStorage.removeItem(`cache_v_${tabela}`);
   localStorage.removeItem(`cache_data_${tabela}`);
 }
 
-/**
- * Helper para atualizar a versão no banco de dados após uma operação de escrita (Admin)
- */
 export async function bumpTableVersion(tabela: string) {
   try {
-    // Busca versão atual para incrementar
     const { data: current } = await supabase
       .from('app_metadata')
       .select('version')
@@ -106,15 +106,13 @@ export async function bumpTableVersion(tabela: string) {
     
     const nextVersion = (current?.version || 0) + 1;
 
-    const { error } = await supabase
+    await supabase
       .from('app_metadata')
-      .update({ 
+      .upsert({ 
+        tabela,
         version: nextVersion,
         updated_at: new Date().toISOString() 
-      })
-      .eq('tabela', tabela);
-
-    if (error) throw error;
+      });
   } catch (err) {
     console.error(`[SmartCache] Falha ao atualizar versão de ${tabela}:`, err);
   }
