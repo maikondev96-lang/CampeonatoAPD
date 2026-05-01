@@ -32,16 +32,22 @@ export default function AdminHub() {
             return (
               <div key={comp.id} className="fs-comp-item-admin">
                 <div className="fs-comp-item-main">
-                  <img src={comp.logo_url || logoApd} alt="" className="fs-comp-logo-large" />
+                  {comp.logo_url ? (
+                    <img src={comp.logo_url} alt="" className="fs-comp-logo-large" />
+                  ) : (
+                    <div className="fs-comp-logo-large placeholder"><Trophy size={16} /></div>
+                  )}
                   <div className="fs-comp-details">
-                    <span className="fs-comp-country">{comp.is_active ? '● ATIVO' : 'ARQUIVADO'}</span>
-                    <h3 className="fs-comp-name">{comp.name} {activeSeason?.year}</h3>
+                    <span className="fs-comp-country" style={{ fontSize: '0.65rem', fontWeight: 800, color: comp.is_active ? 'var(--primary-dark)' : 'var(--text-muted)' }}>
+                      {comp.is_active ? '● ATIVO' : 'ARQUIVADO'}
+                    </span>
+                    <h3 className="fs-comp-name" style={{ fontSize: '1rem', marginTop: '2px' }}>{comp.name} {activeSeason?.year}</h3>
                     <span className="fs-comp-type">{comp.type.toUpperCase()}</span>
                   </div>
                 </div>
                 <div className="fs-comp-actions">
                   <Link to={`/admin/${comp.slug}/${activeSeason?.year || 2026}`} className="btn-app-outline">Gerenciar</Link>
-                  <Link to={`/admin/${comp.slug}/${activeSeason?.year || 2026}/settings`} className="btn-app-icon"><Settings size={14}/></Link>
+                  <Link to={`/admin/${comp.slug}/${activeSeason?.year || 2026}/settings`} className="btn-app-icon"><Settings size={16}/></Link>
                 </div>
               </div>
             );
@@ -54,22 +60,22 @@ export default function AdminHub() {
         <div className="fs-section-header">CONFIGURAÇÕES GLOBAIS</div>
         <div className="fs-comps-list">
           <Link to="/admin/news" className="fs-comp-item">
-             <div className="fs-comp-logo" style={{ background: 'var(--surface-alt)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+             <div className="fs-comp-logo" style={{ background: 'var(--surface-alt)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24 }}>
                <Globe size={12} />
              </div>
              <div className="fs-comp-details">
                <h3 className="fs-comp-name">Motor de Notícias (GE)</h3>
-               <span className="fs-comp-country">Publicações na Home</span>
+               <span className="fs-comp-country" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Publicações na Home</span>
              </div>
              <ChevronRight size={14} color="var(--text-muted)" style={{ marginLeft: 'auto' }} />
           </Link>
-          <div className="fs-comp-item" style={{ cursor: 'pointer' }}>
-             <div className="fs-comp-logo" style={{ background: 'var(--surface-alt)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="fs-comp-item" style={{ cursor: 'pointer' }} onClick={() => alert('Módulo de Organização: Aqui você poderá alterar a logo da APD, nome oficial e cores padrão de todo o portal. Funcionalidade em desenvolvimento!')}>
+             <div className="fs-comp-logo" style={{ background: 'var(--surface-alt)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24 }}>
                <Settings size={12} />
              </div>
              <div className="fs-comp-details">
                <h3 className="fs-comp-name">Organização</h3>
-               <span className="fs-comp-country">Identidade Visual da APD</span>
+               <span className="fs-comp-country" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Identidade Visual da APD</span>
              </div>
              <ChevronRight size={14} color="var(--text-muted)" style={{ marginLeft: 'auto' }} />
           </div>
@@ -128,12 +134,18 @@ export default function AdminHub() {
           gap: 12px;
         }
         .fs-comp-logo-large {
-          width: 32px;
-          height: 32px;
+          width: 40px;
+          height: 40px;
           object-fit: contain;
-          border-radius: 6px;
+          border-radius: 8px;
           background: var(--surface-alt);
-          padding: 2px;
+          padding: 4px;
+        }
+        .fs-comp-logo-large.placeholder {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-muted);
         }
         .fs-comp-type {
           font-size: 0.6rem;
@@ -143,19 +155,20 @@ export default function AdminHub() {
           border-radius: 4px;
           display: inline-block;
           margin-top: 4px;
+          font-weight: 700;
         }
         .fs-comp-actions {
           display: flex;
           gap: 8px;
-          margin-left: 44px; /* alinha com o texto */
+          margin-left: 52px; /* alinha com o texto */
         }
         .btn-app-outline {
           border: 1px solid var(--primary-color);
           color: var(--primary-color);
-          padding: 6px 12px;
-          border-radius: 4px;
+          padding: 8px 12px;
+          border-radius: 6px;
           font-weight: 800;
-          font-size: 0.75rem;
+          font-size: 0.8rem;
           text-decoration: none;
           display: inline-flex;
           align-items: center;
@@ -165,8 +178,8 @@ export default function AdminHub() {
         .btn-app-icon {
           border: 1px solid var(--border-color);
           color: var(--text-muted);
-          padding: 6px 12px;
-          border-radius: 4px;
+          padding: 8px;
+          border-radius: 6px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
