@@ -106,7 +106,7 @@ const AdminJogadores = () => {
       });
 
       if (!validation.success) {
-        throw new Error(validation.error.errors[0].message);
+        throw new Error(validation.error.issues[0].message);
       }
       let finalPhotoUrl = previewUrl || '';
 

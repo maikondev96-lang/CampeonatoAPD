@@ -58,10 +58,10 @@ const TournamentDashboard = () => {
       ]);
 
       let nextMatchesData: Match[] = [];
-      if (firstNext) {
+      if (firstNext.data) {
         const query = supabase.from('matches').select('*, home_team:teams!home_team_id(name, logo_url, short_name), away_team:teams!away_team_id(name, logo_url, short_name)').eq('season_id', season.id).eq('status', 'agendado');
-        if (firstNext.round) { query.eq('round', firstNext.round); setCurrentRound(`RODADA ${firstNext.round}`); }
-        else { query.eq('stage_id', firstNext.stage_id); setCurrentRound((firstNext as any).stage?.name?.toUpperCase() || 'PRÓXIMA FASE'); }
+        if (firstNext.data.round) { query.eq('round', firstNext.data.round); setCurrentRound(`RODADA ${firstNext.data.round}`); }
+        else { query.eq('stage_id', firstNext.data.stage_id); setCurrentRound((firstNext.data as any).stage?.name?.toUpperCase() || 'PRÓXIMA FASE'); }
         const { data } = await query.order('date', { ascending: true }).order('time', { ascending: true }).limit(6);
         nextMatchesData = data || [];
       }
@@ -69,10 +69,11 @@ const TournamentDashboard = () => {
       const teamIds = (teamsRes.data || []).map((st: any) => st.team?.id).filter(Boolean);
       const groupStageIds = (stagesRes.data || []).map(s => s.id);
 
-      const [{ count: playersCount }, { data: events }, { data: allGroupMatches }] = await Promise.all([
+      const [{ count: playersCount }, { data: events }, { data: allGroupMatches }, { data: players }] = await Promise.all([
         supabase.from('players').select('*', { count: 'exact', head: true }).in('team_id', teamIds),
         supabase.from('match_events').select('player_id, assist_player_id, type, match:matches!inner(season_id)').eq('match.season_id', season.id),
-        supabase.from('matches').select('*').eq('season_id', season.id).eq('status', 'finalizado').in('stage_id', groupStageIds)
+        supabase.from('matches').select('*').eq('season_id', season.id).eq('status', 'finalizado').in('stage_id', groupStageIds),
+        supabase.from('players').select('*, team:teams(name, logo_url)').in('team_id', teamIds)
       ]);
 
       setSeasonStats({

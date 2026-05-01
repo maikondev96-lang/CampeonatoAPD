@@ -34,6 +34,17 @@ export type Competition = {
     required: string[];
     optional: string[];
   };
+  settings_json?: {
+    primary_color?: string;
+    banner_url?: string;
+    logo_url?: string;
+    description?: string;
+    has_knockout?: boolean;
+    has_groups?: boolean;
+    has_hall_of_fame?: boolean;
+    theme?: 'light' | 'dark' | 'auto';
+    [key: string]: any;
+  };
   is_active: boolean;
   created_at?: string;
   // Relações

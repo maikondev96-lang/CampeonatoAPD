@@ -1,3 +1,4 @@
+import React from 'react';
 import { History as HistoryIcon, Star, Trophy, Users, Flag, Loader2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { Season } from '../types';

@@ -104,7 +104,7 @@ export default function PublicRegistration() {
       });
 
       if (!validation.success) {
-        throw new Error(validation.error.errors[0].message);
+        throw new Error(validation.error.issues[0].message);
       }
 
       const { error } = await supabase.from('registration_submissions').insert([{

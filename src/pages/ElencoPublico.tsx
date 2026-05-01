@@ -31,8 +31,6 @@ const ElencoPublico = () => {
     setLoading(true);
     setErrorMsg('');
     try {
-      // Usar a anon key, mas as consultas podem falhar se RLS estiver fechado.
-      // Atualmente RLS permite leitura pública.
       const { data: teamData, error: teamErr } = await supabase
         .from('teams')
         .select('*')
@@ -86,7 +84,7 @@ const ElencoPublico = () => {
       });
 
       if (!validation.success) {
-        throw new Error(validation.error.errors[0].message);
+        throw new Error(validation.error.issues[0].message);
       }
 
       let finalPhotoUrl = photoUrl || previewUrl || '';
