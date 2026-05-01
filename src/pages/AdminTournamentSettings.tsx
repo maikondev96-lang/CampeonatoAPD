@@ -18,17 +18,14 @@ export default function AdminTournamentSettings() {
   const [status, setStatus] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#16a34a');
   const [logoUrl, setLogoUrl] = useState('');
-  const [bannerUrl, setBannerUrl] = useState('');
 
   useEffect(() => {
     if (activeCompetition) {
       setName(activeCompetition.name);
       setSlug(activeCompetition.slug);
       setType(activeCompetition.type);
-      const settings = activeCompetition.settings_json || {};
-      setPrimaryColor(settings.primary_color || '#16a34a');
-      setLogoUrl(settings.logo_url || '');
-      setBannerUrl(settings.banner_url || '');
+      setPrimaryColor(activeCompetition.primary_color || '#16a34a');
+      setLogoUrl(activeCompetition.logo_url || '');
     }
     if (activeSeason) {
       setStatus(activeSeason.status);
@@ -48,12 +45,8 @@ export default function AdminTournamentSettings() {
           name, 
           slug, 
           type,
-          settings_json: {
-            ...(activeCompetition.settings_json || {}),
-            primary_color: primaryColor,
-            logo_url: logoUrl,
-            banner_url: bannerUrl
-          }
+          primary_color: primaryColor,
+          logo_url: logoUrl
         })
         .eq('id', activeCompetition.id);
       
@@ -197,17 +190,6 @@ export default function AdminTournamentSettings() {
                    value={logoUrl} 
                    onChange={e => setLogoUrl(e.target.value)} 
                    placeholder="https://exemplo.com/logo.png"
-                   style={{ padding: '10px', fontSize: '0.9rem' }}
-                 />
-               </div>
-
-               <div className="form-group" style={{ margin: 0 }}>
-                 <label style={{ fontSize: '0.7rem', fontWeight: 800 }}>URL DO BANNER DE FUNDO</label>
-                 <input 
-                   type="text" 
-                   value={bannerUrl} 
-                   onChange={e => setBannerUrl(e.target.value)} 
-                   placeholder="https://exemplo.com/banner.jpg"
                    style={{ padding: '10px', fontSize: '0.9rem' }}
                  />
                </div>
