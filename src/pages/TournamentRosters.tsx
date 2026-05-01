@@ -11,8 +11,17 @@ const PlayerModal = ({ player, onClose }: { player: Player, onClose: () => void 
   const modalRoot = document.getElementById('modal-root');
 
   useEffect(() => {
+    // Trava de scroll agressiva (html e body)
+    const originalOverflowBody = document.body.style.overflow;
+    const originalOverflowHtml = document.documentElement.style.overflow;
+    
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = 'unset'; };
+    document.documentElement.style.overflow = 'hidden';
+    
+    return () => { 
+      document.body.style.overflow = originalOverflowBody || 'unset';
+      document.documentElement.style.overflow = originalOverflowHtml || 'unset';
+    };
   }, []);
 
   if (!modalRoot) return null;
@@ -52,22 +61,11 @@ export default function TournamentRosters() {
     if (season) fetchRosters();
   }, [season]);
 
-  useEffect(() => {
-    if (selectedPlayer) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => { document.body.style.overflow = 'unset'; };
-  }, [selectedPlayer]);
-
   const fetchRosters = async () => {
     if (!season) return;
     setLoading(true);
     try {
-      // 1. Usa SmartCache para buscar os dados consolidados do elenco
       const data = await getSmartData(`elencos_${season.id}`, async () => {
-        // Fetch Season Teams
         const { data: stData } = await supabase
           .from('season_teams')
           .select('team:teams(*)')
@@ -76,7 +74,6 @@ export default function TournamentRosters() {
         const teamList = stData?.map((st: any) => st.team).filter(Boolean) || [];
         const teamIds = teamList.map(t => t.id);
 
-        // Fetch Players for these teams
         const { data: pData } = await supabase
           .from('players')
           .select('*')
@@ -105,147 +102,284 @@ export default function TournamentRosters() {
   if (ctxLoading || loading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" size={40} color="var(--primary-color)" /></div>;
 
   return (
-    <div className="animate-fade container" style={{ maxWidth: '1000px', margin: '0 auto' }}>
-      <div style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
-        <h1 className="section-title" style={{ justifyContent: 'center' }}><Users /> ELENCOS E ATLETAS</h1>
-        <p style={{ color: 'var(--text-muted)' }}>Confira os jogadores inscritos em cada equipe para esta temporada.</p>
+    <div className="page-fluid animate-fade roster-page-container">
+      <div className="roster-header-section">
+        <h1 className="section-title"><Users /> ELENCOS E ATLETAS</h1>
+        <p className="section-subtitle">Confira os jogadores inscritos em cada equipe para esta temporada.</p>
       </div>
 
-      {/* SEARCH */}
-      <div style={{ position: 'relative', marginBottom: '2rem' }}>
-        <Search style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={20} />
+      <div className="search-wrapper">
+        <Search className="search-icon" size={20} />
         <input 
           type="text" 
           placeholder="Buscar por time ou jogador..." 
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          className="form-control"
-          style={{ width: '100%', padding: '1rem 1rem 1rem 3.5rem', borderRadius: '16px', background: 'var(--card-bg)', border: '1px solid var(--border-color)', fontWeight: 700 }}
+          className="roster-search-input"
         />
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div className="roster-grid">
         {filteredTeams.map(team => (
-          <div key={team.id} className="premium-card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-            <button 
+          <div key={team.id} className={`roster-team-card ${expandedTeamId === team.id ? 'expanded' : ''}`}>
+            <div 
+              className="roster-team-header"
               onClick={() => setExpandedTeamId(expandedTeamId === team.id ? null : team.id)}
-              style={{ 
-                width: '100%', padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', 
-                alignItems: 'center', background: 'var(--card-bg)', border: 'none', cursor: 'pointer', color: 'inherit' 
-              }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                <div style={{ background: 'var(--surface-alt)', padding: '8px', borderRadius: '12px' }}>
-                  <img src={team.logo_url} style={{ width: 40, height: 40, objectFit: 'contain' }} alt="" />
+              <div className="team-info-group">
+                <div className="team-logo-bg">
+                  <img src={team.logo_url} alt="" />
                 </div>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontWeight: 950, color: 'var(--text-main)', fontSize: '1.2rem' }}>{team.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 800 }}>{team.players.length} ATLETAS INSCRITOS</div>
+                <div className="team-text-group">
+                  <h3 className="team-name">{team.name}</h3>
+                  <span className="player-count">{team.players.length} ATLETAS</span>
                 </div>
               </div>
-              {expandedTeamId === team.id ? <ChevronUp size={24} color="var(--primary-color)" /> : <ChevronDown size={24} color="var(--text-muted)" />}
-            </button>
+              <div className="chevron-icon">
+                {expandedTeamId === team.id ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+              </div>
+            </div>
 
             {expandedTeamId === team.id && (
-              <div style={{ background: 'var(--surface-alt)', borderTop: '1px solid var(--border-color)' }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  {team.players.length === 0 ? (
-                    <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontWeight: 700 }}>Nenhum jogador cadastrado para este time.</p>
-                  ) : (
-                    team.players.map(p => (
-                      <div 
-                        key={p.id} 
-                        className="player-list-item" 
-                        onClick={() => setSelectedPlayer(p)}
-                      >
-                        <div className="p-list-photo">
-                          <img 
-                            src={p.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.name}`} 
-                            alt="" 
-                          />
-                        </div>
-                        <div className="p-list-number">{p.shirt_number || '--'}</div>
-                        <div className="p-list-name">{p.name}</div>
-                        <div className="p-list-pos">{p.position || 'ATLETA'}</div>
-                        <ChevronRight size={14} color="var(--text-muted)" />
+              <div className="roster-player-list animate-fade">
+                {team.players.length === 0 ? (
+                  <div className="no-players-msg">Nenhum jogador cadastrado.</div>
+                ) : (
+                  team.players.map(p => (
+                    <div key={p.id} className="roster-player-item" onClick={() => setSelectedPlayer(p)}>
+                      <div className="player-avatar">
+                        <img src={p.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.name}`} alt="" />
                       </div>
-                    ))
-                  )}
-                </div>
+                      <span className="player-num">#{p.shirt_number || '00'}</span>
+                      <span className="player-name">{p.name}</span>
+                      <span className="player-pos-badge">{p.position || 'ATLETA'}</span>
+                      <ChevronRight size={16} className="arrow-icon" />
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </div>
         ))}
-
-        {filteredTeams.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '5rem', background: 'var(--card-bg)', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
-            <Users size={48} style={{ margin: '0 auto 1rem', opacity: 0.2 }} />
-            <p style={{ fontWeight: 800, color: 'var(--text-muted)' }}>Nenhum time ou atleta encontrado.</p>
-          </div>
-        )}
       </div>
 
-      {/* MODAL VIA PORTAL */}
-      {selectedPlayer && (
-        <PlayerModal 
-          player={selectedPlayer} 
-          onClose={() => setSelectedPlayer(null)} 
-        />
-      )}
+      {selectedPlayer && <PlayerModal player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />}
 
       <style>{`
-        .player-list-item {
+        .roster-page-container {
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 40px 20px;
+        }
+
+        .roster-header-section {
+          text-align: center;
+          margin-bottom: 3rem;
+        }
+
+        .section-subtitle {
+          color: var(--text-muted);
+          font-size: 1rem;
+          margin-top: 0.5rem;
+        }
+
+        .search-wrapper {
+          position: relative;
+          max-width: 800px;
+          margin: 0 auto 3rem;
+        }
+
+        .search-icon {
+          position: absolute;
+          left: 1.25rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: var(--text-muted);
+        }
+
+        .roster-search-input {
+          width: 100%;
+          padding: 1.25rem 1.25rem 1.25rem 3.5rem;
+          border-radius: 20px;
+          background: var(--card-bg);
+          border: 1px solid var(--border-color);
+          font-weight: 700;
+          font-size: 1rem;
+          color: var(--text-main);
+          box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+          transition: all 0.2s;
+        }
+
+        .roster-search-input:focus {
+          border-color: var(--primary-color);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        .roster-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        @media (min-width: 1024px) {
+          .roster-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        .roster-team-card {
+          background: var(--card-bg);
+          border-radius: 24px;
+          border: 1px solid var(--border-color);
+          overflow: hidden;
+          transition: all 0.3s ease;
+          height: fit-content;
+        }
+
+        .roster-team-card.expanded {
+          border-color: var(--primary-color);
+          box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+        }
+
+        .roster-team-header {
+          padding: 1.5rem;
           display: flex;
           align-items: center;
-          padding: 10px 16px;
-          border-bottom: 1px solid var(--border-color);
-          background: var(--card-bg);
-          gap: 12px;
+          justify-content: space-between;
           cursor: pointer;
-          transition: background 0.15s;
+          transition: background 0.2s;
         }
-        .player-list-item:hover { background: var(--surface-alt); }
-        .player-list-item:last-child { border-bottom: none; }
 
-        .p-list-photo {
-          width: 36px;
-          height: 36px;
+        .roster-team-header:hover {
+          background: var(--surface-alt);
+        }
+
+        .team-info-group {
+          display: flex;
+          align-items: center;
+          gap: 1.25rem;
+        }
+
+        .team-logo-bg {
+          background: var(--surface-alt);
+          padding: 10px;
+          border-radius: 16px;
+          width: 60px;
+          height: 60px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .team-logo-bg img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+
+        .team-name {
+          margin: 0;
+          font-size: 1.25rem;
+          font-weight: 950;
+          color: var(--text-main);
+          letter-spacing: -0.5px;
+        }
+
+        .player-count {
+          font-size: 0.75rem;
+          font-weight: 800;
+          color: var(--text-muted);
+          letter-spacing: 0.5px;
+        }
+
+        .chevron-icon {
+          color: var(--text-muted);
+          transition: transform 0.3s;
+        }
+
+        .roster-player-list {
+          border-top: 1px solid var(--border-color);
+          background: var(--surface-alt);
+        }
+
+        .roster-player-item {
+          display: flex;
+          align-items: center;
+          padding: 12px 20px;
+          gap: 15px;
+          cursor: pointer;
+          transition: all 0.2s;
+          border-bottom: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .roster-player-item:hover {
+          background: var(--card-bg);
+          padding-left: 28px;
+        }
+
+        .player-avatar {
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
           overflow: hidden;
-          background: var(--surface-alt);
-          flex-shrink: 0;
+          background: var(--card-bg);
+          border: 1px solid var(--border-color);
         }
-        .p-list-photo img {
+
+        .player-avatar img {
           width: 100%;
           height: 100%;
           object-fit: cover;
         }
 
-        .p-list-number {
-          width: 25px;
-          font-size: 0.85rem;
+        .player-num {
           font-weight: 900;
           color: var(--primary-color);
-          text-align: center;
-          flex-shrink: 0;
-        }
-
-        .p-list-name {
-          flex: 1;
           font-size: 0.9rem;
-          font-weight: 800;
-          color: var(--text-main);
+          width: 30px;
         }
 
-        .p-list-pos {
-          font-size: 0.6rem;
+        .player-name {
+          flex: 1;
+          font-weight: 700;
+          color: var(--text-main);
+          font-size: 0.95rem;
+        }
+
+        .player-pos-badge {
+          font-size: 0.65rem;
           font-weight: 900;
+          background: var(--card-bg);
           color: var(--text-muted);
-          background: var(--surface-alt);
-          padding: 2px 8px;
-          border-radius: 4px;
+          padding: 4px 10px;
+          border-radius: 6px;
           text-transform: uppercase;
-          flex-shrink: 0;
+        }
+
+        .arrow-icon {
+          opacity: 0;
+          transform: translateX(-10px);
+          transition: all 0.2s;
+          color: var(--primary-color);
+        }
+
+        .roster-player-item:hover .arrow-icon {
+          opacity: 1;
+          transform: translateX(0);
+        }
+
+        .no-players-msg {
+          padding: 2rem;
+          text-align: center;
+          color: var(--text-muted);
+          font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+          .roster-page-container { padding: 20px 15px; }
+          .team-logo-bg { width: 50px; height: 50px; }
+          .team-name { font-size: 1.1rem; }
+          .roster-team-header { padding: 1rem; }
         }
       `}</style>
     </div>
