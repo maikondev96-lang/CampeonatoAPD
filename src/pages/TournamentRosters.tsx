@@ -159,7 +159,7 @@ export default function TournamentRosters() {
           <div className="player-photo-modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-photo-wrapper">
               <img src={selectedPlayer.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedPlayer.name}`} alt="" />
-              <div className="modal-player-badge">#{selectedPlayer.shirt_number}</div>
+              <div className="modal-player-badge">{selectedPlayer.shirt_number}</div>
             </div>
             <div className="modal-player-info">
               <h3>{selectedPlayer.name}</h3>
@@ -228,28 +228,34 @@ export default function TournamentRosters() {
         /* MODAL STYLES */
         .player-photo-modal-overlay {
           position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,0.85);
-          backdrop-filter: blur(8px);
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(0,0,0,0.9);
+          backdrop-filter: blur(10px);
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 2000;
+          z-index: 9999;
           padding: 20px;
-          overflow-y: auto;
+          box-sizing: border-box;
         }
         .player-photo-modal-content {
           background: var(--card-bg);
-          border-radius: 24px;
+          border-radius: 28px;
           width: 100%;
-          max-width: 360px;
-          margin: auto; /* Centering fix for overflow-y: auto */
-          overflow: hidden;
-          animation: modalIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+          max-width: 380px;
+          max-height: 90vh;
+          display: flex;
+          flex-direction: column;
+          overflow-y: auto;
+          animation: modalScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+          box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+          position: relative;
         }
-        @keyframes modalIn {
-          from { transform: scale(0.9); opacity: 0; }
+        @keyframes modalScaleIn {
+          from { transform: scale(0.8); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
         }
 
