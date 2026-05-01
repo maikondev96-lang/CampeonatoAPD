@@ -11,6 +11,7 @@ export default function TournamentRosters() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   useEffect(() => {
     if (season) fetchRosters();
@@ -102,25 +103,27 @@ export default function TournamentRosters() {
             </button>
 
             {expandedTeamId === team.id && (
-              <div style={{ padding: '0 1.5rem 1.5rem', background: 'var(--surface-alt)', borderTop: '1px solid var(--border-color)' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1.25rem', marginTop: '1.5rem' }}>
+              <div style={{ background: 'var(--surface-alt)', borderTop: '1px solid var(--border-color)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
                   {team.players.length === 0 ? (
-                    <p style={{ gridColumn: '1/-1', textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontWeight: 700 }}>Nenhum jogador cadastrado para este time.</p>
+                    <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontWeight: 700 }}>Nenhum jogador cadastrado para este time.</p>
                   ) : (
                     team.players.map(p => (
-                      <div key={p.id} className="player-card-premium">
-                        <div className="player-card-photo-area">
+                      <div 
+                        key={p.id} 
+                        className="player-list-item" 
+                        onClick={() => setSelectedPlayer(p)}
+                      >
+                        <div className="p-list-photo">
                           <img 
                             src={p.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.name}`} 
                             alt="" 
-                            className="p-card-img" 
                           />
-                          <div className="p-card-number-badge">{p.shirt_number || '--'}</div>
                         </div>
-                        <div className="player-card-info">
-                          <div className="p-card-pos-tag">{p.position || 'ATLETA'}</div>
-                          <h4 className="p-card-name">{p.name}</h4>
-                        </div>
+                        <div className="p-list-number">{p.shirt_number || '--'}</div>
+                        <div className="p-list-name">{p.name}</div>
+                        <div className="p-list-pos">{p.position || 'ATLETA'}</div>
+                        <ChevronRight size={14} color="var(--text-muted)" />
                       </div>
                     ))
                   )}
@@ -138,87 +141,156 @@ export default function TournamentRosters() {
         )}
       </div>
 
+      {/* MODAL PARA FOTO DO JOGADOR */}
+      {selectedPlayer && (
+        <div 
+          className="player-photo-modal-overlay" 
+          onClick={() => setSelectedPlayer(null)}
+        >
+          <div className="player-photo-modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-photo-wrapper">
+              <img src={selectedPlayer.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedPlayer.name}`} alt="" />
+              <div className="modal-player-badge">#{selectedPlayer.shirt_number}</div>
+            </div>
+            <div className="modal-player-info">
+              <h3>{selectedPlayer.name}</h3>
+              <span>{selectedPlayer.position}</span>
+            </div>
+            <button className="modal-close-btn" onClick={() => setSelectedPlayer(null)}>FECHAR</button>
+          </div>
+        </div>
+      )}
+
       <style>{`
-        .player-card-premium {
+        .player-list-item {
           display: flex;
-          flex-direction: column;
-          background: var(--card-bg);
-          border-radius: 20px;
-          border: 1px solid var(--border-color);
-          overflow: hidden;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          position: relative;
-        }
-        .player-card-premium:hover {
-          transform: translateY(-8px);
-          border-color: var(--primary-color);
-          box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-        }
-
-        .player-card-photo-area {
-          position: relative;
-          width: 100%;
-          padding-top: 100%; /* Square aspect ratio */
-          background: var(--surface-alt);
-          overflow: hidden;
-        }
-        .p-card-img {
-          position: absolute;
-          top: 0; left: 0;
-          width: 100%; height: 100%;
-          object-fit: cover;
-          transition: transform 0.5s ease;
-        }
-        .player-card-premium:hover .p-card-img { transform: scale(1.05); }
-
-        .p-card-number-badge {
-          position: absolute;
-          top: 12px; right: 12px;
-          background: var(--primary-color);
-          color: white;
-          padding: 4px 10px;
-          border-radius: 10px;
-          font-size: 0.9rem;
-          font-weight: 950;
-          box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.4);
-          z-index: 2;
-        }
-
-        .player-card-info {
-          padding: 1.25rem;
-          background: var(--card-bg);
-          text-align: center;
-          display: flex;
-          flex-direction: column;
           align-items: center;
-          gap: 6px;
+          padding: 10px 16px;
+          border-bottom: 1px solid var(--border-color);
+          background: var(--card-bg);
+          gap: 12px;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+        .player-list-item:hover { background: var(--surface-alt); }
+        .player-list-item:last-child { border-bottom: none; }
+
+        .p-list-photo {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          overflow: hidden;
+          background: var(--surface-alt);
+          flex-shrink: 0;
+        }
+        .p-list-photo img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
 
-        .p-card-pos-tag {
+        .p-list-number {
+          width: 25px;
+          font-size: 0.85rem;
+          font-weight: 900;
+          color: var(--primary-color);
+          text-align: center;
+          flex-shrink: 0;
+        }
+
+        .p-list-name {
+          flex: 1;
+          font-size: 0.9rem;
+          font-weight: 800;
+          color: var(--text-main);
+        }
+
+        .p-list-pos {
           font-size: 0.6rem;
-          font-weight: 950;
+          font-weight: 900;
           color: var(--text-muted);
           background: var(--surface-alt);
-          padding: 3px 10px;
-          border-radius: 50px;
-          letter-spacing: 1px;
+          padding: 2px 8px;
+          border-radius: 4px;
+          text-transform: uppercase;
+          flex-shrink: 0;
+        }
+
+        /* MODAL STYLES */
+        .player-photo-modal-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.85);
+          backdrop-filter: blur(8px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 2000;
+          padding: 20px;
+        }
+        .player-photo-modal-content {
+          background: var(--card-bg);
+          border-radius: 24px;
+          width: 100%;
+          max-width: 360px;
+          overflow: hidden;
+          animation: modalIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes modalIn {
+          from { transform: scale(0.9); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-photo-wrapper {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 1;
+        }
+        .modal-photo-wrapper img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .modal-player-badge {
+          position: absolute;
+          top: 20px; right: 20px;
+          background: var(--primary-color);
+          color: white;
+          padding: 8px 16px;
+          border-radius: 12px;
+          font-weight: 950;
+          font-size: 1.2rem;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .modal-player-info {
+          padding: 1.5rem;
+          text-align: center;
+        }
+        .modal-player-info h3 {
+          font-size: 1.4rem;
+          font-weight: 950;
+          margin: 0;
+          color: var(--text-main);
           text-transform: uppercase;
         }
-
-        .p-card-name {
-          font-size: 1rem;
-          font-weight: 900;
-          color: var(--text-main);
-          margin: 0;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          width: 100%;
+        .modal-player-info span {
+          font-size: 0.8rem;
+          font-weight: 800;
+          color: var(--text-muted);
+          text-transform: uppercase;
+          letter-spacing: 1px;
         }
 
-        @media (max-width: 640px) {
-           .player-card-info { padding: 0.75rem; }
-           .p-card-name { font-size: 0.85rem; }
+        .modal-close-btn {
+          width: 100%;
+          padding: 1.25rem;
+          background: var(--surface-alt);
+          border: none;
+          border-top: 1px solid var(--border-color);
+          font-weight: 900;
+          color: var(--primary-color);
+          cursor: pointer;
         }
       `}</style>
     </div>
