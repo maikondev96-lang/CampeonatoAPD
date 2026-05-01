@@ -383,8 +383,16 @@ const Classificacao = () => {
         }
         
         .page-fluid {
-          max-width: 1400px;
+          max-width: 1600px;
           margin: 0 auto;
+          padding: 40px;
+        }
+
+        @media (min-width: 1200px) {
+          .standings-table { font-size: 1rem; }
+          .fs-team-name-table { font-size: 1.1rem; }
+          .fs-team-logo { width: 28px; height: 28px; }
+          .standings-table th, .standings-table td { padding: 12px 8px; }
         }
       `}</style>
     </div>

@@ -9,6 +9,12 @@ import { getSmartData } from '../utils/smartCache';
 // SUB-COMPONENTE MODAL (PROFISSIONAL)
 const PlayerModal = ({ player, onClose }: { player: Player, onClose: () => void }) => {
   const modalRoot = document.getElementById('modal-root');
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = 'unset'; };
+  }, []);
+
   if (!modalRoot) return null;
 
   return createPortal(
