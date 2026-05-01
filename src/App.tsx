@@ -217,9 +217,6 @@ function App() {
               <Routes>
                 {/* Portal Institutional */}
                 <Route path="/" element={<Home />} />
-                <Route path="/admin/:slug/:year/times" element={<AdminRoute><AdminTimes /></AdminRoute>} />
-                <Route path="/admin/:slug/:year/sorteio" element={<AdminRoute><AdminGroupSorter /></AdminRoute>} />
-                <Route path="/admin/:slug/:year/jogos" element={<AdminRoute><AdminJogos /></AdminRoute>} />
                 <Route path="/admin/new-championship" element={<AdminRoute><AdminChampionshipWizard /></AdminRoute>} />
                 <Route path="/admin/news" element={<AdminRoute><AdminNews /></AdminRoute>} />
                 <Route path="/sobre" element={<InstitutionalAbout />} />
@@ -254,6 +251,7 @@ function App() {
                       <Route path="jogos/:id" element={<AdminMatchDetail />} />
                       <Route path="times" element={<AdminTimes />} />
                       <Route path="jogadores" element={<AdminJogadores />} />
+                      <Route path="sorteio" element={<AdminGroupSorter />} />
                       <Route path="inscricoes" element={<AdminApprovals />} />
                       <Route path="settings" element={<AdminTournamentSettings />} />
                    </Route>

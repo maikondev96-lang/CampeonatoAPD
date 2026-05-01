@@ -67,7 +67,7 @@ export default function AdminHub() {
                 <Link to={`/admin/${comp.slug}/${activeSeason?.year || 2026}`} className="btn btn-primary" style={{ width: '100%', fontSize: '0.8rem' }}>
                   Gerenciar
                 </Link>
-                <Link to={`/admin/competitions`} className="btn btn-secondary" style={{ width: '100%', fontSize: '0.8rem' }}>
+                <Link to={`/admin/${comp.slug}/${activeSeason?.year || 2026}/settings`} className="btn btn-secondary" style={{ width: '100%', fontSize: '0.8rem' }}>
                   Configurar
                 </Link>
               </div>
