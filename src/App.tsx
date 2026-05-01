@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Trophy, Calendar, Table, Activity, Settings, Users, Shield, Menu, X, Sun, Moon, Globe, ChevronDown, Layout, Home as HomeIcon, Star } from 'lucide-react';
 

@@ -52,6 +52,7 @@ export default function AdminHistory() {
   const handleSave = async () => {
     try {
       const table = activeTab === 'timeline' ? 'history_timeline' : 'hall_of_fame';
+      const dataToSave = activeTab === 'timeline' 
         ? { year: formData.year, title: formData.title, description: formData.description, icon_name: formData.icon_name, color: formData.color }
         : { 
             year: formData.year, 
