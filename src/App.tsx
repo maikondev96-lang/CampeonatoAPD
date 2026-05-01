@@ -29,7 +29,6 @@ import ElencoPublico from './pages/ElencoPublico';
 import PublicRegistration from './pages/PublicRegistration';
 import TeamProfile from './pages/TeamProfile';
 import AdminLogin from './pages/AdminLogin';
-import InstitutionalAbout from './pages/InstitutionalAbout';
 import InstitutionalHistory from './pages/InstitutionalHistory';
 import PlayerRegistration from './pages/PlayerRegistration';
 
@@ -167,9 +166,6 @@ const Navbar = () => {
                     <HomeIcon size={18} />
                     <span>Início</span>
                   </Link>
-                  <Link to="/sobre" className={`nav-link-item ${location.pathname === '/sobre' ? 'active' : ''}`}>
-                    <span>Sobre</span>
-                  </Link>
                   <Link to="/historia" className={`nav-link-item ${location.pathname === '/historia' ? 'active' : ''}`}>
                     <span>História</span>
                   </Link>
@@ -242,10 +238,6 @@ const BottomNav = () => {
         <HomeIcon size={20} />
         <span>Início</span>
       </Link>
-      <Link to="/sobre" className={location.pathname === '/sobre' ? 'active' : ''}>
-        <Star size={20} />
-        <span>Sobre</span>
-      </Link>
       <Link to="/historia" className={location.pathname === '/historia' ? 'active' : ''}>
         <Trophy size={20} />
         <span>História</span>
@@ -282,7 +274,6 @@ function App() {
                 <Route path="/admin/new-championship" element={<AdminRoute><AdminChampionshipWizard /></AdminRoute>} />
                 <Route path="/admin/news" element={<AdminRoute><AdminNews /></AdminRoute>} />
                 <Route path="/admin/history" element={<AdminRoute><AdminHistory /></AdminRoute>} />
-                <Route path="/sobre" element={<InstitutionalAbout />} />
                 <Route path="/historia" element={<InstitutionalHistory />} />
                 
                 {/* Competition Context Routes */}
