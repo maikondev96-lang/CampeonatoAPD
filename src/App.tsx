@@ -2,6 +2,9 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Trophy, Calendar, Table, Activity, Settings, Users, Shield, Menu, X, Sun, Moon, Globe, ChevronDown, Layout, Home as HomeIcon, Star } from 'lucide-react';
 
+// Controle de Versão do Cache (Incremente ao fazer mudanças estruturais)
+const APP_BUILD_ID = '2024.05.01.05'; 
+
 // Pages
 import Home from './pages/Home';
 import TournamentDashboard from './pages/TournamentDashboard';
@@ -185,7 +188,27 @@ const Navbar = () => {
                   <Link to="/admin" className={`nav-link-item ${location.pathname === '/admin' ? 'active' : ''}`}>
                     <Globe size={18} /> <span>Hub Admin</span>
                   </Link>
-                  <button onClick={handleLogout} className="nav-logout-btn">Sair</button>
+                  
+                  {/* Links Contextuais se estiver dentro de um campeonato */}
+                  {location.pathname.split('/').length >= 4 && (
+                    <>
+                      <div className="nav-menu-divider" style={{ margin: '0.5rem 0', opacity: 0.1, borderTop: '1px solid white', width: '100%' }}></div>
+                      <Link to={`${location.pathname.split('/').slice(0, 4).join('/')}`} className="nav-link-item">
+                        <Layout size={18} /> <span>Dashboard</span>
+                      </Link>
+                      <Link to={`${location.pathname.split('/').slice(0, 4).join('/')}/jogos`} className="nav-link-item">
+                        <Calendar size={18} /> <span>Jogos</span>
+                      </Link>
+                      <Link to={`${location.pathname.split('/').slice(0, 4).join('/')}/times`} className="nav-link-item">
+                        <Shield size={18} /> <span>Times</span>
+                      </Link>
+                      <Link to={`${location.pathname.split('/').slice(0, 4).join('/')}/jogadores`} className="nav-link-item">
+                        <Users size={18} /> <span>Jogadores</span>
+                      </Link>
+                    </>
+                  )}
+
+                  <button onClick={handleLogout} className="nav-logout-btn" style={{ marginTop: 'auto' }}>Sair</button>
                 </>
               )}
             </>
@@ -260,6 +283,22 @@ const CompetitionWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
+  useEffect(() => {
+    const localBuildId = localStorage.getItem('app_build_id');
+    if (localBuildId !== APP_BUILD_ID) {
+      // Limpa caches do SmartCache
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('cache_')) localStorage.removeItem(key);
+      });
+      localStorage.setItem('app_build_id', APP_BUILD_ID);
+      
+      // Se não for a primeira vez (ou seja, se mudou mesmo), recarrega
+      if (localBuildId) {
+        window.location.reload();
+      }
+    }
+  }, []);
+
   return (
     <Router>
       <ScrollToTop />
