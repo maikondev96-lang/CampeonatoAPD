@@ -218,6 +218,47 @@ const Classificacao = () => {
           <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#ff5252', marginRight: 4 }} />Derrota</span>
         </div>
       </div>
+      <div className="rules-section animate-fade">
+        <h3 className="rules-title"><Info size={16} /> Critérios de Desempate</h3>
+        <div className="rules-grid">
+          <div className="rule-item">
+            <span className="rule-number">1</span>
+            <div className="rule-info">
+              <span className="rule-label">Vitórias</span>
+              <p className="rule-desc">Maior número de vitórias</p>
+            </div>
+          </div>
+          <div className="rule-item">
+            <span className="rule-number">2</span>
+            <div className="rule-info">
+              <span className="rule-label">Saldo de Gols</span>
+              <p className="rule-desc">Gols marcados menos sofridos</p>
+            </div>
+          </div>
+          <div className="rule-item">
+            <span className="rule-number">3</span>
+            <div className="rule-info">
+              <span className="rule-label">Gols Pró</span>
+              <p className="rule-desc">Maior quantidade de gols feitos</p>
+            </div>
+          </div>
+          <div className="rule-item">
+            <span className="rule-number">4</span>
+            <div className="rule-info">
+              <span className="rule-label">Confronto Direto</span>
+              <p className="rule-desc">Resultado entre as equipes</p>
+            </div>
+          </div>
+          <div className="rule-item">
+            <span className="rule-number">5</span>
+            <div className="rule-info">
+              <span className="rule-label">Cartões</span>
+              <p className="rule-desc">Menor número de punições</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <style>{`
         .section-title { font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; color: var(--primary-dark); }
         .section-title svg { color: var(--primary-color); width: 20px; height: 20px; }
@@ -279,8 +320,63 @@ const Classificacao = () => {
         .fs-team-logo { width: 16px; height: 16px; object-fit: contain; }
         .fs-team-name-table { font-weight: 600; color: var(--text-main); font-size: 0.8rem; }
 
+        /* REGRAS DE DESEMPATE STYLES */
+        .rules-section {
+          margin-top: 2rem;
+          padding: 1.5rem;
+          background: var(--surface-alt);
+          border-radius: 20px;
+          border: 1px solid var(--border-color);
+        }
+        .rules-title {
+          font-size: 0.8rem;
+          font-weight: 950;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          color: var(--text-main);
+          margin-bottom: 1.5rem;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .rules-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 12px;
+        }
+        .rule-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          background: var(--card-bg);
+          padding: 12px 16px;
+          border-radius: 14px;
+          border: 1px solid var(--border-color);
+          transition: transform 0.2s;
+        }
+        .rule-item:hover { transform: translateY(-2px); }
+        .rule-number {
+          width: 24px;
+          height: 24px;
+          background: var(--primary-color);
+          color: white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 950;
+          font-size: 0.65rem;
+          flex-shrink: 0;
+        }
+        .rule-label { font-size: 0.75rem; font-weight: 800; color: var(--text-main); display: block; line-height: 1.2; }
+        .rule-desc { font-size: 0.6rem; color: var(--text-muted); margin: 2px 0 0; line-height: 1.2; }
+
         @media (max-width: 900px) {
           .page-fluid { padding: 16px; }
+          .rules-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 480px) {
+          .rules-grid { grid-template-columns: 1fr; }
         }
       `}</style>
     </div>
