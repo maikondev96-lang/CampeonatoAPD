@@ -180,6 +180,8 @@ export default function Home() {
         .home-dashboard {
           padding: 16px;
           width: 100%;
+          overflow-x: hidden;
+          overscroll-behavior-y: contain;
         }
 
         .dashboard-container {
@@ -407,10 +409,22 @@ export default function Home() {
           }
         }
 
+        @media (max-width: 900px) {
+          .page-fluid { padding: 16px; }
+          .rules-grid { grid-template-columns: 1fr; gap: 8px; }
+          .rules-section { padding: 1rem; margin-top: 1.5rem; border-radius: 16px; }
+          .rule-item { padding: 10px; border-radius: 12px; }
+          .rule-desc { display: none; }
+          .standings-table { font-size: 0.7rem; }
+          .fs-team-name-table { font-size: 0.8rem; }
+          .fs-team-logo { width: 16px; height: 16px; }
+        }
+
         @media (max-width: 768px) {
           .home-dashboard {
             padding: 0;
             background: var(--bg-color);
+            overscroll-behavior-y: none; /* Previne o efeito de puxar e cortar o topo */
           }
           .dashboard-container {
             gap: 0; /* Stack sections tightly */

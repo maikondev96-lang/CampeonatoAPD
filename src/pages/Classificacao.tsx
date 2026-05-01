@@ -373,7 +373,11 @@ const Classificacao = () => {
 
         @media (max-width: 900px) {
           .page-fluid { padding: 16px; }
-          .rules-grid { grid-template-columns: 1fr 1fr; }
+          .rules-grid { grid-template-columns: 1fr; gap: 8px; }
+          .rules-section { padding: 1rem; margin-top: 1rem; border-radius: 16px; }
+          .rule-item { padding: 10px; border-radius: 12px; }
+          .rule-label { font-size: 0.75rem; }
+          .rule-desc { font-size: 0.55rem; }
           .standings-table { font-size: 0.7rem; }
           .fs-team-name-table { font-size: 0.8rem; }
           .fs-team-logo { width: 16px; height: 16px; }
