@@ -104,13 +104,7 @@ button {
   font-family: inherit;
 }
 
-img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ LAYOUT BASE (FULL WIDTH) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ─────────── LAYOUT BASE (FULL WIDTH) ─────────── */
 html, body, #root {
   width: 100%;
   min-height: 100%;
@@ -1814,9 +1808,8 @@ input:focus, select:focus {
     flex-direction: row;
     overflow-x: auto;
     white-space: nowrap;
-    position: sticky;
-    top: 56px; /* Ajustado para respeitar a Navbar de 56px, original era 0 */
-    z-index: 1000;
+    position: relative; /* Removido sticky pois o user reclamou de "barra fixa" */
+    z-index: 40;
   }
   .admin-main {
     width: 100%;

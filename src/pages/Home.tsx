@@ -183,7 +183,7 @@ export default function Home() {
       {/* MODAL DE NOTÍCIA */}
       {selectedNews && (
         <div className="modal-overlay" onClick={() => setSelectedNews(null)}>
-           <div className="news-modal-compact" onClick={e => e.stopPropagation()} style={{ background: 'white', width: '90%', maxWidth: '800px', maxHeight: '90vh', borderRadius: '24px', overflowY: 'auto', position: 'relative' }}>
+           <div className="news-modal-compact" onClick={e => e.stopPropagation()} style={{ background: 'var(--card-bg)', width: '90%', maxWidth: '800px', maxHeight: '90vh', borderRadius: '24px', overflowY: 'auto', position: 'relative' }}>
               <button className="modal-close" onClick={() => setSelectedNews(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(0,0,0,0.5)', color: 'white', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}><X size={20}/></button>
               <div className="modal-img-box">
                 <div 
@@ -194,8 +194,8 @@ export default function Home() {
               </div>
               <div className="modal-content" style={{ padding: '3rem' }}>
                 <span className="modal-tag" style={{ color: 'var(--primary-color)', fontWeight: 950, fontSize: '0.75rem', textTransform: 'uppercase' }}>{selectedNews.category}</span>
-                <h2 style={{ fontSize: '2.5rem', fontWeight: 950, margin: '1rem 0 2rem', lineHeight: 1.1 }}>{selectedNews.title}</h2>
-                <div className="modal-body-text" style={{ lineHeight: 1.8, fontSize: '1.1rem', whiteSpace: 'pre-wrap', color: '#334155' }}>{selectedNews.content}</div>
+                <h2 style={{ fontSize: '2.5rem', fontWeight: 950, margin: '1rem 0 2rem', lineHeight: 1.1, color: 'var(--text-main)' }}>{selectedNews.title}</h2>
+                <div className="modal-body-text" style={{ lineHeight: 1.8, fontSize: '1.1rem', whiteSpace: 'pre-wrap', color: 'var(--text-main)' }}>{selectedNews.content}</div>
               </div>
            </div>
         </div>
