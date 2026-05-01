@@ -40,7 +40,7 @@ const TournamentDashboard = () => {
         const query = supabase.from('matches').select('*, home_team:teams!home_team_id(name, logo_url, short_name), away_team:teams!away_team_id(name, logo_url, short_name)').eq('season_id', season.id).eq('status', 'agendado');
         if (firstNext.round) { query.eq('round', firstNext.round); setCurrentRound(`RODADA ${firstNext.round}`); }
         else { query.eq('stage_id', firstNext.stage_id); setCurrentRound((firstNext as any).stage?.name?.toUpperCase() || 'PRÓXIMA FASE'); }
-        const { data } = await query.order('date', { ascending: true }).limit(4);
+        const { data } = await query.order('date', { ascending: true }).order('time', { ascending: true }).limit(6);
         nextMatchesData = data || [];
       }
       const [recentRes, teamsRes, stagesRes] = await Promise.all([
@@ -180,20 +180,18 @@ const TournamentDashboard = () => {
                <Link to={`/competitions/${slug}/${year}/classificacao`} className="view-all-link">VER TUDO</Link>
             </div>
             <div className="card-body-full">
-               <table className="standings-table-compact">
-                  <thead>
-                    <tr><th>#</th><th>Equipe</th><th style={{textAlign:'right'}}>Pts</th></tr>
-                  </thead>
-                  <tbody>
-                    {topStandings.map((s, idx) => (
-                      <tr key={s.team_id}>
-                        <td className="pos-cell">{idx + 1}º</td>
-                        <td><div className="team-cell"><img src={s.team?.logo_url} alt="" /><span className="team-col-name">{s.team?.name}</span></div></td>
-                        <td className="pts-cell">{s.points}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-               </table>
+                <div className="standings-g4-list">
+                  {topStandings.map((s, idx) => (
+                    <div key={s.team_id} className={`standings-g4-item ${idx < 4 ? 'is-advancing' : ''}`}>
+                      <div className="g4-pos">{idx + 1}º</div>
+                      <div className="g4-team">
+                        <img src={s.team?.logo_url} alt="" />
+                        <span>{s.team?.name}</span>
+                      </div>
+                      <div className="g4-pts">{s.points}<span>PTS</span></div>
+                    </div>
+                  ))}
+                </div>
             </div>
           </div>
 
@@ -319,15 +317,24 @@ const TournamentDashboard = () => {
         .round-separator::before { content: ''; position: absolute; left: 0; right: 0; height: 1px; background: var(--border-color); }
         .round-separator span { background: var(--card-bg); padding: 0 12px; position: relative; font-size: 0.7rem; font-weight: 950; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; }
 
-        .standings-table-compact { width: 100%; border-collapse: collapse; }
-        .standings-table-compact thead th { font-size: 0.65rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; padding: 0.75rem 1rem; text-align: left; }
-        .standings-table-compact tr { border-bottom: 1px solid var(--border-color); }
-        .standings-table-compact td { padding: 0.8rem 1rem; }
-        .pos-cell { font-weight: 950; width: 40px; font-size: 0.85rem; color: var(--text-main); }
-        .pts-cell { font-weight: 950; text-align: right; color: var(--primary-color); font-size: 1rem; }
-        .team-cell { display: flex; align-items: center; gap: 10px; }
-        .team-cell img { width: 22px; height: 22px; object-fit: contain; }
-        .team-col-name { font-size: 0.9rem; font-weight: 800; color: var(--text-main); }
+        /* ESTILO G-4 AVANÇANDO */
+        .standings-g4-list { display: flex; flex-direction: column; gap: 4px; padding: 0.5rem; }
+        .standings-g4-item {
+          display: flex; align-items: center; gap: 12px; padding: 0.85rem 1rem;
+          background: var(--surface-alt); border-radius: 12px; position: relative;
+          transition: all 0.2s ease; border: 1px solid transparent;
+        }
+        .standings-g4-item.is-advancing {
+          background: var(--card-bg); border-left: 4px solid #22c55e;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .g4-pos { font-size: 0.8rem; font-weight: 950; color: var(--text-muted); width: 24px; }
+        .is-advancing .g4-pos { color: var(--text-main); }
+        .g4-team { flex: 1; display: flex; align-items: center; gap: 10px; }
+        .g4-team img { width: 24px; height: 24px; object-fit: contain; }
+        .g4-team span { font-size: 0.9rem; font-weight: 850; color: var(--text-main); }
+        .g4-pts { text-align: right; font-weight: 950; font-size: 1.1rem; color: var(--primary-color); display: flex; flex-direction: column; line-height: 1; }
+        .g4-pts span { font-size: 0.6rem; color: var(--text-subtle); font-weight: 800; }
 
         .stats-body { padding: 1.25rem; display: flex; align-items: center; gap: 1rem; }
         .stats-body img { width: 50px; height: 50px; border-radius: 12px; object-fit: cover; background: var(--surface-alt); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
