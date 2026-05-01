@@ -3,27 +3,14 @@ import { History as HistoryIcon, Star, Trophy, Users, Flag, Loader2 } from 'luci
 import { supabase } from '../supabaseClient';
 import { Season } from '../types';
 
-const timeline = [
+// Fallback hardcoded (caso a tabela não exista ou esteja vazia)
+const fallbackTimeline = [
   {
-    year: '2022',
-    title: 'A Semente',
-    desc: 'Um grupo de amigos decide organizar as "peladas" de domingo com placares marcados e uniformes básicos.',
-    icon: Flag,
-    color: '#64748b'
-  },
-  {
-    year: '2023',
-    title: 'Primeiro Torneio Oficial',
-    desc: 'A primeira Copa APD é realizada com 8 equipes convidadas. O sucesso foi imediato.',
-    icon: Trophy,
-    color: '#eab308'
-  },
-  {
-    year: '2024',
-    title: 'Expansão Tecnológica',
-    desc: 'Lançamento da primeira versão do portal web para acompanhamento de resultados e artilharia.',
-    icon: Star,
-    color: '#3b82f6'
+    year: '2026',
+    title: 'O Portal Profissional',
+    desc: 'Refatoração completa para o modelo institucional GE, permitindo a gestão de campeonatos em larga escala.',
+    icon: HistoryIcon,
+    color: 'var(--primary-color)'
   },
   {
     year: '2025',
@@ -33,30 +20,74 @@ const timeline = [
     color: '#22c55e'
   },
   {
-    year: '2026',
-    title: 'O Portal Profissional',
-    desc: 'Refatoração completa para o modelo institucional GE, permitindo a gestão de campeonatos em larga escala.',
-    icon: HistoryIcon,
-    color: 'var(--primary-color)'
+    year: '2024',
+    title: 'Expansão Tecnológica',
+    desc: 'Lançamento da primeira versão do portal web para acompanhamento de resultados e artilharia.',
+    icon: Star,
+    color: '#3b82f6'
+  },
+  {
+    year: '2023',
+    title: 'Primeiro Torneio Oficial',
+    desc: 'A primeira Copa APD é realizada com 8 equipes convidadas. O sucesso foi imediato.',
+    icon: Trophy,
+    color: '#eab308'
+  },
+  {
+    year: '2022',
+    title: 'A Semente',
+    desc: 'Um grupo de amigos decide organizar as "peladas" de domingo com placares marcados e uniformes básicos.',
+    icon: Flag,
+    color: '#64748b'
   }
 ];
 
+// Mapeamento de nomes de ícones para componentes Lucide
+const iconMap: any = {
+  'HistoryIcon': HistoryIcon,
+  'Star': Star,
+  'Trophy': Trophy,
+  'Users': Users,
+  'Flag': Flag
+};
+
 export default function InstitutionalHistory() {
   const [champions, setChampions] = React.useState<Season[]>([]);
+  const [timeline, setTimeline] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const fetchChampions = async () => {
-      const { data } = await supabase
-        .from('seasons')
-        .select('*, competition:competitions(name), champion_team:teams!champion_team_id(*), runner_up_team:teams!runner_up_team_id(*)')
-        .eq('status', 'finished')
-        .order('year', { ascending: false });
-      
-      if (data) setChampions(data);
-      setLoading(false);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // 1. Busca Campeões
+        const { data: champData } = await supabase
+          .from('seasons')
+          .select('*, competition:competitions(name), champion_team:teams!champion_team_id(*), runner_up_team:teams!runner_up_team_id(*)')
+          .eq('status', 'finished')
+          .order('year', { ascending: false });
+        
+        if (champData) setChampions(champData);
+
+        // 2. Busca Timeline Dinâmica
+        const { data: timeData } = await supabase
+          .from('history_timeline')
+          .select('*')
+          .order('year', { ascending: false });
+        
+        if (timeData && timeData.length > 0) {
+          setTimeline(timeData);
+        } else {
+          setTimeline(fallbackTimeline);
+        }
+      } catch (err) {
+        console.warn("Usando fallback para a linha do tempo.");
+        setTimeline(fallbackTimeline);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchChampions();
+    fetchData();
   }, []);
 
   return (
@@ -68,70 +99,8 @@ export default function InstitutionalHistory() {
         <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>A trajetória de quem ama o futebol e acredita na organização.</p>
       </div>
 
-      <div style={{ position: 'relative' }}>
-        {/* Linha Central */}
-        <div style={{ 
-          position: 'absolute', 
-          left: '50%', 
-          top: 0, 
-          bottom: 0, 
-          width: '2px', 
-          background: 'var(--border-color)', 
-          transform: 'translateX(-50%)' 
-        }} />
-
-        {timeline.map((item, idx) => (
-          <div key={item.year} style={{ 
-            display: 'flex', 
-            justifyContent: idx % 2 === 0 ? 'flex-start' : 'flex-end', 
-            width: '100%', 
-            marginBottom: '4rem',
-            position: 'relative'
-          }}>
-            {/* Ponto Central */}
-            <div style={{ 
-              position: 'absolute', 
-              left: '50%', 
-              top: '20px', 
-              width: '16px', 
-              height: '16px', 
-              background: item.color, 
-              borderRadius: '50%', 
-              transform: 'translateX(-50%)',
-              border: '4px solid var(--bg-color)',
-              zIndex: 2
-            }} />
-
-            <div className="premium-card" style={{ 
-              width: '45%', 
-              padding: '2rem', 
-              textAlign: idx % 2 === 0 ? 'right' : 'left',
-              position: 'relative'
-            }}>
-              <div style={{ 
-                fontSize: '2rem', 
-                fontWeight: 950, 
-                color: item.color, 
-                marginBottom: '0.5rem',
-                fontFamily: 'monospace' 
-              }}>
-                {item.year}
-              </div>
-              <h3 style={{ fontWeight: 900, fontSize: '1.2rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '10px', justifyContent: idx % 2 === 0 ? 'flex-end' : 'flex-start' }}>
-                 {idx % 2 !== 0 && <item.icon size={20} color={item.color} />}
-                 {item.title}
-                 {idx % 2 === 0 && <item.icon size={20} color={item.color} />}
-              </h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>
-                {item.desc}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* HALL OF FAME */}
-      <div style={{ marginTop: '8rem' }}>
+      {/* HALL OF FAME — TOPO */}
+      <div style={{ marginBottom: '8rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
           <h2 style={{ fontWeight: 950, fontSize: '2rem', display: 'flex', alignItems: 'center', gap: '15px', justifyContent: 'center' }}>
             <Trophy size={32} color="#eab308" /> GALERIA DE CAMPEÕES
@@ -139,7 +108,7 @@ export default function InstitutionalHistory() {
           <p style={{ color: 'var(--text-muted)' }}>O hall da fama eterno da APD.</p>
         </div>
 
-        {loading ? (
+        {loading && champions.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '2rem' }}><Loader2 className="animate-spin" /></div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' }}>
@@ -175,7 +144,7 @@ export default function InstitutionalHistory() {
                 )}
               </div>
             ))}
-            {champions.length === 0 && (
+            {!loading && champions.length === 0 && (
               <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>
                 Aguardando a coroação do primeiro campeão oficial.
               </div>
@@ -184,10 +153,74 @@ export default function InstitutionalHistory() {
         )}
       </div>
 
-      <div style={{ marginTop: '5rem', textAlign: 'center', background: 'var(--surface-alt)', padding: '3rem', borderRadius: '24px' }}>
-         <h2 style={{ fontWeight: 950, marginBottom: '1rem' }}>Faça parte do próximo capítulo</h2>
-         <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Estamos apenas começando. O futuro da APD é com você.</p>
-         <button className="btn btn-primary">Inscrever meu Time</button>
+      <div style={{ position: 'relative' }}>
+        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+          <h2 style={{ fontWeight: 950, fontSize: '2rem' }}>LINHA DO TEMPO</h2>
+          <p style={{ color: 'var(--text-muted)' }}>Nossa evolução ano a ano</p>
+        </div>
+
+        {/* Linha Central */}
+        <div style={{ 
+          position: 'absolute', 
+          left: '50%', 
+          top: '100px', 
+          bottom: 0, 
+          width: '2px', 
+          background: 'var(--border-color)', 
+          transform: 'translateX(-50%)' 
+        }} />
+
+        {timeline.map((item, idx) => {
+          const Icon = iconMap[item.icon_name] || Flag;
+          return (
+            <div key={item.id || item.year} style={{ 
+              display: 'flex', 
+              justifyContent: idx % 2 === 0 ? 'flex-start' : 'flex-end', 
+              width: '100%', 
+              marginBottom: '4rem',
+              position: 'relative'
+            }}>
+              {/* Ponto Central */}
+              <div style={{ 
+                position: 'absolute', 
+                left: '50%', 
+                top: '20px', 
+                width: '16px', 
+                height: '16px', 
+                background: item.color, 
+                borderRadius: '50%', 
+                transform: 'translateX(-50%)',
+                border: '4px solid var(--bg-color)',
+                zIndex: 2
+              }} />
+
+              <div className="premium-card" style={{ 
+                width: '45%', 
+                padding: '2rem', 
+                textAlign: idx % 2 === 0 ? 'right' : 'left',
+                position: 'relative'
+              }}>
+                <div style={{ 
+                  fontSize: '2rem', 
+                  fontWeight: 950, 
+                  color: item.color, 
+                  marginBottom: '0.5rem',
+                  fontFamily: 'monospace' 
+                }}>
+                  {item.year}
+                </div>
+                <h3 style={{ fontWeight: 900, fontSize: '1.2rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '10px', justifyContent: idx % 2 === 0 ? 'flex-end' : 'flex-start' }}>
+                   {idx % 2 !== 0 && <Icon size={20} color={item.color} />}
+                   {item.title}
+                   {idx % 2 === 0 && <Icon size={20} color={item.color} />}
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                  {item.description || item.desc}
+                </p>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

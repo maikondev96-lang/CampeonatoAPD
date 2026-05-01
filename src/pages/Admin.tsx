@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSeasonContext } from '../components/SeasonContext';
 import { useOrganizationContext } from '../components/OrganizationContext';
-import { Trophy, Plus, Settings, ChevronRight, Globe, Layers, Activity } from 'lucide-react';
+import { Trophy, Plus, Settings, ChevronRight, Globe, Layers, Activity, History as HistoryIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import logoApd from '../assets/logo.png';
 import apdNews from '../assets/apd-news.jpg';
@@ -63,6 +63,16 @@ export default function AdminHub() {
              <div className="fs-comp-details" style={{ marginLeft: '12px' }}>
                <h3 className="fs-comp-name">APD News</h3>
                <span className="fs-comp-country" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Publicações na Home</span>
+             </div>
+             <ChevronRight size={14} color="var(--text-muted)" style={{ marginLeft: 'auto' }} />
+          </Link>
+          <Link to="/admin/history" className="fs-comp-item">
+             <div className="fs-comp-logo" style={{ background: 'var(--surface-alt)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, overflow: 'hidden' }}>
+                <HistoryIcon size={20} />
+             </div>
+             <div className="fs-comp-details" style={{ marginLeft: '12px' }}>
+               <h3 className="fs-comp-name">Nossa História</h3>
+               <span className="fs-comp-country" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Gerenciar Linha do Tempo</span>
              </div>
              <ChevronRight size={14} color="var(--text-muted)" style={{ marginLeft: 'auto' }} />
           </Link>

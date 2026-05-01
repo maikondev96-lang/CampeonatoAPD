@@ -21,6 +21,7 @@ import AdminTournamentSettings from './pages/AdminTournamentSettings';
 import AdminChampionshipWizard from './pages/AdminChampionshipWizard';
 import AdminFases from './pages/AdminFases';
 import AdminNews from './pages/AdminNews';
+import AdminHistory from './pages/AdminHistory';
 import AdminGroupSorter from './pages/AdminGroupSorter';
 import AdminApprovals from './pages/AdminApprovals';
 import MatchDetail from './pages/MatchDetail';
@@ -280,6 +281,7 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/admin/new-championship" element={<AdminRoute><AdminChampionshipWizard /></AdminRoute>} />
                 <Route path="/admin/news" element={<AdminRoute><AdminNews /></AdminRoute>} />
+                <Route path="/admin/history" element={<AdminRoute><AdminHistory /></AdminRoute>} />
                 <Route path="/sobre" element={<InstitutionalAbout />} />
                 <Route path="/historia" element={<InstitutionalHistory />} />
                 
