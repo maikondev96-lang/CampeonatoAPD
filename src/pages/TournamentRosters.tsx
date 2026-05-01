@@ -2,8 +2,37 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Team, Player } from '../types';
 import { useSeasonContext } from '../components/SeasonContext';
-import { Users, Loader2, Search, ChevronRight, ChevronDown, ChevronUp, UserSquare2, Shield } from 'lucide-react';
+import { Users, Loader2, Search, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { getSmartData } from '../utils/smartCache';
+
+// SUB-COMPONENTE MODAL (PROFISSIONAL)
+const PlayerModal = ({ player, onClose }: { player: Player, onClose: () => void }) => {
+  const modalRoot = document.getElementById('modal-root');
+  if (!modalRoot) return null;
+
+  return createPortal(
+    <div className="player-modal-overlay" onClick={onClose}>
+      <div className="player-modal-content" onClick={e => e.stopPropagation()}>
+        <div className="player-modal-photo">
+          <img 
+            src={player.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${player.name}`} 
+            alt={player.name} 
+          />
+          <div className="player-modal-badge">{player.shirt_number}</div>
+        </div>
+        <div className="player-modal-body">
+          <h2 className="player-modal-name">{player.name}</h2>
+          <span className="player-modal-pos">{player.position || 'ATLETA'}</span>
+        </div>
+        <div className="player-modal-footer">
+          <button className="player-modal-close" onClick={onClose}>FECHAR</button>
+        </div>
+      </div>
+    </div>,
+    modalRoot
+  );
+};
 
 export default function TournamentRosters() {
   const { season, loading: ctxLoading } = useSeasonContext();
@@ -150,24 +179,12 @@ export default function TournamentRosters() {
         )}
       </div>
 
-      {/* MODAL PARA FOTO DO JOGADOR */}
+      {/* MODAL VIA PORTAL */}
       {selectedPlayer && (
-        <div 
-          className="player-photo-modal-overlay" 
-          onClick={() => setSelectedPlayer(null)}
-        >
-          <div className="player-photo-modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-photo-wrapper">
-              <img src={selectedPlayer.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedPlayer.name}`} alt="" />
-              <div className="modal-player-badge">{selectedPlayer.shirt_number}</div>
-            </div>
-            <div className="modal-player-info">
-              <h3>{selectedPlayer.name}</h3>
-              <span>{selectedPlayer.position}</span>
-            </div>
-            <button className="modal-close-btn" onClick={() => setSelectedPlayer(null)}>FECHAR</button>
-          </div>
-        </div>
+        <PlayerModal 
+          player={selectedPlayer} 
+          onClose={() => setSelectedPlayer(null)} 
+        />
       )}
 
       <style>{`
@@ -223,92 +240,6 @@ export default function TournamentRosters() {
           border-radius: 4px;
           text-transform: uppercase;
           flex-shrink: 0;
-        }
-
-        /* MODAL STYLES */
-        .player-photo-modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          background: rgba(0,0,0,0.9);
-          backdrop-filter: blur(10px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 9999;
-          padding: 20px;
-          box-sizing: border-box;
-        }
-        .player-photo-modal-content {
-          background: var(--card-bg);
-          border-radius: 28px;
-          width: 100%;
-          max-width: 380px;
-          max-height: 90vh;
-          display: flex;
-          flex-direction: column;
-          overflow-y: auto;
-          animation: modalScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-          box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-          position: relative;
-        }
-        @keyframes modalScaleIn {
-          from { transform: scale(0.8); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-
-        .modal-photo-wrapper {
-          position: relative;
-          width: 100%;
-          aspect-ratio: 1;
-        }
-        .modal-photo-wrapper img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        .modal-player-badge {
-          position: absolute;
-          top: 20px; right: 20px;
-          background: var(--primary-color);
-          color: white;
-          padding: 8px 16px;
-          border-radius: 12px;
-          font-weight: 950;
-          font-size: 1.2rem;
-          box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-
-        .modal-player-info {
-          padding: 1.5rem;
-          text-align: center;
-        }
-        .modal-player-info h3 {
-          font-size: 1.4rem;
-          font-weight: 950;
-          margin: 0;
-          color: var(--text-main);
-          text-transform: uppercase;
-        }
-        .modal-player-info span {
-          font-size: 0.8rem;
-          font-weight: 800;
-          color: var(--text-muted);
-          text-transform: uppercase;
-          letter-spacing: 1px;
-        }
-
-        .modal-close-btn {
-          width: 100%;
-          padding: 1.25rem;
-          background: var(--surface-alt);
-          border: none;
-          border-top: 1px solid var(--border-color);
-          font-weight: 900;
-          color: var(--primary-color);
-          cursor: pointer;
         }
       `}</style>
     </div>
