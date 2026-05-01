@@ -129,53 +129,39 @@ const Jogos = () => {
                     <Link 
                       key={jogo.id} 
                       to={`/competitions/${slug}/${year}/jogos/${jogo.id}`}
-                      className={`premium-match-card ${isLive ? 'is-live' : ''} ${isFinished ? 'is-finished' : ''}`}
+                      className={`fs-match-row ${isLive ? 'is-live' : ''} ${isFinished ? 'is-finished' : ''}`}
                     >
-                      <div className="p-card-body">
-                        {/* TIME CASA */}
-                        <div className="p-team home">
-                          <span className={`p-team-name ${!jogo.home_team ? 'placeholder' : ''}`}>{homeName}</span>
+                      {/* LADO ESQUERDO: Data/Status */}
+                      <div className="fs-match-time">
+                        {isFinished ? (
+                          <span className="fs-status finished">Fim</span>
+                        ) : isLive ? (
+                          <span className="fs-status live">Ao Vivo</span>
+                        ) : (
+                          <span className="fs-time">{jogo.time?.slice(0, 5) || 'A Def.'}</span>
+                        )}
+                        {!isFinished && !isLive && <span className="fs-date">{jogo.date?.split('-').reverse().slice(0, 2).join('/')}</span>}
+                      </div>
+
+                      {/* CENTRO: Times Empilhados */}
+                      <div className="fs-match-teams">
+                        <div className="fs-team">
                           {jogo.home_team?.logo_url ? (
-                            <img src={jogo.home_team.logo_url} alt="" className="p-shield" />
+                            <img src={jogo.home_team.logo_url} alt="" className="fs-team-logo" />
                           ) : (
-                            <div className="p-empty-logo">?</div>
+                            <div className="fs-team-logo-placeholder">?</div>
                           )}
+                          <span className={`fs-team-name ${!jogo.home_team ? 'placeholder' : ''} ${homeWin ? 'winner' : ''}`}>{homeName}</span>
+                          <span className={`fs-team-score ${homeWin ? 'winner' : ''}`}>{isFinished || isLive ? jogo.home_score : '-'}</span>
                         </div>
-
-                        {/* ÁREA CENTRAL PLACAR */}
-                        <div className="p-score-area">
-                          {isFinished || isLive ? (
-                            <div className="p-score-display">
-                              <span className={`p-num ${homeWin ? 'winner' : ''}`}>{jogo.home_score}</span>
-                              <span className="p-sep">-</span>
-                              <span className={`p-num ${awayWin ? 'winner' : ''}`}>{jogo.away_score}</span>
-                            </div>
-                          ) : (
-                            <div className="p-vs-box">VS</div>
-                          )}
-                          
-                          <div className="p-meta-info">
-                            {isFinished ? (
-                              <span className="p-status-tag finished">ENCERRADO</span>
-                            ) : isLive ? (
-                              <span className="p-status-tag live">AO VIVO</span>
-                            ) : (
-                              <div className="p-datetime">
-                                <span className="p-date">{jogo.date?.split('-').reverse().slice(0, 2).join('/')}</span>
-                                <span className="p-hour">{jogo.time?.slice(0, 5) || 'A DEF.'}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* TIME FORA */}
-                        <div className="p-team away">
+                        <div className="fs-team mt-1">
                           {jogo.away_team?.logo_url ? (
-                            <img src={jogo.away_team.logo_url} alt="" className="p-shield" />
+                            <img src={jogo.away_team.logo_url} alt="" className="fs-team-logo" />
                           ) : (
-                            <div className="p-empty-logo">?</div>
+                            <div className="fs-team-logo-placeholder">?</div>
                           )}
-                          <span className={`p-team-name ${!jogo.away_team ? 'placeholder' : ''}`}>{awayName}</span>
+                          <span className={`fs-team-name ${!jogo.away_team ? 'placeholder' : ''} ${awayWin ? 'winner' : ''}`}>{awayName}</span>
+                          <span className={`fs-team-score ${awayWin ? 'winner' : ''}`}>{isFinished || isLive ? jogo.away_score : '-'}</span>
                         </div>
                       </div>
                     </Link>
@@ -188,99 +174,102 @@ const Jogos = () => {
       )}
 
       <style>{`
-        .jogos-header { margin-bottom: 3rem; }
-        .header-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--surface-alt); border-radius: 50px; color: var(--primary-color); font-size: 0.7rem; font-weight: 950; letter-spacing: 1px; margin-bottom: 1rem; border: 1px solid var(--border-color); }
-        .main-title { font-size: 2.5rem; font-weight: 950; color: var(--text-main); margin: 0; letter-spacing: -1.5px; }
+        .jogos-header { margin-bottom: 2rem; }
+        .header-badge { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; background: var(--surface-alt); border-radius: 4px; color: var(--primary-color); font-size: 0.65rem; font-weight: 800; letter-spacing: 1px; margin-bottom: 0.5rem; border: 1px solid var(--border-color); }
+        .main-title { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin: 0; letter-spacing: -0.5px; }
 
         .jogos-grid-fluid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-          gap: 3rem;
-          align-items: start;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
         }
 
-        .round-section { display: flex; flex-direction: column; gap: 1.5rem; }
+        .round-section { display: flex; flex-direction: column; }
 
-        .round-pill-header { display: flex; align-items: center; }
+        .round-pill-header { display: flex; align-items: center; margin-bottom: 0; }
         .pill-content {
-          display: flex; align-items: center; gap: 10px;
-          background: #f1f5f9; color: #475569;
-          padding: 8px 20px; border-radius: 50px;
-          font-size: 0.75rem; font-weight: 950; letter-spacing: 1.5px;
-          border: 1px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+          width: 100%;
+          display: flex; align-items: center; gap: 8px;
+          background: var(--secondary-color); color: #0d1e25;
+          padding: 8px 12px; border-radius: 0;
+          font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px;
+          border-top: 1px solid var(--border-color);
+          border-bottom: 1px solid var(--border-color);
         }
         .round-pill-header.knockout .pill-content {
-          background: #fefce8; color: #854d0e; border-color: #fef08a;
+          background: #fdf3c7;
         }
 
-        .matches-column-list { display: flex; flex-direction: column; gap: 0.75rem; }
-
-        .premium-match-card {
+        .matches-column-list { 
+          display: flex; 
+          flex-direction: column; 
           background: var(--card-bg);
-          border: 1px solid var(--border-color);
-          border-radius: 20px;
-          padding: 1.25rem 1.5rem;
-          text-decoration: none;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          position: relative;
-          overflow: hidden;
         }
-        .premium-match-card:hover {
-          transform: translateY(-4px) scale(1.01);
-          border-color: var(--primary-color);
-          box-shadow: 0 12px 30px rgba(0,0,0,0.06);
-        }
-        .premium-match-card.is-live { border-color: var(--error); border-width: 2px; }
 
-        .p-card-body {
-          display: grid;
-          grid-template-columns: 1fr 120px 1fr;
+        .fs-match-row {
+          display: flex;
           align-items: center;
-          gap: 1rem;
+          padding: 8px 12px;
+          border-bottom: 1px solid var(--border-color);
+          text-decoration: none;
+          color: inherit;
+          transition: background 0.15s;
+          cursor: pointer;
+        }
+        .fs-match-row:hover { background: var(--card-hover); }
+        .fs-match-row:last-child { border-bottom: none; }
+
+        .fs-match-time {
+          width: 50px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          border-right: 1px solid var(--border-color);
+          padding-right: 12px;
+          margin-right: 12px;
+          flex-shrink: 0;
         }
 
-        .p-team { display: flex; align-items: center; gap: 12px; min-width: 0; }
-        .p-team.home { justify-content: flex-end; text-align: right; }
-        .p-team.away { justify-content: flex-start; text-align: left; }
+        .fs-time { font-size: 0.75rem; font-weight: 500; color: var(--text-main); }
+        .fs-date { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+        .fs-status { font-size: 0.7rem; font-weight: 700; }
+        .fs-status.finished { color: var(--text-muted); }
+        .fs-status.live { color: var(--accent-color); animation: blink 1.5s infinite; }
 
-        .p-shield { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
-        .p-team-name { font-size: 0.95rem; font-weight: 850; color: var(--text-main); line-height: 1.2; }
-        .p-team-name.placeholder { color: var(--text-muted); opacity: 0.5; font-style: italic; font-weight: 700; font-size: 0.8rem; }
-
-        .p-score-area { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 50px; }
-        .p-score-display { display: flex; align-items: center; gap: 12px; }
-        .p-num { font-size: 1.75rem; font-weight: 950; color: var(--text-muted); opacity: 0.5; }
-        .p-num.winner { color: var(--text-main); opacity: 1; }
-        .p-sep { color: var(--border-color); font-weight: 300; font-size: 1rem; }
-
-        .p-vs-box {
-          font-size: 0.75rem; font-weight: 950; color: var(--text-muted); opacity: 0.25;
-          padding: 4px 12px; background: var(--surface-alt); border-radius: 8px; letter-spacing: 2px;
+        .fs-match-teams {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
         }
 
-        .p-meta-info { margin-top: 6px; }
-        .p-status-tag { font-size: 0.6rem; font-weight: 950; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px; }
-        .p-status-tag.finished { background: #f1f5f9; color: #64748b; }
-        .p-status-tag.live { background: #fee2e2; color: #ef4444; animation: blink 1.2s infinite; }
+        .fs-team {
+          display: flex;
+          align-items: center;
+          width: 100%;
+        }
+        .fs-team.mt-1 { margin-top: 6px; }
 
-        .p-datetime { display: flex; flex-direction: column; align-items: center; gap: 1px; }
-        .p-date { font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
-        .p-hour { font-size: 0.8rem; font-weight: 950; color: var(--primary-color); }
+        .fs-team-logo { width: 18px; height: 18px; object-fit: contain; margin-right: 8px; }
+        .fs-team-logo-placeholder { width: 18px; height: 18px; border-radius: 50%; background: var(--surface-alt); border: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: var(--text-muted); margin-right: 8px; }
 
-        .p-empty-logo { width: 36px; height: 36px; border-radius: 50%; background: var(--surface-alt); border: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--text-muted); }
+        .fs-team-name { flex: 1; font-size: 0.85rem; font-weight: 500; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fs-team-name.winner { font-weight: 800; }
+        .fs-team-name.placeholder { color: var(--text-muted); font-style: italic; font-weight: 400; font-size: 0.75rem; }
+
+        .fs-team-score { font-size: 0.9rem; font-weight: 500; color: var(--text-main); margin-left: 8px; }
+        .fs-team-score.winner { font-weight: 800; color: var(--primary-dark); }
+
+        .empty-state { text-align: center; padding: 4rem; background: var(--card-bg); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
+        .empty-state p { font-weight: 500; color: var(--text-muted); font-size: 0.85rem; }
 
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        .empty-state { text-align: center; padding: 6rem; background: var(--card-bg); border-radius: 24px; border: 1px dashed var(--border-color); }
-        .empty-state p { font-weight: 900; color: var(--text-muted); }
-
-        @media (max-width: 1400px) {
-          .jogos-grid-fluid { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 2rem; }
-        }
-
         @media (max-width: 900px) {
-          .jogos-grid-fluid { grid-template-columns: 1fr; }
-          .main-title { font-size: 2rem; }
+          .page-fluid { padding: 0; padding-bottom: 24px; }
+          .jogos-header { padding: 16px; margin-bottom: 0; background: white; }
+          .jogos-grid-fluid { gap: 0; }
+          .round-pill-header .pill-content { border-left: none; border-right: none; }
         }
       `}</style>
     </div>

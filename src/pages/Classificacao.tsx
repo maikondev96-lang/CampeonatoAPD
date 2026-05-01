@@ -140,7 +140,7 @@ const Classificacao = () => {
     <div className="page-fluid animate-fade">
       <h1 className="section-title"><Table /> Classificação {season && <span style={{ fontSize: '0.6em', color: 'var(--text-muted)', fontWeight: 600 }}>{season.year}</span>}</h1>
 
-      <div className="card" style={{ padding: 0, overflowX: 'auto', border: '2px solid var(--border-color)', WebkitOverflowScrolling: 'touch' }}>
+      <div className="fs-table-container">
         {standings.length === 0 && !loading ? (
           <p style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontWeight: 700 }}>Nenhum dado de classificação disponível.</p>
         ) : (
@@ -167,27 +167,16 @@ const Classificacao = () => {
                 const results = recentResults[s.team_id] || [];
                 return (
                   <tr key={s.team_id}>
-                    <td style={{ textAlign: 'center' }}>
-                      <span style={{
-                        fontWeight: 900,
-                        fontSize: '0.85rem',
-                        color: idx < 4 ? 'var(--primary-color)' : 'var(--text-muted)'
-                      }}>
-                        {idx + 1}º
-                      </span>
+                    <td style={{ textAlign: 'center', width: '30px', padding: '0' }}>
+                      <div className={`fs-pos ${idx < 4 ? 'qualified' : ''}`}>{idx + 1}.</div>
                     </td>
                     <td>
-                      <Link to={`/time/${s.team_id}`} className="team-cell" style={{ textDecoration: 'none', cursor: 'pointer' }}>
-                        <span style={{
-                          width: '6px', height: '24px',
-                          background: idx < 4 ? 'var(--primary-color)' : '#94a3b8',
-                          borderRadius: '2px', marginRight: '10px', flexShrink: 0
-                        }}></span>
-                        <img src={s.team?.logo_url} className="team-logo" style={{ width: 32, height: 32 }} alt="" />
-                        <span style={{ fontWeight: 950, fontSize: '1rem', color: 'var(--primary-dark)' }}>{s.team?.name}</span>
+                      <Link to={`/time/${s.team_id}`} className="team-cell fs-team-cell">
+                        <img src={s.team?.logo_url} className="fs-team-logo" alt="" />
+                        <span className="fs-team-name-table">{s.team?.name}</span>
                       </Link>
                     </td>
-                    <td className="number-cell points" style={{ fontSize: '1.2rem', fontWeight: 950 }}>{s.points}</td>
+                    <td className="number-cell points" style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-main)' }}>{s.points}</td>
                     <td className="number-cell">{s.played}</td>
                     <td className="number-cell">{s.wins}</td>
                     <td className="number-cell">{s.draws}</td>
@@ -229,6 +218,71 @@ const Classificacao = () => {
           <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#ff5252', marginRight: 4 }} />Derrota</span>
         </div>
       </div>
+      <style>{`
+        .section-title { font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; color: var(--primary-dark); }
+        .section-title svg { color: var(--primary-color); width: 20px; height: 20px; }
+        
+        .fs-table-container {
+          background: var(--card-bg);
+          overflow-x: auto;
+          WebkitOverflowScrolling: touch;
+          margin-bottom: 1rem;
+        }
+
+        .standings-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 0.75rem;
+          color: var(--text-muted);
+        }
+        
+        .standings-table th {
+          font-weight: 500;
+          text-align: center;
+          padding: 8px 4px;
+          border-bottom: 1px solid var(--border-color);
+        }
+        
+        .standings-table td {
+          padding: 6px 4px;
+          border-bottom: 1px solid var(--border-color);
+          text-align: center;
+          white-space: nowrap;
+        }
+
+        .standings-table th:nth-child(2),
+        .standings-table td:nth-child(2) {
+          text-align: left;
+        }
+
+        .fs-pos {
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 4px;
+          font-weight: 800;
+          font-size: 0.7rem;
+          margin: 0 auto;
+          color: var(--text-muted);
+        }
+        .fs-pos.qualified { background: #0284c7; color: white; }
+
+        .fs-team-cell {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          text-decoration: none;
+        }
+
+        .fs-team-logo { width: 16px; height: 16px; object-fit: contain; }
+        .fs-team-name-table { font-weight: 600; color: var(--text-main); font-size: 0.8rem; }
+
+        @media (max-width: 900px) {
+          .page-fluid { padding: 16px; }
+        }
+      `}</style>
     </div>
   );
 };

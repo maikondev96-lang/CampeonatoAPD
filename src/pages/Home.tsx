@@ -75,105 +75,61 @@ export default function Home() {
     <div className="home-dashboard animate-fade">
       <div className="dashboard-container">
         
-        {/* ROW 1: HERO & STATS */}
-        <div className="dashboard-row top-row">
-          <section className="hero-compact">
-            <div className="hero-brand-inline">
-              <img src={organization.logo_url || logoApd} alt="" className="hero-logo-small" />
-              <div className="hero-text-small">
-                <h1>{organization.name}</h1>
-                <p>Portal Oficial das Competições</p>
-              </div>
-            </div>
-            <div className="hero-quick-actions">
-               <button className="btn-quick" onClick={() => document.getElementById('comp-grid')?.scrollIntoView({ behavior: 'smooth' })}>
-                 <Trophy size={16} /> CAMPEONATOS
-               </button>
-            </div>
-          </section>
-
-          <section className="stats-compact-grid">
-            <div className="mini-stat-card">
-              <Shield size={18} className="icon-green" />
-              <div className="stat-val">{stats.teams}</div>
-              <div className="stat-lbl">TIMES</div>
-            </div>
-            <div className="mini-stat-card">
-              <Users size={18} className="icon-yellow" />
-              <div className="stat-val">{stats.players >= 100 ? `${stats.players}+` : stats.players}</div>
-              <div className="stat-lbl">ATLETAS</div>
-            </div>
-            <div className="mini-stat-card">
-              <Activity size={18} className="icon-blue" />
-              <div className="stat-val">{stats.matches >= 1000 ? `${(stats.matches/1000).toFixed(1)}k` : stats.matches}</div>
-              <div className="stat-lbl">JOGOS</div>
-            </div>
-          </section>
-        </div>
-
+        {/* HERO & STATS REMOVIDOS PARA DAR ESPAÇO AO PADRÃO APP (Podem ser movidos para uma tab específica se necessário) */}
+        {/* A Home agora foca diretamente em Notícias e Campeonatos, imitando a tela inicial de um app */}
+        
         {/* ROW 2: MAIN CONTENT (NEWS & COMPS) */}
         <div className="dashboard-row main-content-row">
           
           {/* COLUNA ESQUERDA: NOTÍCIAS */}
-          <main className="news-bento">
-            <div className="bento-label"><Newspaper size={14} /> DESTAQUES DO PORTAL</div>
+          <main className="fs-news-section">
+            <div className="fs-tabs-scroll">
+              <span className="fs-tab active">TODOS</span>
+              <span className="fs-tab">FUTEBOL</span>
+              <span className="fs-tab">DESTAQUES</span>
+              <span className="fs-tab">COMUNICADOS</span>
+            </div>
             
             {featuredNews && (
-              <div className="featured-card-compact" onClick={() => setSelectedNews(featuredNews)}>
-                <div className="featured-img-box">
-                  <img src={featuredNews.image_url} alt="" />
-                  <div className="featured-overlay">
-                    <span className="featured-tag">{featuredNews.category}</span>
-                    <h3>{featuredNews.title}</h3>
-                  </div>
+              <div className="fs-hero-news" onClick={() => setSelectedNews(featuredNews)}>
+                <img src={featuredNews.image_url} alt="" className="fs-hero-img" />
+                <div className="fs-hero-content">
+                  <h3 className="fs-hero-title">{featuredNews.title}</h3>
+                  <span className="fs-hero-time">Há 2 horas</span>
                 </div>
               </div>
             )}
 
-            <div className="news-list-compact">
-              {sideNews.slice(0, 4).map(item => (
-                <div key={item.id} className="news-item-row" onClick={() => setSelectedNews(item)}>
-                  <img src={item.image_url} alt="" />
-                  <div className="news-item-info">
-                    <span className="item-tag">{item.category}</span>
-                    <h4>{item.title}</h4>
+            <div className="fs-news-list">
+              {sideNews.slice(0, 5).map(item => (
+                <div key={item.id} className="fs-news-item" onClick={() => setSelectedNews(item)}>
+                  <img src={item.image_url} alt="" className="fs-news-thumb" />
+                  <div className="fs-news-info">
+                    <h4 className="fs-news-title">{item.title}</h4>
+                    <span className="fs-news-time">Há 4 horas</span>
                   </div>
-                  <ChevronRight size={14} className="arrow" />
                 </div>
               ))}
             </div>
           </main>
 
           {/* COLUNA DIREITA: CAMPEONATOS */}
-          <aside className="comps-bento" id="comp-grid">
-            <div className="bento-label"><Trophy size={14} /> CAMPEONATOS ATIVOS</div>
-            <div className="comps-list-vertical">
+          <aside className="fs-comps-section" id="comp-grid">
+            <div className="fs-section-header">COMPETIÇÕES FAVORITAS</div>
+            <div className="fs-comps-list">
               {competitions.map(comp => {
                 const activeSeason = comp.seasons?.find((s: any) => s.status === 'active') || comp.seasons?.[0];
                 return (
-                  <Link to={activeSeason ? `/competitions/${comp.slug}/${activeSeason.year}` : '#'} key={comp.id} className="comp-item-card">
-                    <div className="comp-logo-mini">
-                      <img src={comp.logo_url || logoApd} alt="" />
+                  <Link to={activeSeason ? `/competitions/${comp.slug}/${activeSeason.year}` : '#'} key={comp.id} className="fs-comp-item">
+                    <img src={comp.logo_url || logoApd} alt="" className="fs-comp-logo" />
+                    <div className="fs-comp-details">
+                      <span className="fs-comp-country">BRASIL</span>
+                      <h3 className="fs-comp-name">{comp.name} {activeSeason?.year}</h3>
                     </div>
-                    <div className="comp-details">
-                      <h3>{comp.name}</h3>
-                      <div className="comp-badge-row">
-                        <span className="badge-year">{activeSeason?.year}</span>
-                        <span className={`badge-status ${activeSeason?.status === 'active' ? 'active' : ''}`}>
-                          {activeSeason?.status === 'active' ? '● AO VIVO' : 'ENCERRADO'}
-                        </span>
-                      </div>
-                    </div>
-                    <ArrowRight size={16} className="go-icon" />
                   </Link>
                 );
               })}
-              {competitions.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', opacity: 0.5, fontSize: '0.8rem' }}>Nenhum campeonato ativo.</div>}
-            </div>
-
-            <div className="about-card-compact" style={{ marginTop: '2rem', padding: '1rem', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', gap: '10px' }}>
-               <Info size={16} style={{ color: '#64748b', marginTop: '2px' }} />
-               <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0, lineHeight: 1.4 }}>{organization.description || "O portal oficial das maiores competições de futebol amador."}</p>
+              {competitions.length === 0 && <div style={{ padding: '1rem', textAlign: 'center', opacity: 0.5, fontSize: '0.8rem' }}>Nenhum campeonato.</div>}
             </div>
           </aside>
 
@@ -266,84 +222,163 @@ export default function Home() {
         .mini-stat-card .stat-lbl { font-size: 0.6rem; font-weight: 800; color: #64748b; letter-spacing: 1px; }
         .icon-green { color: #16a34a; } .icon-yellow { color: #d97706; } .icon-blue { color: #0284c7; }
 
-        /* CARDS PADRÃO */
-        .news-bento,
-        .comps-bento {
-          background: white;
-          border-radius: 24px;
-          padding: 24px;
+        /* FS NEWS SECTION */
+        .fs-news-section {
+          background: var(--card-bg);
           width: 100%;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+          border-bottom: 1px solid var(--border-color);
         }
 
-        .bento-label { font-size: 0.65rem; font-weight: 950; color: #64748b; letter-spacing: 1.5px; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px; text-transform: uppercase; }
-
-        /* FEATURED */
-        .featured-card-compact {
-          width: 100%;
-          height: 320px;
-          border-radius: 16px;
-          overflow: hidden;
+        .fs-tabs-scroll {
+          display: flex;
+          overflow-x: auto;
+          white-space: nowrap;
+          border-bottom: 1px solid var(--border-color);
+          padding: 0 16px;
+        }
+        .fs-tabs-scroll::-webkit-scrollbar { display: none; }
+        
+        .fs-tab {
+          padding: 12px 16px;
+          font-size: 0.75rem;
+          font-weight: 800;
+          color: var(--text-muted);
+          text-transform: uppercase;
           cursor: pointer;
-          margin-bottom: 20px;
-          position: relative;
+          border-bottom: 3px solid transparent;
         }
-        .featured-img-box { width: 100%; height: 100%; }
-        .featured-img-box img { width: 100%; height: 100%; object-fit: cover; }
-        .featured-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); display: flex; flex-direction: column; justify-content: flex-end; padding: 1.5rem; color: white; }
-        .featured-tag { background: var(--primary-color); color: black; font-weight: 950; font-size: 0.6rem; padding: 3px 8px; border-radius: 5px; width: fit-content; margin-bottom: 0.5rem; }
-        .featured-overlay h3 { font-size: 1.5rem; font-weight: 950; margin: 0; line-height: 1.1; }
+        .fs-tab.active {
+          color: var(--accent-color);
+          border-bottom-color: var(--accent-color);
+        }
 
-        /* LISTA */
-        .news-list-compact {
+        .fs-hero-news {
+          padding: 16px;
+          cursor: pointer;
+          border-bottom: 1px solid var(--border-color);
+        }
+        .fs-hero-img {
+          width: 100%;
+          height: 200px;
+          object-fit: cover;
+          border-radius: 8px;
+          margin-bottom: 12px;
+        }
+        .fs-hero-title {
+          font-size: 1.1rem;
+          font-weight: 800;
+          color: var(--text-main);
+          margin: 0 0 4px;
+          line-height: 1.3;
+        }
+        .fs-hero-time {
+          font-size: 0.7rem;
+          color: var(--text-muted);
+        }
+
+        .fs-news-list {
           display: flex;
           flex-direction: column;
-          gap: 12px;
         }
-        .news-item-row { display: flex; align-items: center; gap: 1rem; padding: 0.75rem; border-radius: 12px; cursor: pointer; transition: background 0.2s; }
-        .news-item-row:hover { background: #f8fafc; }
-        .news-item-row img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
-        .news-item-info { flex: 1; }
-        .item-tag { font-size: 0.55rem; font-weight: 900; color: var(--primary-color); text-transform: uppercase; }
-        .news-item-info h4 { font-size: 0.85rem; font-weight: 850; margin: 2px 0 0; color: #0f172a; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-        .news-item-row .arrow { opacity: 0.2; }
-        .news-item-row:hover .arrow { opacity: 1; transform: translateX(3px); color: var(--primary-color); }
-
-        /* COMPS */
-        .comps-list-vertical {
+        .fs-news-item {
+          display: flex;
+          padding: 12px 16px;
+          gap: 12px;
+          border-bottom: 1px solid var(--border-color);
+          cursor: pointer;
+          text-decoration: none;
+        }
+        .fs-news-item:last-child { border-bottom: none; }
+        .fs-news-thumb {
+          width: 80px;
+          height: 60px;
+          object-fit: cover;
+          border-radius: 6px;
+          flex-shrink: 0;
+        }
+        .fs-news-info {
           display: flex;
           flex-direction: column;
-          gap: 12px;
-          flex: 1;
+          justify-content: center;
+        }
+        .fs-news-title {
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: var(--text-main);
+          margin: 0 0 4px;
+          line-height: 1.3;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        .fs-news-time {
+          font-size: 0.65rem;
+          color: var(--text-muted);
         }
 
-        /* ITEM */
-        .comp-item-card {
+        /* FS COMPS SECTION */
+        .fs-comps-section {
+          background: var(--card-bg);
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .fs-section-header {
+          background: var(--secondary-color);
+          padding: 6px 16px;
+          font-size: 0.65rem;
+          font-weight: 800;
+          color: var(--primary-dark);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          border-bottom: 1px solid var(--border-color);
+          border-top: 1px solid var(--border-color);
+        }
+
+        .fs-comps-list {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .fs-comp-item {
           display: flex;
           align-items: center;
+          padding: 10px 16px;
           gap: 12px;
-          padding: 14px;
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
-          border-radius: 14px;
+          border-bottom: 1px solid var(--border-color);
           text-decoration: none;
           color: inherit;
-          transition: all 0.2s;
         }
-        .comp-item-card:hover {
-          transform: translateX(4px);
-          border-color: var(--primary-color);
-          background: white;
+        .fs-comp-item:last-child { border-bottom: none; }
+        .fs-comp-item:hover { background: var(--card-hover); }
+
+        .fs-comp-logo {
+          width: 20px;
+          height: 20px;
+          object-fit: contain;
+          flex-shrink: 0;
         }
-        .comp-logo-mini { width: 40px; height: 40px; background: white; border-radius: 10px; padding: 5px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .comp-logo-mini img { width: 100%; height: 100%; object-fit: contain; }
-        .comp-details h3 { font-size: 0.9rem; font-weight: 950; margin: 0; color: #0f172a; }
-        .comp-badge-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
-        .badge-year { font-size: 0.65rem; font-weight: 800; color: #64748b; }
-        .badge-status { font-size: 0.6rem; font-weight: 950; color: #94a3b8; }
-        .badge-status.active { color: #16a34a; }
-        .go-icon { opacity: 0.2; color: var(--primary-color); }
-        .comp-item-card:hover .go-icon { opacity: 1; }
+
+        .fs-comp-details {
+          display: flex;
+          flex-direction: column;
+        }
+        .fs-comp-country {
+          font-size: 0.6rem;
+          color: var(--text-muted);
+          text-transform: uppercase;
+          line-height: 1;
+          margin-bottom: 2px;
+        }
+        .fs-comp-name {
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: var(--text-main);
+          margin: 0;
+          line-height: 1;
+        }
 
         /* MODAL (corrigido) */
         .modal-overlay {
@@ -396,8 +431,18 @@ export default function Home() {
 
         @media (max-width: 768px) {
           .home-dashboard {
-            padding: 16px;
+            padding: 0; /* Remove padding entirely for true app look */
+            background: var(--bg-color);
           }
+          .dashboard-container {
+            gap: 0; /* Stack sections tightly */
+          }
+          
+          .main-content-row {
+            gap: 16px;
+            background: var(--bg-color);
+          }
+        }
 
           .hero-compact {
             flex-direction: column;
