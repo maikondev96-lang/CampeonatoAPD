@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Standing } from '../types';
-import { Table, Loader2 } from 'lucide-react';
+import { Table, Loader2, Info } from 'lucide-react';
 import { useSeasonContext } from '../components/SeasonContext';
 import { getSmartData } from '../utils/smartCache';
 
@@ -273,7 +273,7 @@ const Classificacao = () => {
         .standings-table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 0.75rem;
+          font-size: 0.85rem;
           color: var(--text-muted);
         }
         
@@ -317,8 +317,8 @@ const Classificacao = () => {
           text-decoration: none;
         }
 
-        .fs-team-logo { width: 16px; height: 16px; object-fit: contain; }
-        .fs-team-name-table { font-weight: 600; color: var(--text-main); font-size: 0.8rem; }
+        .fs-team-logo { width: 22px; height: 22px; object-fit: contain; }
+        .fs-team-name-table { font-weight: 700; color: var(--text-main); font-size: 0.95rem; }
 
         /* REGRAS DE DESEMPATE STYLES */
         .rules-section {
@@ -374,9 +374,17 @@ const Classificacao = () => {
         @media (max-width: 900px) {
           .page-fluid { padding: 16px; }
           .rules-grid { grid-template-columns: 1fr 1fr; }
+          .standings-table { font-size: 0.7rem; }
+          .fs-team-name-table { font-size: 0.8rem; }
+          .fs-team-logo { width: 16px; height: 16px; }
         }
         @media (max-width: 480px) {
           .rules-grid { grid-template-columns: 1fr; }
+        }
+        
+        .page-fluid {
+          max-width: 1400px;
+          margin: 0 auto;
         }
       `}</style>
     </div>

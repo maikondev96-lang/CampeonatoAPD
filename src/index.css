@@ -108,15 +108,12 @@ button {
 html {
   scrollbar-gutter: stable;
   overflow-x: hidden;
-  width: 100%;
-  height: 100%;
 }
 
 body {
   margin: 0;
   padding: 0;
   width: 100%;
-  min-height: 100%;
   overflow-x: hidden;
   background-color: var(--bg-color);
   color: var(--text-main);
@@ -125,7 +122,6 @@ body {
 
 #root {
   width: 100%;
-  min-height: 100%;
 }
 
 /* ─────────── ESTRUTURA DO APLICATIVO ─────────── */
