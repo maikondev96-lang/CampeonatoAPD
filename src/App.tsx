@@ -316,8 +316,8 @@ function App() {
                 <Route path="/admin/history" element={<AdminRoute><AdminHistory /></AdminRoute>} />
                 <Route path="/historia" element={<InstitutionalHistory />} />
                 
-                {/* HUB Administrativo (Seletor de Campeonatos) */}
-                <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+                {/* HUB Administrativo (Seletor de Campeonatos) - TESTE SEM PROTEÇÃO */}
+                <Route path="/admin" element={<Admin />} />
 
                 {/* Competition Context Routes */}
                 <Route path="/competitions/:slug/:year?" element={<CompetitionWrapper><TournamentDashboard /></CompetitionWrapper>} />
