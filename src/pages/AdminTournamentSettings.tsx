@@ -112,97 +112,103 @@ export default function AdminTournamentSettings() {
 
   return (
     <div className="animate-fade">
-      <div style={{ marginBottom: '2.5rem' }}>
-        <h1 className="section-title" style={{ margin: 0 }}><Settings /> CONFIGURAÇÕES DO CAMPEONATO</h1>
-        <p style={{ color: 'var(--text-muted)' }}>Personalize a identidade e as regras desta competição específica.</p>
+      <div className="admin-header-app" style={{ marginBottom: '1.5rem' }}>
+        <div className="admin-header-title">
+          <Settings size={18} />
+          <h1>CONFIGURAÇÕES</h1>
+        </div>
+        <p className="admin-header-subtitle">Identidade e regras da competição.</p>
       </div>
 
-      <form onSubmit={handleSave} style={{ maxWidth: '800px' }}>
-        <div className="grid-2" style={{ marginBottom: '2rem' }}>
-          <div className="premium-card" style={{ padding: '2rem' }}>
-            <h3 style={{ fontWeight: 900, fontSize: '1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Layout size={18} color="var(--primary-color)" /> IDENTIDADE VISUAL
-            </h3>
-            
-            <div className="form-group">
-              <label>Nome Público</label>
-              <input type="text" value={name} onChange={e => setName(e.target.value)} />
+      <form onSubmit={handleSave} style={{ width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
+          
+          <div className="fs-comps-section">
+            <div className="fs-section-header" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Layout size={12} color="var(--primary-dark)" /> IDENTIDADE VISUAL
             </div>
-            
-            <div className="form-group">
-              <label>Slug (URL)</label>
-              <input type="text" value={slug} onChange={e => setSlug(e.target.value)} />
-            </div>
+            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.7rem', fontWeight: 800 }}>NOME PÚBLICO</label>
+                <input type="text" value={name} onChange={e => setName(e.target.value)} style={{ padding: '10px', fontSize: '0.9rem' }} />
+              </div>
+              
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.7rem', fontWeight: 800 }}>SLUG (URL)</label>
+                <input type="text" value={slug} onChange={e => setSlug(e.target.value)} style={{ padding: '10px', fontSize: '0.9rem' }} />
+              </div>
 
-            <div className="form-group">
-              <label>Tipo de Competição</label>
-              <select value={type} onChange={e => setType(e.target.value)}>
-                <option value="league">Liga (Pontos Corridos)</option>
-                <option value="knockout">Mata-Mata</option>
-                <option value="hybrid">Híbrido (Grupos + Mata-Mata)</option>
-                <option value="league_knockout">Pontos Corridos + Mata-Mata</option>
-              </select>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.7rem', fontWeight: 800 }}>TIPO DE COMPETIÇÃO</label>
+                <select value={type} onChange={e => setType(e.target.value)} style={{ padding: '10px', fontSize: '0.9rem' }}>
+                  <option value="league">Liga (Pontos Corridos)</option>
+                  <option value="knockout">Mata-Mata</option>
+                  <option value="hybrid">Híbrido (Grupos + Mata-Mata)</option>
+                  <option value="league_knockout">Pontos Corridos + Mata-Mata</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <div className="premium-card" style={{ padding: '2rem' }}>
-            <h3 style={{ fontWeight: 900, fontSize: '1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ShieldCheck size={18} color="var(--success)" /> STATUS & REGRAS
-            </h3>
-
-            <div className="form-group">
-              <label>Status da Temporada ({activeSeason?.year})</label>
-              <select value={status} onChange={e => setStatus(e.target.value)}>
-                <option value="draft">Rascunho (Não visível)</option>
-                <option value="active">Ativo (Em andamento)</option>
-                <option value="finished">Finalizado (Histórico)</option>
-              </select>
+          <div className="fs-comps-section">
+            <div className="fs-section-header" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <ShieldCheck size={12} color="var(--primary-dark)" /> STATUS & REGRAS
             </div>
+            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.7rem', fontWeight: 800 }}>STATUS DA TEMPORADA ({activeSeason?.year})</label>
+                <select value={status} onChange={e => setStatus(e.target.value)} style={{ padding: '10px', fontSize: '0.9rem' }}>
+                  <option value="draft">Rascunho (Não visível)</option>
+                  <option value="active">Ativo (Em andamento)</option>
+                  <option value="finished">Finalizado (Histórico)</option>
+                </select>
+              </div>
+            </div>
+          </div>
 
-            <div style={{ background: 'var(--surface-alt)', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--border-color)', marginTop: '1rem' }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem', fontWeight: 900, marginBottom: '1.2rem' }}>
-                  <Palette size={18} color="var(--primary-color)" /> PERSONALIZAÇÃO DE TEMA
-               </div>
-               
-               <div className="form-group">
-                 <label>Cor Primária (Identidade)</label>
+          <div className="fs-comps-section">
+            <div className="fs-section-header" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Palette size={12} color="var(--primary-dark)" /> PERSONALIZAÇÃO DE TEMA
+            </div>
+            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+               <div className="form-group" style={{ margin: 0 }}>
+                 <label style={{ fontSize: '0.7rem', fontWeight: 800 }}>COR PRIMÁRIA (IDENTIDADE)</label>
                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                    <input 
                     type="color" 
                     value={primaryColor} 
                     onChange={e => setPrimaryColor(e.target.value)}
-                    style={{ width: '50px', height: '40px', padding: '2px', cursor: 'pointer' }}
+                    style={{ width: '40px', height: '40px', padding: '2px', cursor: 'pointer', borderRadius: '4px' }}
                    />
                    <input 
                     type="text" 
                     value={primaryColor} 
                     onChange={e => setPrimaryColor(e.target.value)}
                     placeholder="#000000"
-                    style={{ flex: 1, fontFamily: 'monospace' }}
+                    style={{ flex: 1, fontFamily: 'monospace', padding: '10px', fontSize: '0.9rem' }}
                    />
                  </div>
-                 <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                   Esta cor será usada em botões, links e destaques em todo o site deste campeonato.
-                 </p>
                </div>
 
-               <div className="form-group" style={{ marginTop: '1.5rem' }}>
-                 <label>URL do Logo do Campeonato</label>
+               <div className="form-group" style={{ margin: 0 }}>
+                 <label style={{ fontSize: '0.7rem', fontWeight: 800 }}>URL DO LOGO DO CAMPEONATO</label>
                  <input 
                    type="text" 
                    value={logoUrl} 
                    onChange={e => setLogoUrl(e.target.value)} 
                    placeholder="https://exemplo.com/logo.png"
+                   style={{ padding: '10px', fontSize: '0.9rem' }}
                  />
                </div>
 
-               <div className="form-group" style={{ marginTop: '1rem' }}>
-                 <label>URL do Banner de Fundo</label>
+               <div className="form-group" style={{ margin: 0 }}>
+                 <label style={{ fontSize: '0.7rem', fontWeight: 800 }}>URL DO BANNER DE FUNDO</label>
                  <input 
                    type="text" 
                    value={bannerUrl} 
                    onChange={e => setBannerUrl(e.target.value)} 
                    placeholder="https://exemplo.com/banner.jpg"
+                   style={{ padding: '10px', fontSize: '0.9rem' }}
                  />
                </div>
             </div>
@@ -217,34 +223,24 @@ export default function AdminTournamentSettings() {
       </form>
 
       {/* DANGER ZONE */}
-      <div className="premium-card" style={{ 
-          marginTop: '4rem', 
-          padding: '2.5rem', 
-          border: '1px solid rgba(239,68,68,0.3)', 
-          background: 'rgba(239,68,68,0.02)',
-          borderRadius: '24px'
-      }}>
-         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
-            <AlertTriangle size={24} color="var(--error)" />
-            <h3 style={{ color: 'var(--error)', fontWeight: 950, margin: 0, fontSize: '1.2rem' }}>ZONA DE PERIGO</h3>
-         </div>
-         
-         <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '2rem', lineHeight: 1.6 }}>
-            A exclusão de um campeonato é <strong>definitiva e irreversível</strong>. <br />
-            Todos os jogos, estatísticas, elencos e configurações associadas a esta competição serão removidos permanentemente do sistema.
-         </p>
+      <div className="fs-comps-section" style={{ marginTop: '2rem', border: '1px solid var(--error)' }}>
+         <div className="fs-section-header" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--error)' }}>ZONA DE PERIGO</div>
+         <div style={{ padding: '16px' }}>
+           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+              A exclusão de um campeonato é <strong>definitiva e irreversível</strong>. <br />
+              Todos os jogos, estatísticas e elencos serão removidos permanentemente.
+           </p>
 
-         <div style={{ display: 'flex', gap: '1rem' }}>
-            <button 
-              type="button"
-              onClick={handleDelete}
-              disabled={deleting}
-              className="btn" 
-              style={{ background: 'var(--error)', color: 'white', padding: '0.8rem 2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-               {deleting ? <Loader2 className="animate-spin" size={18} /> : <Trash2 size={18} />}
-               EXCLUIR CAMPEONATO DEFINITIVAMENTE
-            </button>
+           <button 
+             type="button"
+             onClick={handleDelete}
+             disabled={deleting}
+             className="btn" 
+             style={{ width: '100%', background: 'var(--error)', color: 'white', padding: '12px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: '6px' }}
+           >
+              {deleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
+              EXCLUIR DEFINITIVAMENTE
+           </button>
          </div>
       </div>
     </div>

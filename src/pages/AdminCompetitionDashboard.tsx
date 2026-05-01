@@ -135,91 +135,92 @@ export default function AdminCompetitionDashboard() {
 
   return (
     <div className="animate-fade">
-      <div style={{ marginBottom: '2.5rem' }}>
-        <h1 className="section-title" style={{ margin: 0 }}>PAINEL DE CONTROLE</h1>
-        <p style={{ color: 'var(--text-muted)' }}>Gestão completa da {activeCompetition?.name}.</p>
+      <div className="admin-header-app">
+        <div className="admin-header-title">
+          <TrophyIcon size={18} />
+          <h1>{activeCompetition?.name}</h1>
+        </div>
+        <p className="admin-header-subtitle">Gestão da Temporada {year}</p>
       </div>
 
-      {/* STATS GRID */}
-      {/* STATS GRID */}
-      <div className="grid-4" style={{ marginBottom: '3rem' }}>
-        <div className="premium-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ background: 'rgba(34,197,94,0.1)', padding: '0.6rem', borderRadius: '12px', flexShrink: 0 }}><Shield size={20} color="var(--success)" /></div>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: '1.25rem', fontWeight: 950 }}>{stats.teamsCount}</div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 800 }}>TIMES</div>
+      {/* STATS MINI BAR (App Style) */}
+      <div className="fs-comps-section" style={{ borderTop: 'none' }}>
+        <div style={{ display: 'flex', width: '100%', padding: '12px 0' }}>
+          <div style={{ flex: 1, textAlign: 'center', borderRight: '1px solid var(--border-color)' }}>
+            <span style={{ display: 'block', fontSize: '1.1rem', fontWeight: 900, color: 'var(--success)' }}>{stats.teamsCount}</span>
+            <span style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)' }}>TIMES</span>
           </div>
-        </div>
-        <div className="premium-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ background: 'rgba(59,130,246,0.1)', padding: '0.6rem', borderRadius: '12px', flexShrink: 0 }}><Users size={20} color="var(--primary-color)" /></div>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: '1.25rem', fontWeight: 950 }}>{stats.playersCount}</div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 800 }}>ATLETAS</div>
+          <div style={{ flex: 1, textAlign: 'center', borderRight: '1px solid var(--border-color)' }}>
+            <span style={{ display: 'block', fontSize: '1.1rem', fontWeight: 900, color: 'var(--primary-color)' }}>{stats.playersCount}</span>
+            <span style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)' }}>ATLETAS</span>
           </div>
-        </div>
-        <div className="premium-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ background: 'rgba(168,85,247,0.1)', padding: '0.6rem', borderRadius: '12px', flexShrink: 0 }}><Calendar size={20} color="#a855f7" /></div>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: '1.25rem', fontWeight: 950 }}>{stats.matchesCount}</div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 800 }}>JOGOS</div>
+          <div style={{ flex: 1, textAlign: 'center', borderRight: '1px solid var(--border-color)' }}>
+            <span style={{ display: 'block', fontSize: '1.1rem', fontWeight: 900, color: '#a855f7' }}>{stats.matchesCount}</span>
+            <span style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)' }}>JOGOS</span>
           </div>
-        </div>
-        <div className="premium-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ background: 'rgba(239,68,68,0.1)', padding: '0.6rem', borderRadius: '12px', flexShrink: 0 }}><ClipboardList size={20} color="var(--error)" /></div>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: '1.25rem', fontWeight: 950 }}>{stats.pendingApprovals}</div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 800 }}>PENDENTES</div>
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            <span style={{ display: 'block', fontSize: '1.1rem', fontWeight: 900, color: 'var(--error)' }}>{stats.pendingApprovals}</span>
+            <span style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)' }}>PENDENTES</span>
           </div>
         </div>
       </div>
-
-      {/* QUICK ACCESS */}
-      <div className="grid-2">
-        <div className="premium-card" style={{ padding: '1.5rem' }}>
+      {/* QUICK ACCESS (List Style) */}
+      <div className="fs-comps-section" style={{ marginTop: '1rem' }}>
+        <div className="fs-section-header">AÇÕES RÁPIDAS</div>
+        <div className="fs-comps-list">
           <h3 style={{ fontWeight: 950, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem' }}>
             <Clock size={20} color="var(--primary-color)" /> AÇÕES RÁPIDAS
           </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-            <Link to={`/admin/${slug}/${year}/jogos`} className="btn btn-secondary" style={{ justifyContent: 'space-between', padding: '0.6rem 1rem' }}>
-              Lançar Resultados <ArrowRight size={16} />
+            <Link to={`/admin/${slug}/${year}/jogos`} className="fs-comp-item">
+              <div className="fs-comp-details"><h3 className="fs-comp-name">Lançar Resultados</h3></div>
+              <ArrowRight size={14} color="var(--text-muted)" style={{ marginLeft: 'auto' }} />
             </Link>
-            <Link to={`/admin/${slug}/${year}/inscricoes`} className="btn btn-secondary" style={{ justifyContent: 'space-between', padding: '0.6rem 1rem' }}>
-              Aprovar Times <ArrowRight size={16} />
+            <Link to={`/admin/${slug}/${year}/inscricoes`} className="fs-comp-item">
+              <div className="fs-comp-details"><h3 className="fs-comp-name">Aprovar Times</h3></div>
+              <ArrowRight size={14} color="var(--text-muted)" style={{ marginLeft: 'auto' }} />
             </Link>
-            <Link to={`/admin/${slug}/${year}/times`} className="btn btn-secondary" style={{ justifyContent: 'space-between', padding: '0.6rem 1rem' }}>
-              Gerenciar Elencos <ArrowRight size={16} />
+            <Link to={`/admin/${slug}/${year}/times`} className="fs-comp-item">
+              <div className="fs-comp-details"><h3 className="fs-comp-name">Gerenciar Elencos</h3></div>
+              <ArrowRight size={14} color="var(--text-muted)" style={{ marginLeft: 'auto' }} />
             </Link>
-            <Link to={`/admin/${slug}/${year}/sorteio`} className="btn btn-secondary" style={{ justifyContent: 'space-between', padding: '0.6rem 1rem' }}>
-              Sorteio de Grupos <ArrowRight size={16} />
+            <Link to={`/admin/${slug}/${year}/sorteio`} className="fs-comp-item">
+              <div className="fs-comp-details"><h3 className="fs-comp-name">Sorteio de Grupos</h3></div>
+              <ArrowRight size={14} color="var(--text-muted)" style={{ marginLeft: 'auto' }} />
             </Link>
+        </div>
+      </div>
+
+      <div className="fs-comps-section" style={{ marginTop: '1rem' }}>
+        <div className="fs-section-header">GERAÇÃO DE TABELAS</div>
+        <div className="fs-comps-list" style={{ padding: '12px 16px', gap: '8px', display: 'flex', flexDirection: 'column' }}>
             <button 
-              className="btn btn-primary" 
-              style={{ marginTop: '0.5rem', background: 'var(--brand-dark)', color: 'var(--primary-color)', border: '1px solid var(--primary-color)', padding: '0.8rem' }}
+              className="btn-app-primary" 
+              style={{ width: '100%', background: 'var(--brand-dark)', color: 'var(--primary-color)' }}
               onClick={handleGenerateTournament}
               disabled={loading}
             >
-              {loading ? <Loader2 className="animate-spin" size={18} /> : <Wand2 size={18} />} Gerar Tabela Completa
+              {loading ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />} Gerar Tabela Completa
             </button>
             <button 
-              className="btn btn-secondary" 
-              style={{ marginTop: '0.5rem', background: 'rgba(234,179,8,0.1)', color: '#ca8a04', border: '1px solid #ca8a04', padding: '0.8rem' }}
+              className="btn-app-primary" 
+              style={{ width: '100%', background: 'var(--surface-alt)', color: '#ca8a04', border: '1px solid #ca8a04' }}
               onClick={handleAdvanceToKnockout}
               disabled={loading}
             >
-              {loading ? <Loader2 className="animate-spin" size={18} /> : <TrophyIcon size={18} />} Finalizar Grupos e Gerar Mata-Mata
+              {loading ? <Loader2 className="animate-spin" size={16} /> : <TrophyIcon size={16} />} Finalizar Grupos e Gerar Mata-Mata
             </button>
-          </div>
         </div>
+      </div>
 
-        <div className="premium-card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, var(--surface-alt) 0%, var(--card-bg) 100%)' }}>
-          <h3 style={{ fontWeight: 950, marginBottom: '1rem', fontSize: '1.1rem' }}>STATUS DA COMPETIÇÃO</h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--success)', fontWeight: 800, fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-             <CheckCircle size={18} /> INSCRIÇÕES ABERTAS
+      <div className="fs-comps-section" style={{ marginTop: '1rem', marginBottom: '2rem' }}>
+        <div className="fs-section-header">STATUS DA INSCRIÇÃO</div>
+        <div style={{ padding: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--success)', fontWeight: 800, fontSize: '0.8rem', marginBottom: '8px' }}>
+             <CheckCircle size={14} /> INSCRIÇÕES ABERTAS
           </div>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
-            O link de inscrição pública está ativo. Você tem {stats.pendingApprovals} solicitações aguardando revisão.
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1rem', lineHeight: 1.4, margin: 0 }}>
+            Você tem {stats.pendingApprovals} solicitações aguardando revisão.
           </p>
-          <button className="btn btn-primary" style={{ width: '100%', padding: '0.8rem' }}>Configurar Inscrições</button>
         </div>
       </div>
     </div>
