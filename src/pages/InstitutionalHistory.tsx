@@ -34,6 +34,7 @@ export default function InstitutionalHistory() {
       competition_name: s.competition?.name,
       champion_name: s.champion_team?.name,
       champion_logo: s.champion_team?.logo_url,
+      squad_photo: s.champion_team?.squad_photo_url,
       runner_up_name: s.runner_up_team?.name,
       runner_up_logo: s.runner_up_team?.logo_url,
       is_auto: true
@@ -45,6 +46,7 @@ export default function InstitutionalHistory() {
       competition_name: h.competition_name,
       champion_name: h.champion_name,
       champion_logo: h.champion_logo_url,
+      squad_photo: h.squad_photo_url,
       runner_up_name: h.runner_up_name,
       runner_up_logo: h.runner_up_logo_url,
       is_auto: false
@@ -83,35 +85,54 @@ export default function InstitutionalHistory() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' }}>
             {allChampions.map(item => (
-              <div key={item.id} className="premium-card" style={{ padding: '2rem', border: '2px solid #eab308', background: 'linear-gradient(145deg, var(--card-bg), #fffbeb)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 950, color: '#854d0e' }}>{item.year}</div>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#b45309', background: '#fef08a', padding: '4px 12px', borderRadius: '20px' }}>
-                    {item.competition_name}
+              <div key={item.id} className="premium-card champion-card-heavy" style={{ padding: 0, border: '2px solid #eab308', background: 'var(--card-bg)', overflow: 'hidden' }}>
+                {item.squad_photo ? (
+                  <div style={{ width: '100%', height: '200px', position: 'relative' }}>
+                    <img src={item.squad_photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Squad" />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }} />
+                    <div style={{ position: 'absolute', bottom: '15px', left: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                       <img src={item.champion_logo || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.champion_name}`} style={{ width: '50px', height: '50px', objectFit: 'contain', background: 'white', borderRadius: '50%', padding: '5px' }} />
+                       <div>
+                         <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#eab308' }}>CAMPEÃO {item.year}</div>
+                         <h3 style={{ fontSize: '1.25rem', fontWeight: 950, color: 'white', margin: 0 }}>{item.champion_name}</h3>
+                       </div>
+                    </div>
                   </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                   <div style={{ position: 'relative' }}>
-                      <img src={item.champion_logo || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.champion_name}`} style={{ width: '80px', height: '80px', objectFit: 'contain' }} />
-                      <div style={{ position: 'absolute', bottom: -5, right: -5, background: '#eab308', borderRadius: '50%', padding: '4px' }}>
-                        <Trophy size={14} color="white" />
+                ) : (
+                  <div style={{ padding: '2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 950, color: '#854d0e' }}>{item.year}</div>
+                      <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#b45309', background: '#fef08a', padding: '4px 12px', borderRadius: '20px' }}>
+                        {item.competition_name}
                       </div>
-                   </div>
-                   <div>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '4px' }}>CAMPEÃO</div>
-                      <h3 style={{ fontSize: '1.5rem', fontWeight: 950, color: 'var(--text-main)', margin: 0 }}>{item.champion_name}</h3>
-                   </div>
-                </div>
+                    </div>
 
-                {item.runner_up_name && (
-                  <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <img src={item.runner_up_logo} style={{ width: '40px', height: '40px', objectFit: 'contain', opacity: 0.6 }} />
-                    <div style={{ fontSize: '0.85rem' }}>
-                      <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>Vice-campeão:</span> {item.runner_up_name}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                       <div style={{ position: 'relative' }}>
+                          <img src={item.champion_logo || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.champion_name}`} style={{ width: '80px', height: '80px', objectFit: 'contain' }} />
+                          <div style={{ position: 'absolute', bottom: -5, right: -5, background: '#eab308', borderRadius: '50%', padding: '4px' }}>
+                            <Trophy size={14} color="white" />
+                          </div>
+                       </div>
+                       <div>
+                          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '4px' }}>CAMPEÃO</div>
+                          <h3 style={{ fontSize: '1.5rem', fontWeight: 950, color: 'var(--text-main)', margin: 0 }}>{item.champion_name}</h3>
+                       </div>
                     </div>
                   </div>
                 )}
+
+                <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>{item.competition_name}</div>
+                  {item.runner_up_name && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <img src={item.runner_up_logo} style={{ width: '30px', height: '30px', objectFit: 'contain', opacity: 0.6 }} />
+                      <div style={{ fontSize: '0.85rem' }}>
+                        <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>Vice:</span> {item.runner_up_name}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>

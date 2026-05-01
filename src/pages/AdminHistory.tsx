@@ -20,7 +20,8 @@ export default function AdminHistory() {
     champion_name: '',
     champion_logo_url: '',
     runner_up_name: '',
-    runner_up_logo_url: ''
+    runner_up_logo_url: '',
+    squad_photo_url: ''
   });
 
   useEffect(() => {
@@ -43,16 +44,24 @@ export default function AdminHistory() {
     setEditingId(null);
     setFormData({
       year: '', title: '', description: '', icon_name: 'HistoryIcon', color: 'var(--primary-color)',
-      competition_name: '', champion_name: '', champion_logo_url: '', runner_up_name: '', runner_up_logo_url: ''
+      competition_name: '', champion_name: '', champion_logo_url: '', runner_up_name: '', runner_up_logo_url: '',
+      squad_photo_url: ''
     });
   };
 
   const handleSave = async () => {
     try {
       const table = activeTab === 'timeline' ? 'history_timeline' : 'hall_of_fame';
-      const dataToSave = activeTab === 'timeline' 
         ? { year: formData.year, title: formData.title, description: formData.description, icon_name: formData.icon_name, color: formData.color }
-        : { year: formData.year, competition_name: formData.competition_name, champion_name: formData.champion_name, champion_logo_url: formData.champion_logo_url, runner_up_name: formData.runner_up_name, runner_up_logo_url: formData.runner_up_logo_url };
+        : { 
+            year: formData.year, 
+            competition_name: formData.competition_name, 
+            champion_name: formData.champion_name, 
+            champion_logo_url: formData.champion_logo_url, 
+            runner_up_name: formData.runner_up_name, 
+            runner_up_logo_url: formData.runner_up_logo_url,
+            squad_photo_url: formData.squad_photo_url
+          };
 
       if (editingId) {
         const { error } = await supabase.from(table).update(dataToSave).eq('id', editingId);
@@ -140,6 +149,10 @@ export default function AdminHistory() {
               <div className="form-group">
                 <label>Logo do Vice (URL)</label>
                 <input type="text" value={formData.runner_up_logo_url} onChange={e => setFormData({...formData, runner_up_logo_url: e.target.value})} />
+              </div>
+              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                <label>Foto do Elenco Campeão (URL)</label>
+                <input type="text" value={formData.squad_photo_url} onChange={e => setFormData({...formData, squad_photo_url: e.target.value})} placeholder="URL de uma foto do time completo com o troféu" />
               </div>
             </>
           )}

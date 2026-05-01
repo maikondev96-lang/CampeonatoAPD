@@ -13,6 +13,8 @@ const AdminTimes = () => {
   const [name, setName] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [squadFile, setSquadFile] = useState<File | null>(null);
+  const [squadPreviewUrl, setSquadPreviewUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -48,7 +50,9 @@ const AdminTimes = () => {
     setEditingId(time.id);
     setName(time.name);
     setPreviewUrl(time.logo_url);
+    setSquadPreviewUrl(time.squad_photo_url || '');
     setFile(null);
+    setSquadFile(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -56,7 +60,9 @@ const AdminTimes = () => {
     setEditingId(null);
     setName('');
     setFile(null);
+    setSquadFile(null);
     setPreviewUrl('');
+    setSquadPreviewUrl('');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,18 +119,30 @@ const AdminTimes = () => {
         finalLogoUrl = publicUrl;
       }
 
+      let finalSquadUrl = squadPreviewUrl;
+      if (squadFile) {
+        const fileExt = squadFile.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}-squad.${fileExt}`;
+        const filePath = `team-squads/${fileName}`;
+        const { error: uploadError } = await supabase.storage.from('logos').upload(filePath, squadFile);
+        if (uploadError) throw new Error('Erro no upload da foto: ' + uploadError.message);
+        const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(filePath);
+        finalSquadUrl = publicUrl;
+      }
+
       if (!finalLogoUrl) throw new Error('Selecione o escudo do time');
 
       if (editingId) {
         const { error: dbError } = await supabase
           .from('teams')
-          .update({ name, logo_url: finalLogoUrl })
+          .update({ name, logo_url: finalLogoUrl, squad_photo_url: finalSquadUrl })
           .eq('id', editingId);
         if (dbError) throw dbError;
       } else {
         const { data: newTeam, error: dbError } = await supabase.from('teams').insert([{ 
           name, 
-          logo_url: finalLogoUrl 
+          logo_url: finalLogoUrl,
+          squad_photo_url: finalSquadUrl 
         }]).select().single();
         if (dbError) throw dbError;
         
@@ -140,7 +158,9 @@ const AdminTimes = () => {
 
       setName('');
       setFile(null);
+      setSquadFile(null);
       setPreviewUrl('');
+      setSquadPreviewUrl('');
       setEditingId(null);
       await fetchTimes();
       await bumpTableVersion('times');
@@ -254,6 +274,46 @@ const AdminTimes = () => {
           </div>
         </div>
 
+        <div className="form-group">
+          <label>Foto do Elenco (Opcional - Ex: foto posada da final)</label>
+          <div 
+            className={`dropzone ${isDragging ? 'dragging' : ''}`}
+            onClick={() => document.getElementById('squad-input')?.click()}
+          >
+            <input 
+              type="file" 
+              id="squad-input"
+              onChange={(e) => {
+                const sFile = e.target.files?.[0];
+                if (sFile) {
+                  setSquadFile(sFile);
+                  setSquadPreviewUrl(URL.createObjectURL(sFile));
+                }
+              }} 
+              accept="image/*" 
+              style={{ display: 'none' }} 
+            />
+            
+            {squadPreviewUrl ? (
+              <div style={{ position: 'relative', width: '100%' }}>
+                <img src={squadPreviewUrl} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '12px' }} alt="Squad Preview" />
+                <button 
+                  type="button" 
+                  onClick={(e) => { e.stopPropagation(); setSquadFile(null); setSquadPreviewUrl(''); }}
+                  style={{ position: 'absolute', top: 5, right: 5, background: 'var(--error)', borderRadius: '50%', padding: '4px', color: 'white', display: 'flex' }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <>
+                <ImageIcon size={32} color="var(--text-muted)" />
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Carregar foto do elenco</div>
+              </>
+            )}
+          </div>
+        </div>
+
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} disabled={saving}>
             {saving ? <Loader2 className="animate-spin" /> : editingId ? <Save size={18} /> : <Plus />} 
@@ -277,7 +337,12 @@ const AdminTimes = () => {
               {/* Header do Card */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <img src={time.logo_url} alt={time.name} style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+                  <div style={{ position: 'relative' }}>
+                    <img src={time.logo_url} alt={time.name} style={{ width: '40px', height: '40px', objectFit: 'contain', zIndex: 2, position: 'relative' }} />
+                    {time.squad_photo_url && (
+                      <img src={time.squad_photo_url} style={{ width: '30px', height: '30px', objectFit: 'cover', borderRadius: '4px', position: 'absolute', bottom: -5, right: -5, border: '2px solid white', opacity: 0.8 }} title="Tem foto do elenco" />
+                    )}
+                  </div>
                   <span style={{ fontWeight: 950, color: 'var(--primary-dark)', fontSize: '1.1rem' }}>{time.name}</span>
                 </div>
                 <div style={{ display: 'flex', gap: '0.25rem' }}>

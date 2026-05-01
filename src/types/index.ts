@@ -108,6 +108,7 @@ export type Team = {
   name: string;
   short_name?: string;
   logo_url: string;
+  squad_photo_url?: string;
   active: boolean;
   created_at?: string;
   // Campos legados (roster management)
