@@ -283,7 +283,6 @@ const CompetitionWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
-  console.log("App booting version:", APP_BUILD_ID);
   useEffect(() => {
     const localBuildId = localStorage.getItem('app_build_id');
     if (localBuildId !== APP_BUILD_ID) {
@@ -316,8 +315,8 @@ function App() {
                 <Route path="/admin/history" element={<AdminRoute><AdminHistory /></AdminRoute>} />
                 <Route path="/historia" element={<InstitutionalHistory />} />
                 
-                {/* HUB Administrativo - TESTE DIRETO */}
-                <Route path="/admin" element={<div style={{ padding: '5rem', color: 'green', fontSize: '2rem' }}>APP_TSX: SE VOCÊ VIR ISSO, O APP.TSX ESTÁ OK!</div>} />
+                {/* HUB Administrativo (Seletor de Campeonatos) */}
+                <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
 
                 {/* Competition Context Routes */}
                 <Route path="/competitions/:slug/:year?" element={<CompetitionWrapper><TournamentDashboard /></CompetitionWrapper>} />

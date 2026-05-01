@@ -10,15 +10,10 @@ export default function AdminHub() {
   const { organization } = useOrganizationContext();
   const { competitions, loading } = useSeasonContext();
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '5rem', color: 'blue' }}>Carregando Campeonatos (HUB)...</div>;
+  if (loading) return <div style={{ textAlign: 'center', padding: '5rem' }}>Carregando Campeonatos...</div>;
 
   return (
-    <div style={{ padding: '2rem', background: 'white', color: 'black' }}>
-      <h1>ADMIN HUB TEST - Se você vir isso, o problema está no visual abaixo.</h1>
-      <p>Org: {organization?.name}</p>
-      <p>Comps: {competitions.length}</p>
-      <hr />
-
+    <div className="animate-fade">
       <div className="admin-header-app">
         <div className="admin-header-title">
           <Globe size={18} />
@@ -93,110 +88,6 @@ export default function AdminHub() {
           </div>
         </div>
       </div>
-      <style>{`
-        .admin-header-app {
-          padding: 16px;
-          background: var(--card-bg);
-          border-bottom: 1px solid var(--border-color);
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-        .admin-header-title {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          color: var(--primary-dark);
-        }
-        .admin-header-title h1 {
-          font-size: 1.1rem;
-          font-weight: 900;
-          margin: 0;
-        }
-        .admin-header-subtitle {
-          font-size: 0.75rem;
-          color: var(--text-muted);
-          margin: 0;
-        }
-        .btn-app-primary {
-          background: var(--primary-color);
-          color: white;
-          padding: 10px;
-          border-radius: 6px;
-          font-weight: 800;
-          font-size: 0.8rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          text-decoration: none;
-          text-transform: uppercase;
-        }
-        .fs-comp-item-admin {
-          display: flex;
-          flex-direction: column;
-          padding: 12px 16px;
-          border-bottom: 1px solid var(--border-color);
-          gap: 12px;
-          background: var(--card-bg);
-        }
-        .fs-comp-item-main {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        .fs-comp-logo-large {
-          width: 40px;
-          height: 40px;
-          object-fit: contain;
-          border-radius: 8px;
-          background: var(--surface-alt);
-          padding: 4px;
-        }
-        .fs-comp-logo-large.placeholder {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: var(--text-muted);
-        }
-        .fs-comp-type {
-          font-size: 0.6rem;
-          color: var(--text-muted);
-          background: var(--surface-alt);
-          padding: 2px 6px;
-          border-radius: 4px;
-          display: inline-block;
-          margin-top: 4px;
-          font-weight: 700;
-        }
-        .fs-comp-actions {
-          display: flex;
-          gap: 8px;
-          margin-left: 52px; /* alinha com o texto */
-        }
-        .btn-app-outline {
-          border: 1px solid var(--primary-color);
-          color: var(--primary-color);
-          padding: 8px 12px;
-          border-radius: 6px;
-          font-weight: 800;
-          font-size: 0.8rem;
-          text-decoration: none;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          flex: 1;
-        }
-        .btn-app-icon {
-          border: 1px solid var(--border-color);
-          color: var(--text-muted);
-          padding: 8px;
-          border-radius: 6px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-        }
-      `}</style>
     </div>
   );
 }
