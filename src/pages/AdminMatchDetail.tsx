@@ -241,16 +241,20 @@ const AdminMatchDetail = () => {
   return (
     <div className="container animate-fade" style={{ maxWidth: '900px' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <button onClick={() => navigate('/admin/jogos')} className="btn btn-secondary">
-          <ChevronLeft size={18} /> Voltar
-        </button>
-        <h2 style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-          Gerenciar Partida
-        </h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      {/* Header App Style */}
+      <div className="admin-header-app" style={{ marginBottom: '1rem', paddingBottom: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
+          <button onClick={() => navigate('/admin/jogos')} style={{ background: 'none', border: 'none', color: 'var(--text-main)', padding: '4px', cursor: 'pointer' }}>
+            <ChevronLeft size={24} />
+          </button>
+          <div style={{ flex: 1 }}>
+            <h1 style={{ fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>SÚMULA DA PARTIDA</h1>
+            <p className="admin-header-subtitle" style={{ margin: 0, marginTop: '2px' }}>
+              {match.phase === 'grupo' ? `Rodada ${match.round}` : (match.phase?.replace('_', ' ').toUpperCase() || 'MATA-MATA')}
+            </p>
+          </div>
           {isFinished && (
-            <span style={{ fontSize: '0.72rem', fontWeight: 800, background: 'var(--primary-light)', color: 'var(--primary-color)', padding: '4px 10px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span style={{ fontSize: '0.65rem', fontWeight: 800, background: 'rgba(34,197,94,0.1)', color: 'var(--success)', padding: '4px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <CheckCircle2 size={12} /> FINALIZADO
             </span>
           )}
@@ -258,74 +262,52 @@ const AdminMatchDetail = () => {
       </div>
 
       {/* Card de placar */}
-      <div className="premium-card" style={{ marginBottom: '1.5rem' }}>
-        <div className="premium-card-header">
-          <div className="section-label-bar">
-            <span className="header-main-title">
-              {isFinished ? '✏️ Corrigir Resultado' : '⚽ Lançar Resultado'}
-            </span>
-          </div>
-          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-subtle)' }}>
-            {match.phase === 'grupo' ? `Rodada ${match.round}` : (match.phase?.replace('_', ' ').toUpperCase() || 'MATA-MATA')}
-          </span>
-        </div>
-
-        <div style={{ padding: '2rem' }}>
+      {/* Card de placar App Style */}
+      <div className="fs-comps-section" style={{ marginBottom: '1.5rem', borderTop: 'none' }}>
+        <div style={{ padding: '16px' }}>
           {/* Times + Placar */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: '2rem' }}>
-            <div style={{ textAlign: 'center' }}>
-              <img src={match.home_team?.logo_url} style={{ width: 80, height: 80, objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))' }} />
-              <div style={{ fontWeight: 900, marginTop: '0.75rem', fontSize: '1rem', color: 'var(--primary-dark)', textTransform: 'uppercase' }}>{match.home_team?.name}</div>
-              <div style={{
-                width: '80px', height: '80px', fontSize: '2.5rem', fontWeight: 900, 
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'var(--brand-dark)', color: '#fff', 
-                borderRadius: '14px', marginTop: '1rem', marginInline: 'auto'
-              }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {match.home_team?.logo_url ? (
+                <img src={match.home_team.logo_url} style={{ width: 48, height: 48, objectFit: 'contain' }} />
+              ) : (
+                <div style={{ width: 48, height: 48, background: 'var(--surface-alt)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>?</div>
+              )}
+              <div style={{ fontWeight: 900, marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--primary-dark)', textTransform: 'uppercase', lineHeight: 1.2 }}>{match.home_team?.name}</div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '45px', height: '55px', fontSize: '2rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--brand-dark)', color: '#fff', borderRadius: '8px' }}>
                 {homeScore}
+              </div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-subtle)' }}>×</div>
+              <div style={{ width: '45px', height: '55px', fontSize: '2rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--brand-dark)', color: '#fff', borderRadius: '8px' }}>
+                {awayScore}
               </div>
             </div>
 
-            <div style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: 900, color: 'var(--text-subtle)' }}>×</div>
-
-            <div style={{ textAlign: 'center' }}>
-              <img src={match.away_team?.logo_url} style={{ width: 80, height: 80, objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))' }} />
-              <div style={{ fontWeight: 900, marginTop: '0.75rem', fontSize: '1rem', color: 'var(--primary-dark)', textTransform: 'uppercase' }}>{match.away_team?.name}</div>
-              <div style={{
-                width: '80px', height: '80px', fontSize: '2.5rem', fontWeight: 900, 
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'var(--brand-dark)', color: '#fff', 
-                borderRadius: '14px', marginTop: '1rem', marginInline: 'auto'
-              }}>
-                {awayScore}
-              </div>
+            <div style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {match.away_team?.logo_url ? (
+                <img src={match.away_team.logo_url} style={{ width: 48, height: 48, objectFit: 'contain' }} />
+              ) : (
+                <div style={{ width: 48, height: 48, background: 'var(--surface-alt)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>?</div>
+              )}
+              <div style={{ fontWeight: 900, marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--primary-dark)', textTransform: 'uppercase', lineHeight: 1.2 }}>{match.away_team?.name}</div>
             </div>
           </div>
 
           {/* Pênaltis (mata-mata empatado) */}
           {showPens && (
-            <div style={{ marginTop: '1.5rem', padding: '1.25rem', background: 'rgba(202,138,4,0.08)', borderRadius: '12px', border: '1px solid rgba(202,138,4,0.3)' }}>
-              <h4 style={{ textAlign: 'center', marginBottom: '1rem', color: '#b45309', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <div style={{ marginTop: '1.25rem', padding: '1rem', background: 'rgba(202,138,4,0.05)', borderRadius: '8px', border: '1px solid rgba(202,138,4,0.2)' }}>
+              <h4 style={{ textAlign: 'center', marginBottom: '0.75rem', color: '#b45309', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>
                 🥅 Disputa de Pênaltis
               </h4>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', alignItems: 'center' }}>
-                <div style={{ 
-                    width: '80px', height: '70px', fontSize: '2.5rem', fontWeight: 900, 
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    borderRadius: '12px', border: '3px solid #fbbf24',
-                    background: 'var(--card-bg)', color: '#b45309',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
-                  }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', alignItems: 'center' }}>
+                <div style={{ width: '50px', height: '50px', fontSize: '1.5rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', border: '2px solid #fbbf24', background: 'var(--card-bg)', color: '#b45309' }}>
                   {homePens}
                 </div>
-                <span style={{ fontWeight: 900, color: '#b45309', fontSize: '1.5rem' }}>×</span>
-                <div style={{ 
-                    width: '80px', height: '70px', fontSize: '2.5rem', fontWeight: 900, 
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    borderRadius: '12px', border: '3px solid #fbbf24',
-                    background: '#fff', color: '#b45309',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
-                  }}>
+                <span style={{ fontWeight: 900, color: '#b45309', fontSize: '1.2rem' }}>×</span>
+                <div style={{ width: '50px', height: '50px', fontSize: '1.5rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', border: '2px solid #fbbf24', background: '#fff', color: '#b45309' }}>
                   {awayPens}
                 </div>
               </div>
@@ -333,49 +315,28 @@ const AdminMatchDetail = () => {
           )}
 
           {/* Botões de ação */}
-          <div style={{ display: 'grid', gridTemplateColumns: isFinished ? '1fr 1fr' : '1fr', gap: '0.75rem', marginTop: '1.5rem' }}>
-            {/* FINALIZAR / CORRIGIR */}
+          <div style={{ display: 'grid', gridTemplateColumns: isFinished ? '1fr 1fr' : '1fr', gap: '0.5rem', marginTop: '1.25rem' }}>
             <button
               onClick={handleFinalize}
               disabled={saving}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                background: isFinished ? 'var(--secondary-color)' : 'var(--primary-color)',
-                color: '#fff', border: 'none', borderRadius: '12px',
-                padding: '0.9rem', fontWeight: 800, fontSize: '0.9rem',
-                cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1
-              }}
+              className="btn-app-primary"
+              style={{ background: isFinished ? 'var(--surface-alt)' : 'var(--primary-color)', color: isFinished ? 'var(--text-main)' : '#fff', border: isFinished ? '1px solid var(--border-color)' : 'none' }}
             >
-              {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-              {isFinished ? 'Corrigir Resultado' : 'Finalizar Partida'}
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              {isFinished ? 'Corrigir' : 'Finalizar Partida'}
             </button>
 
-            {/* RESETAR (só aparece se já foi finalizado) */}
             {isFinished && (
               <button
                 onClick={() => setShowResetConfirm(true)}
                 disabled={resetting}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                  background: 'rgba(220,38,38,0.08)',
-                  color: 'var(--error)',
-                  border: '1px solid rgba(220,38,38,0.25)',
-                  borderRadius: '12px', padding: '0.9rem',
-                  fontWeight: 800, fontSize: '0.9rem',
-                  cursor: resetting ? 'not-allowed' : 'pointer',
-                }}
+                className="btn-app-primary"
+                style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--error)', border: 'none' }}
               >
-                <RotateCcw size={18} /> Resetar Partida
+                <RotateCcw size={16} /> Resetar
               </button>
             )}
           </div>
-
-          {/* Explicação */}
-          <p style={{ marginTop: '0.75rem', fontSize: '0.7rem', color: 'var(--text-subtle)', textAlign: 'center', lineHeight: 1.5 }}>
-            {isFinished
-              ? <span>✏️ <strong>Corrigir</strong> atualiza o placar existente e recalcula a classificação. <strong>Resetar</strong> apaga tudo e volta ao estado "agendado".</span>
-              : <span>✅ <strong>Finalizar</strong> salva o resultado e atualiza a classificação automaticamente.</span>}
-          </p>
         </div>
       </div>
 
@@ -415,43 +376,49 @@ const AdminMatchDetail = () => {
       )}
 
       {/* Lançamento de eventos */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-        <div>
-          <h4 style={{ marginBottom: '0.75rem', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>
-            ⚽ {match.home_team?.name}
-          </h4>
-          <EventForm players={players.filter(p => p.team_id === match.home_team_id)} onAdd={handleAddEvent} disabled={saving} />
-          <div style={{ marginTop: '0.75rem' }}>
-            {events.filter(ev => !ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id).map(ev => (
-              <EventRow key={ev.id} ev={ev} players={players} onDelete={deleteEvent} />
-            ))}
-            {events.some(ev => ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id) && (
-              <>
-                <div style={{ marginTop: '1rem', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 800, color: '#b45309', textTransform: 'uppercase', textAlign: 'center' }}>🥅 Pênaltis</div>
-                {events.filter(ev => ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id).map(ev => (
-                  <EventRow key={ev.id} ev={ev} players={players} onDelete={deleteEvent} />
-                ))}
-              </>
-            )}
+      {/* Lançamento de eventos (Grid 2 on Desktop, Flex Column on Mobile) */}
+      <div className="grid-2">
+        <div className="fs-comps-section">
+          <div className="fs-section-header" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '12px' }}>🏠</span> {match.home_team?.name}
+          </div>
+          <div style={{ padding: '12px' }}>
+            <EventForm players={players.filter(p => p.team_id === match.home_team_id)} onAdd={handleAddEvent} disabled={saving} />
+            <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {events.filter(ev => !ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id).map(ev => (
+                <EventRow key={ev.id} ev={ev} players={players} onDelete={deleteEvent} />
+              ))}
+              {events.some(ev => ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id) && (
+                <>
+                  <div style={{ marginTop: '1rem', marginBottom: '0.5rem', fontSize: '0.7rem', fontWeight: 800, color: '#b45309', textTransform: 'uppercase', textAlign: 'center', borderTop: '1px solid rgba(180,83,9,0.1)', paddingTop: '10px' }}>🥅 Pênaltis</div>
+                  {events.filter(ev => ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id).map(ev => (
+                    <EventRow key={ev.id} ev={ev} players={players} onDelete={deleteEvent} />
+                  ))}
+                </>
+              )}
+            </div>
           </div>
         </div>
-        <div>
-          <h4 style={{ marginBottom: '0.75rem', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>
-            ⚽ {match.away_team?.name}
-          </h4>
-          <EventForm players={players.filter(p => p.team_id === match.away_team_id)} onAdd={handleAddEvent} disabled={saving} />
-          <div style={{ marginTop: '0.75rem' }}>
-            {events.filter(ev => !ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id).map(ev => (
-              <EventRow key={ev.id} ev={ev} players={players} onDelete={deleteEvent} />
-            ))}
-            {events.some(ev => ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id) && (
-              <>
-                <div style={{ marginTop: '1rem', marginBottom: '0.5rem', fontSize: '0.75rem', fontWeight: 800, color: '#b45309', textTransform: 'uppercase', textAlign: 'center' }}>🥅 Pênaltis</div>
-                {events.filter(ev => ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id).map(ev => (
-                  <EventRow key={ev.id} ev={ev} players={players} onDelete={deleteEvent} />
-                ))}
-              </>
-            )}
+
+        <div className="fs-comps-section">
+          <div className="fs-section-header" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '12px' }}>✈️</span> {match.away_team?.name}
+          </div>
+          <div style={{ padding: '12px' }}>
+            <EventForm players={players.filter(p => p.team_id === match.away_team_id)} onAdd={handleAddEvent} disabled={saving} />
+            <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {events.filter(ev => !ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id).map(ev => (
+                <EventRow key={ev.id} ev={ev} players={players} onDelete={deleteEvent} />
+              ))}
+              {events.some(ev => ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id) && (
+                <>
+                  <div style={{ marginTop: '1rem', marginBottom: '0.5rem', fontSize: '0.7rem', fontWeight: 800, color: '#b45309', textTransform: 'uppercase', textAlign: 'center', borderTop: '1px solid rgba(180,83,9,0.1)', paddingTop: '10px' }}>🥅 Pênaltis</div>
+                  {events.filter(ev => ev.type.includes('penalti') && players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id).map(ev => (
+                    <EventRow key={ev.id} ev={ev} players={players} onDelete={deleteEvent} />
+                  ))}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -473,38 +440,34 @@ const EventForm = ({ players, onAdd, disabled }: { players: Player[], onAdd: (p:
   };
 
   return (
-    <form className="premium-card" onSubmit={handleSubmit} style={{ padding: '1rem' }}>
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-        <select value={pId} onChange={e => setPId(e.target.value)} style={{ flex: 2, fontSize: '0.82rem', padding: '0.4rem 0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-          <option value="">Autor do Lance...</option>
-          {players.map(p => <option key={p.id} value={p.id}>{p.shirt_number ? `${p.shirt_number} - ` : ''}{p.name}</option>)}
-        </select>
-        <select value={type} onChange={e => { setType(e.target.value); if (e.target.value !== 'gol') setAssistId(''); }} style={{ flex: 1, fontSize: '0.82rem', padding: '0.4rem 0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-          <option value="gol">⚽ Gol (Tempo Normal)</option>
-          <option value="gol_penalti">⚽ Gol de Pênalti (Tempo Normal)</option>
-          <option value="penalti_perdido_tempo_normal">❌ Pênalti Perdido (Tempo Normal)</option>
-          <option value="cartao_amarelo">🟨 Cartão Amarelo</option>
-          <option value="cartao_vermelho_direto">🟥 Vermelho Direto</option>
-          <option value="cartao_vermelho_indireto">🟥 2º Amarelo</option>
-          <option value="penalti_convertido">✅ Disputa de Pênaltis: Convertido</option>
-          <option value="penalti_perdido">❌ Disputa de Pênaltis: Perdido</option>
-        </select>
-      </div>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: 'var(--surface-alt)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+      <select value={pId} onChange={e => setPId(e.target.value)} style={{ width: '100%', fontSize: '0.8rem', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+        <option value="">Autor do Lance...</option>
+        {players.map(p => <option key={p.id} value={p.id}>{p.shirt_number ? `${p.shirt_number} - ` : ''}{p.name}</option>)}
+      </select>
 
-      {/* Não permitir assistência se for gol de pênalti ou outras coisas */}
+      <select value={type} onChange={e => { setType(e.target.value); if (e.target.value !== 'gol') setAssistId(''); }} style={{ width: '100%', fontSize: '0.8rem', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+        <option value="gol">⚽ Gol Normal</option>
+        <option value="gol_penalti">⚽ Gol Pênalti</option>
+        <option value="penalti_perdido_tempo_normal">❌ Pênalti Perdido</option>
+        <option value="cartao_amarelo">🟨 Amarelo</option>
+        <option value="cartao_vermelho_direto">🟥 Verm. Direto</option>
+        <option value="cartao_vermelho_indireto">🟥 2º Amarelo</option>
+        <option value="penalti_convertido">✅ Pênaltis: Gol</option>
+        <option value="penalti_perdido">❌ Pênaltis: Fora</option>
+      </select>
+
       {(type === 'gol') && (
-        <div style={{ marginBottom: '0.5rem' }}>
-          <select value={assistId} onChange={e => setAssistId(e.target.value)} style={{ width: '100%', fontSize: '0.82rem', padding: '0.4rem 0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-            <option value="">Assistência (Opcional)...</option>
-            {players.filter(p => p.id !== pId).map(p => <option key={p.id} value={p.id}>{p.shirt_number ? `${p.shirt_number} - ` : ''}{p.name}</option>)}
-          </select>
-        </div>
+        <select value={assistId} onChange={e => setAssistId(e.target.value)} style={{ width: '100%', fontSize: '0.8rem', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+          <option value="">Assistência (Opcional)...</option>
+          {players.filter(p => p.id !== pId).map(p => <option key={p.id} value={p.id}>{p.shirt_number ? `${p.shirt_number} - ` : ''}{p.name}</option>)}
+        </select>
       )}
 
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <input type="number" placeholder="Min" value={min} min={1} onChange={e => setMin(e.target.value)} style={{ flex: 1, fontSize: '0.82rem', padding: '0.4rem 0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)' }} />
-        <button type="submit" disabled={disabled} style={{ flex: 2, padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--brand-dark)', color: '#fff', fontWeight: 700, fontSize: '0.8rem', cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
-          {disabled ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Lançar
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <input type="number" placeholder="Min" value={min} min={1} onChange={e => setMin(e.target.value)} style={{ flex: 1, fontSize: '0.8rem', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)' }} />
+        <button type="submit" disabled={disabled} style={{ flex: 2, padding: '8px', borderRadius: '6px', border: 'none', background: 'var(--brand-dark)', color: '#fff', fontWeight: 800, fontSize: '0.8rem', cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+          {disabled ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Lançar
         </button>
       </div>
     </form>
@@ -520,9 +483,9 @@ const EventRow = ({ ev, players, onDelete }: { ev: any, players: Player[], onDel
   const isRedIndirect = ev.type === 'cartao_vermelho_indireto';
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.75rem', marginBottom: '0.4rem', background: 'var(--bg-color)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-        <span style={{ fontSize: '1rem' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', background: 'var(--bg-color)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ fontSize: '1rem', width: '20px', textAlign: 'center' }}>
           {ev.type === 'gol' && '⚽'}
           {ev.type === 'gol_penalti' && '⚽'}
           {ev.type === 'penalti_convertido' && '✅'}
@@ -531,26 +494,30 @@ const EventRow = ({ ev, players, onDelete }: { ev: any, players: Player[], onDel
           {isYellow && '🟨'}
           {(isRedDirect || isRedIndirect) && '🟥'}
         </span>
-        <div>
-          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary-dark)' }}>
-            {player?.shirt_number ? `${player.shirt_number} - ` : ''}{player?.name}
-            {ev.minute && <span style={{ fontWeight: 500, color: 'var(--text-subtle)', marginLeft: '4px' }}>{ev.minute}'</span>}
-            {isRedDirect && <span style={{ color: 'var(--error)', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>DIRETO</span>}
-            {isRedIndirect && <span style={{ color: 'var(--error)', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>2º AMARELO</span>}
-            {ev.type === 'gol_penalti' && <span style={{ color: '#059669', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>PÊNALTI</span>}
-            {ev.type === 'penalti_perdido_tempo_normal' && <span style={{ color: 'var(--error)', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>PÊNALTI PERDIDO</span>}
-            {ev.type === 'penalti_convertido' && <span style={{ color: '#059669', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>PÊNALTI CONVERTIDO</span>}
-            {ev.type === 'penalti_perdido' && <span style={{ color: 'var(--error)', fontSize: '0.65rem', fontWeight: 800, marginLeft: '6px' }}>PÊNALTI PERDIDO</span>}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
+            {player?.shirt_number ? `${player.shirt_number} ` : ''}{player?.name}
+            {ev.minute && <span style={{ fontWeight: 600, color: 'var(--text-subtle)', marginLeft: '4px' }}>{ev.minute}'</span>}
           </div>
+          {(isRedDirect || isRedIndirect || ev.type === 'gol_penalti' || ev.type.includes('perdido') || ev.type === 'penalti_convertido') && (
+             <div style={{ fontSize: '0.6rem', fontWeight: 700, color: isRedDirect || isRedIndirect || ev.type.includes('perdido') ? 'var(--error)' : '#059669', marginTop: '2px' }}>
+               {isRedDirect && 'VERMELHO DIRETO'}
+               {isRedIndirect && '2º AMARELO'}
+               {ev.type === 'gol_penalti' && 'PÊNALTI'}
+               {ev.type === 'penalti_perdido_tempo_normal' && 'PÊNALTI PERDIDO'}
+               {ev.type === 'penalti_convertido' && 'CONVERTIDO'}
+               {ev.type === 'penalti_perdido' && 'PERDIDO'}
+             </div>
+          )}
           {assistPlayer && (
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-subtle)', marginTop: '1px' }}>
-              🤝 {assistPlayer.shirt_number ? `${assistPlayer.shirt_number} - ` : ''}{assistPlayer.name}
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-subtle)', marginTop: '2px', fontWeight: 600 }}>
+              🤝 {assistPlayer.name}
             </div>
           )}
         </div>
       </div>
-      <button onClick={() => onDelete(ev.id)} style={{ background: 'none', border: 'none', color: 'var(--text-subtle)', cursor: 'pointer', padding: '4px' }}>
-        <Trash2 size={15} />
+      <button onClick={() => onDelete(ev.id)} style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', padding: '4px', opacity: 0.7 }}>
+        <Trash2 size={14} />
       </button>
     </div>
   );
