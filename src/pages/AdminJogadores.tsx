@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { Team, Player } from '../types';
 import { Plus, Users, Trash2, Loader2, Edit2, Save, ChevronDown, ChevronUp, Search, Upload, Image as ImageIcon, X } from 'lucide-react';
-import { useSeasonContext } from '../components/SeasonContext';
+import { useAdminContext } from '../components/AdminContext';
 
 import { playerSchema } from '../utils/schemas';
 import { validateImageUrl } from '../utils/imageValidation';
+import { bumpTableVersion } from '../utils/smartCache';
 
 const AdminJogadores = () => {
-  const { season, loading: ctxLoading } = useSeasonContext();
+  const { activeSeason: season, loading: ctxLoading } = useAdminContext();
   const [times, setTimes] = useState<Team[]>([]);
   const [jogadores, setJogadores] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,7 +146,8 @@ const AdminJogadores = () => {
         if (error) throw error;
       }
       cancelEdit();
-      fetchData();
+      await fetchData();
+      await bumpTableVersion('jogadores');
     } catch (err: any) {
       alert(err.message || 'Erro ao salvar jogador');
     } finally {
@@ -157,7 +159,10 @@ const AdminJogadores = () => {
     e.stopPropagation();
     if (!confirm('Tem certeza que deseja excluir este jogador?')) return;
     const { error } = await supabase.from('players').delete().eq('id', id);
-    if (!error) fetchData();
+    if (!error) {
+      await fetchData();
+      await bumpTableVersion('jogadores');
+    }
   };
 
   const groupedPlayers = times.map(time => ({

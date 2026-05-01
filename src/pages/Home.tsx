@@ -4,11 +4,13 @@ import { Trophy, Calendar, Users, ArrowRight, ChevronRight, Newspaper, Activity,
 import { Link } from 'react-router-dom';
 import { useOrganizationContext } from '../components/OrganizationContext';
 import logoApd from '../assets/logo.png';
+import { getSmartData } from '../utils/smartCache';
 
 export default function Home() {
   const { organization } = useOrganizationContext();
   const [news, setNews] = useState<any[]>([]);
   const [competitions, setCompetitions] = useState<any[]>([]);
+  const [stats, setStats] = useState({ teams: 32, players: 450, matches: 1200 });
   const [loading, setLoading] = useState(true);
   const [selectedNews, setSelectedNews] = useState<any>(null);
 
@@ -19,12 +21,30 @@ export default function Home() {
   const fetchHomeData = async () => {
     setLoading(true);
     try {
-      const [newsRes, compRes] = await Promise.all([
-        supabase.from('news').select('*').eq('is_published', true).order('is_featured', { ascending: false }).order('created_at', { ascending: false }).limit(6),
-        supabase.from('competitions').select('*, seasons(year, status)').eq('is_active', true)
-      ]);
-      if (newsRes.data) setNews(newsRes.data);
-      if (compRes.data) setCompetitions(compRes.data);
+      // 1. Usa SmartCache para carregar os dados da Home (composite)
+      const data = await getSmartData('home_data', async () => {
+        const [newsRes, compRes, teamsCount, playersCount, matchesCount] = await Promise.all([
+          supabase.from('news').select('*').eq('is_published', true).order('is_featured', { ascending: false }).order('created_at', { ascending: false }).limit(6),
+          supabase.from('competitions').select('*, seasons(year, status)').eq('is_active', true),
+          supabase.from('teams').select('*', { count: 'exact', head: true }),
+          supabase.from('players').select('*', { count: 'exact', head: true }),
+          supabase.from('matches').select('*', { count: 'exact', head: true })
+        ]);
+
+        return {
+          news: newsRes.data || [],
+          competitions: compRes.data || [],
+          stats: {
+            teams: teamsCount.count || 32,
+            players: playersCount.count || 450,
+            matches: matchesCount.count || 1200
+          }
+        };
+      });
+      
+      setNews(data.news);
+      setCompetitions(data.competitions);
+      setStats(data.stats);
     } catch (err) {
       console.error(err);
     } finally {
@@ -67,17 +87,17 @@ export default function Home() {
           <section className="stats-compact-grid">
             <div className="mini-stat-card">
               <Shield size={18} className="icon-green" />
-              <div className="stat-val">32</div>
+              <div className="stat-val">{stats.teams}</div>
               <div className="stat-lbl">TIMES</div>
             </div>
             <div className="mini-stat-card">
               <Users size={18} className="icon-yellow" />
-              <div className="stat-val">450+</div>
+              <div className="stat-val">{stats.players >= 100 ? `${stats.players}+` : stats.players}</div>
               <div className="stat-lbl">ATLETAS</div>
             </div>
             <div className="mini-stat-card">
               <Activity size={18} className="icon-blue" />
-              <div className="stat-val">1.2k</div>
+              <div className="stat-val">{stats.matches >= 1000 ? `${(stats.matches/1000).toFixed(1)}k` : stats.matches}</div>
               <div className="stat-lbl">JOGOS</div>
             </div>
           </section>

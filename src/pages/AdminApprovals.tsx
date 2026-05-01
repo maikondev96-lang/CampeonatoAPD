@@ -9,7 +9,7 @@ import { RegistrationSubmission, PlayerRegistration } from '../types';
 
 export default function AdminApprovals() {
   const { activeSeason } = useAdminContext();
-  const [tab, setTab] = useState<'teams' | 'players'>('teams');
+  const [tab, setTab] = useState<'teams' | 'players' | 'links'>('teams');
   
   const [submissions, setSubmissions] = useState<RegistrationSubmission[]>([]);
   const [playerRegs, setPlayerRegs] = useState<PlayerRegistration[]>([]);
@@ -18,6 +18,7 @@ export default function AdminApprovals() {
   
   const [selectedSub, setSelectedSub] = useState<RegistrationSubmission | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerRegistration | null>(null);
+  const [regLinks, setRegLinks] = useState<any[]>([]);
   const [feedback, setFeedback] = useState('');
 
   useEffect(() => {
@@ -42,8 +43,16 @@ export default function AdminApprovals() {
       .eq('season_id', activeSeason.id)
       .order('created_at', { ascending: false });
 
+    // Fetch Links
+    const { data: lData } = await supabase
+      .from('registration_links')
+      .select('*')
+      .eq('season_id', activeSeason.id)
+      .order('created_at', { ascending: false });
+
     setSubmissions(sData || []);
     setPlayerRegs((pData as any) || []);
+    setRegLinks(lData || []);
     setLoading(false);
   };
 
@@ -109,6 +118,39 @@ export default function AdminApprovals() {
     }
   };
 
+  const handleGenerateLink = async () => {
+    if (!activeSeason) return;
+    setProcessing(true);
+    try {
+      const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      const { error } = await supabase.from('registration_links').insert([{
+        season_id: activeSeason.id,
+        token: token,
+        active: true,
+        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 dias
+      }]);
+
+      if (error) throw error;
+      fetchAll();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleToggleLink = async (id: string, current: boolean) => {
+    setProcessing(true);
+    try {
+      await supabase.from('registration_links').update({ active: !current }).eq('id', id);
+      fetchAll();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handleReject = async (type: 'team' | 'player', id: string) => {
     if (!feedback) return alert('Informe o motivo da rejeição.');
     setProcessing(true);
@@ -152,16 +194,16 @@ export default function AdminApprovals() {
             <Users size={16} /> Equipes ({pendingTeams.length})
           </button>
           <button 
-            onClick={() => setTab('players')}
+            onClick={() => setTab('links')}
             style={{ 
               padding: '0.6rem 1.2rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 800, 
               display: 'flex', alignItems: 'center', gap: '0.5rem',
-              background: tab === 'players' ? 'var(--card-bg)' : 'transparent',
-              color: tab === 'players' ? 'var(--primary-color)' : 'var(--text-muted)',
-              boxShadow: tab === 'players' ? 'var(--shadow-sm)' : 'none'
+              background: tab === 'links' ? 'var(--card-bg)' : 'transparent',
+              color: tab === 'links' ? 'var(--primary-color)' : 'var(--text-muted)',
+              boxShadow: tab === 'links' ? 'var(--shadow-sm)' : 'none'
             }}
           >
-            <User size={16} /> Jogadores ({pendingPlayers.length})
+            <Search size={16} /> Links de Inscrição
           </button>
         </div>
       </div>
@@ -189,7 +231,7 @@ export default function AdminApprovals() {
              ))
            )}
         </div>
-      ) : (
+      ) : tab === 'players' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
            {pendingPlayers.length === 0 ? (
              <div style={{ gridColumn: '1 / -1', padding: '4rem', textAlign: 'center', background: 'var(--surface-alt)', borderRadius: '20px' }}>
@@ -213,6 +255,59 @@ export default function AdminApprovals() {
                 </div>
              ))
            )}
+        </div>
+      ) : (
+        <div className="card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <h3 style={{ margin: 0, fontWeight: 900 }}>Links de Inscrição Ativos</h3>
+            <button className="btn btn-primary" onClick={handleGenerateLink} disabled={processing}>+ Gerar Novo Link</button>
+          </div>
+
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Token / Link</th>
+                  <th>Expira em</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {regLinks.map(link => (
+                  <tr key={link.id}>
+                    <td>
+                      <code style={{ fontSize: '0.7rem', color: 'var(--primary-color)' }}>{link.token}</code>
+                      <button 
+                        className="btn-icon" 
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/register/${link.token}`);
+                          alert('Link copiado!');
+                        }}
+                        style={{ marginLeft: '10px' }}
+                      >
+                        Copiar URL
+                      </button>
+                    </td>
+                    <td>{link.expires_at ? new Date(link.expires_at).toLocaleDateString() : 'Nunca'}</td>
+                    <td>
+                      <span className={`badge ${link.active ? 'badge-success' : 'badge-danger'}`}>
+                        {link.active ? 'ATIVO' : 'DESATIVADO'}
+                      </span>
+                    </td>
+                    <td>
+                      <button className="btn-icon" onClick={() => handleToggleLink(link.id, link.active)}>
+                        {link.active ? <XCircle size={16} /> : <CheckCircle2 size={16} />}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {regLinks.length === 0 && (
+                  <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Nenhum link gerado.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { getSmartData } from '../utils/smartCache';
 import { 
   Activity, Loader2, Medal, Users, Footprints, 
   ChevronDown, ChevronUp, Shield, Flame, Zap, ScrollText, AlertTriangle 
@@ -46,22 +47,28 @@ const Artilharia = () => {
   const fetchStats = async () => {
     if (!season) return;
     try {
-      // Get teams enrolled in this season
-      const { data: seasonTeamsData } = await supabase
-        .from('season_teams')
-        .select('team_id, team:teams(*)')
-        .eq('season_id', season.id);
-      const enrolledTeamIds = (seasonTeamsData || []).map(st => st.team_id);
+      const data = await getSmartData(`artilharia_${season.id}`, async () => {
+        // Get teams enrolled in this season
+        const { data: seasonTeamsData } = await supabase
+          .from('season_teams')
+          .select('team_id, team:teams(*)')
+          .eq('season_id', season.id);
+        const enrolledTeamIds = (seasonTeamsData || []).map(st => st.team_id);
 
-      const [
-        { data: players },
-        { data: matches },
-        { data: events }
-      ] = await Promise.all([
-        supabase.from('players').select('*, team:teams(*)').in('team_id', enrolledTeamIds),
-        supabase.from('matches').select('*').eq('season_id', season.id).eq('status', 'finalizado'),
-        supabase.from('match_events').select('*, match:matches!inner(season_id)').eq('match.season_id', season.id)
-      ]);
+        const [
+          { data: players },
+          { data: matches },
+          { data: events }
+        ] = await Promise.all([
+          supabase.from('players').select('*, team:teams(*)').in('team_id', enrolledTeamIds),
+          supabase.from('matches').select('*').eq('season_id', season.id).eq('status', 'finalizado'),
+          supabase.from('match_events').select('*, match:matches!inner(season_id)').eq('match.season_id', season.id)
+        ]);
+
+        return { players, seasonTeamsData, matches, events };
+      });
+
+      const { players, seasonTeamsData, matches, events } = data;
       const teams = (seasonTeamsData || []).map((st: any) => st.team).filter(Boolean);
 
       if (players && teams && matches && events) {

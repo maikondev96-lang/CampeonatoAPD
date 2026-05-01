@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, Plus, Trash2, Edit, Save, Image as ImageIcon, CheckCircle, XCircle, Globe, Upload, Link as LinkIcon } from 'lucide-react';
+import { bumpTableVersion } from '../utils/smartCache';
 
 export default function AdminNews() {
   const [news, setNews] = useState<any[]>([]);
@@ -69,7 +70,8 @@ export default function AdminNews() {
       alert('Notícia salva com sucesso!');
       setEditingId(null);
       setFormData({ title: '', subtitle: '', content: '', image_url: '', category: 'Geral', is_published: true, is_featured: false, external_url: '' });
-      fetchNews();
+      await fetchNews();
+      await bumpTableVersion('noticias');
     } catch (err: any) {
       alert(err.message);
     }
@@ -78,7 +80,8 @@ export default function AdminNews() {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Excluir esta notícia definitivamente?')) return;
     await supabase.from('news').delete().eq('id', id);
-    fetchNews();
+    await fetchNews();
+    await bumpTableVersion('noticias');
   };
 
   if (loading && news.length === 0) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;

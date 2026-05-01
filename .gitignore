@@ -22,3 +22,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Security & Config
+.env
+.env.local
+.env.*.local
+
+# Temp/Scratch
+scratch/
+logs/
+.planning/

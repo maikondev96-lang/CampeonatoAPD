@@ -62,12 +62,35 @@ export const checkAndGenerateNextStages = async (seasonId: string) => {
               ];
               await supabase.from('matches').insert(semis);
               generatedSomething = true;
-            } else if (existingSemis.length === 2 && !semiStage) { // if just created but somehow we missed
-              // Propagate updates if the user is correcting the group stage
-              await supabase.from('matches').update({ home_team_id: top1, away_team_id: top4 }).eq('id', existingSemis[0].id);
-              await supabase.from('matches').update({ home_team_id: top2, away_team_id: top3 }).eq('id', existingSemis[1].id);
-              generatedSomething = true;
             }
+          }
+        }
+      } else if (rules.format === 'groups_2_top_2') {
+        // Lógica para 2 grupos -> Semifinais (1A vs 2B, 1B vs 2A)
+        const { data: standings } = await supabase.from('standings').select('team_id, points, goal_diff, goals_for, team:teams!inner(id, name), season_team:season_teams!inner(group_name)').eq('season_id', seasonId);
+        
+        if (standings) {
+          const groupA = standings.filter((s: any) => s.season_team.group_name === 'A').sort((a: any, b: any) => b.points - a.points || b.goal_diff - a.goal_diff || b.goals_for - a.goals_for);
+          const groupB = standings.filter((s: any) => s.season_team.group_name === 'B').sort((a: any, b: any) => b.points - a.points || b.goal_diff - a.goal_diff || b.goals_for - a.goals_for);
+
+          if (groupA.length >= 2 && groupB.length >= 2) {
+             let targetSemiStage = semiStage;
+             if (!targetSemiStage) {
+               const { data: newSemiStage } = await supabase.from('stages').insert([{ season_id: seasonId, name: 'Semifinal', type: 'semi', order_index: 2 }]).select().single();
+               targetSemiStage = newSemiStage;
+             }
+
+             if (targetSemiStage) {
+               const existingSemis = matches.filter(m => m.stage_id === targetSemiStage?.id);
+               if (existingSemis.length === 0) {
+                 const semis = [
+                   { season_id: seasonId, stage_id: targetSemiStage.id, home_team_id: groupA[0].team_id, away_team_id: groupB[1].team_id, round: 100, status: 'agendado' },
+                   { season_id: seasonId, stage_id: targetSemiStage.id, home_team_id: groupB[0].team_id, away_team_id: groupA[1].team_id, round: 100, status: 'agendado' }
+                 ];
+                 await supabase.from('matches').insert(semis);
+                 generatedSomething = true;
+               }
+             }
           }
         }
       }

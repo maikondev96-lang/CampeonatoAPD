@@ -32,6 +32,8 @@ const Fases = () => {
     setLoading(false);
   };
 
+  const roundOf16 = matches.filter((m: any) => m.stage?.type === 'round_of_16');
+  const quarters = matches.filter((m: any) => m.stage?.type === 'quarter');
   const semiFinals = matches.filter((m: any) => m.stage?.type === 'semi');
   const thirdPlace = matches.find((m: any) => m.stage?.type === 'third_place');
   const final = matches.find((m: any) => m.stage?.type === 'final');
@@ -39,8 +41,15 @@ const Fases = () => {
   const BracketCard = ({ match, placeholderHome, placeholderAway, type }: { match?: Match, placeholderHome: string, placeholderAway: string, type: 'semi' | 'final' | 'third' }) => {
     const isPlaceholder = !match;
     const isFinished = match?.status === 'finalizado';
-    const homeWin = isFinished && (match.home_score || 0) >= (match.away_score || 0);
-    const awayWin = isFinished && (match.away_score || 0) > (match.home_score || 0);
+    const isPenalty = isFinished && match.home_score === match.away_score && (match.home_penalties || match.away_penalties);
+    const homeWin = isFinished && (
+      (match.home_score || 0) > (match.away_score || 0) || 
+      (match.home_score === match.away_score && (match.home_penalties || 0) > (match.away_penalties || 0))
+    );
+    const awayWin = isFinished && (
+      (match.away_score || 0) > (match.home_score || 0) ||
+      (match.away_score === match.home_score && (match.away_penalties || 0) > (match.home_penalties || 0))
+    );
 
     const cardContent = (
       <div className={`epic-bracket-card ${type} ${isPlaceholder ? 'is-placeholder' : ''}`}>
@@ -58,7 +67,12 @@ const Fases = () => {
               ) : <div className="team-logo-placeholder">?</div>}
               <span className="team-name">{match?.home_team?.name || placeholderHome}</span>
             </div>
-            {isFinished && <span className="team-score">{match.home_score}</span>}
+            {isFinished && (
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <span className="team-score">{match.home_score}</span>
+                {isPenalty && <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#b45309' }}>({match.home_penalties})</span>}
+              </div>
+            )}
           </div>
           <div className="team-divider"></div>
           <div className={`epic-team ${isFinished && !awayWin ? 'loser' : ''}`}>
@@ -68,7 +82,12 @@ const Fases = () => {
               ) : <div className="team-logo-placeholder">?</div>}
               <span className="team-name">{match?.away_team?.name || placeholderAway}</span>
             </div>
-            {isFinished && <span className="team-score">{match.away_score}</span>}
+            {isFinished && (
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <span className="team-score">{match.away_score}</span>
+                {isPenalty && <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#b45309' }}>({match.away_penalties})</span>}
+              </div>
+            )}
           </div>
         </div>
 
@@ -98,7 +117,32 @@ const Fases = () => {
       </header>
 
       <div className="epic-bracket-layout">
+        {/* OITAVAS (ESQUERDA) */}
+        {roundOf16.length > 0 && (
+          <div className="bracket-col side-col">
+            <div className="col-label">OITAVAS</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {roundOf16.slice(0, Math.ceil(roundOf16.length/2)).map((m, i) => (
+                <BracketCard key={m.id} match={m} placeholderHome={`TIME ${i*2+1}`} placeholderAway={`TIME ${i*2+2}`} type="semi" />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* QUARTAS (ESQUERDA) */}
+        {quarters.length > 0 && (
+          <div className="bracket-col side-col">
+            <div className="col-label">QUARTAS</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              {quarters.slice(0, Math.ceil(quarters.length/2)).map((m, i) => (
+                <BracketCard key={m.id} match={m} placeholderHome={`VENC. OITAVAS ${i*2+1}`} placeholderAway={`VENC. OITAVAS ${i*2+2}`} type="semi" />
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="bracket-col side-col left">
+          <div className="col-label">SEMIFINAIS</div>
           <BracketCard match={semiFinals[0]} placeholderHome="1º COLOCADO" placeholderAway="4º COLOCADO" type="semi" />
         </div>
 
@@ -115,8 +159,33 @@ const Fases = () => {
         </div>
 
         <div className="bracket-col side-col right">
+          <div className="col-label">SEMIFINAIS</div>
           <BracketCard match={semiFinals[1]} placeholderHome="2º COLOCADO" placeholderAway="3º COLOCADO" type="semi" />
         </div>
+
+        {/* QUARTAS (DIREITA) */}
+        {quarters.length > 2 && (
+          <div className="bracket-col side-col">
+            <div className="col-label">QUARTAS</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              {quarters.slice(Math.ceil(quarters.length/2)).map((m, i) => (
+                <BracketCard key={m.id} match={m} placeholderHome={`VENC. OITAVAS ${i*2+5}`} placeholderAway={`VENC. OITAVAS ${i*2+6}`} type="semi" />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* OITAVAS (DIREITA) */}
+        {roundOf16.length > 4 && (
+          <div className="bracket-col side-col">
+            <div className="col-label">OITAVAS</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {roundOf16.slice(Math.ceil(roundOf16.length/2)).map((m, i) => (
+                <BracketCard key={m.id} match={m} placeholderHome={`TIME ${i*2+9}`} placeholderAway={`TIME ${i*2+10}`} type="semi" />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {final?.status === 'finalizado' && final.winner_id && (
@@ -157,15 +226,25 @@ const Fases = () => {
         .epic-subtitle { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; margin-top: 0.5rem; }
 
         .epic-bracket-layout {
-          display: grid;
-          grid-template-columns: 1fr 1.4fr 1fr;
+          display: flex;
+          justify-content: center;
           align-items: center;
-          gap: 1rem;
+          gap: 2rem;
           position: relative;
           z-index: 1;
-          max-width: 1200px;
-          margin: 0 auto;
           width: 100%;
+          padding: 2rem 0;
+          overflow-x: auto;
+        }
+
+        .col-label {
+          font-size: 0.6rem;
+          font-weight: 950;
+          color: var(--text-muted);
+          text-align: center;
+          margin-bottom: 1rem;
+          letter-spacing: 1.5px;
+          opacity: 0.6;
         }
 
         .bracket-col { display: flex; flex-direction: column; justify-content: center; }

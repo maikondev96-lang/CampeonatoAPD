@@ -46,6 +46,7 @@ export default function AdminChampionshipWizard() {
     woScoreHome: 3,
     woScoreAway: 0,
     penaltiesEnabled: true,
+    format: 'groups_2_top_2', // Novo: formato de automação
 
     // Step 5: Calendar
     startDate: '',
@@ -112,7 +113,8 @@ export default function AdminChampionshipWizard() {
              end: formData.regEnd,
              limits: { min: formData.minPlayers, max: formData.maxPlayers },
              required_fields: formData.requiredFields
-          }
+          },
+          format: formData.format // Propaga o formato para o motor de automação
         }
       }]).select().single();
 
@@ -246,6 +248,25 @@ export default function AdminChampionshipWizard() {
                         }}
                       />
                       {p.toUpperCase()}
+                   </label>
+                ))}
+             </div>
+          </div>
+
+          <div className="form-group" style={{ marginTop: '1.5rem' }}>
+             <label>Lógica de Chaveamento Automático</label>
+             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                Como o motor deve gerar os jogos do mata-mata?
+             </p>
+             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                {[
+                   { id: 'groups_2_top_2', label: '2 Grupos → Semis', desc: '1A vs 2B e 1B vs 2A' },
+                   { id: 'league_top_4', label: 'Liga → Top 4', desc: '1º vs 4º e 2º vs 3º' }
+                ].map(f => (
+                   <label key={f.id} className={`template-card ${formData.format === f.id ? 'active' : ''}`} style={{ padding: '1rem' }}>
+                      <input type="radio" name="format" checked={formData.format === f.id} onChange={() => setFormData({...formData, format: f.id})} style={{ display: 'none' }} />
+                      <strong style={{ display: 'block', fontSize: '0.85rem' }}>{f.label}</strong>
+                      <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>{f.desc}</span>
                    </label>
                 ))}
              </div>

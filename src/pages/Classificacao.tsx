@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Standing } from '../types';
 import { Table, Loader2 } from 'lucide-react';
 import { useSeasonContext } from '../components/SeasonContext';
+import { getSmartData } from '../utils/smartCache';
 
 const Classificacao = () => {
   const { season, loading: ctxLoading } = useSeasonContext();
@@ -19,27 +20,38 @@ const Classificacao = () => {
     if (!season) return;
     setLoading(true);
 
-    const [standingsRes, matchesRes, teamsRes] = await Promise.all([
-      supabase.from('standings').select('*, team:teams(*)').eq('season_id', season.id),
-      supabase.from('matches')
-        .select('home_team_id, away_team_id, home_score, away_score, stage_id, status')
-        .eq('season_id', season.id)
-        .eq('status', 'finalizado')
-        .order('date', { ascending: true }),
-      supabase.from('season_teams')
-        .select('team:teams(*)')
-        .eq('season_id', season.id)
-    ]);
+    try {
+      const data = await getSmartData(`classificacao_${season.id}`, async () => {
+        const [standingsRes, matchesRes, teamsRes, stagesRes] = await Promise.all([
+          supabase.from('standings').select('*, team:teams(*)').eq('season_id', season.id),
+          supabase.from('matches')
+            .select('home_team_id, away_team_id, home_score, away_score, stage_id, status')
+            .eq('season_id', season.id)
+            .eq('status', 'finalizado')
+            .order('date', { ascending: true }),
+          supabase.from('season_teams')
+            .select('team:teams(*)')
+            .eq('season_id', season.id),
+          supabase.from('stages')
+            .select('id')
+            .eq('season_id', season.id)
+            .eq('type', 'group')
+        ]);
 
-    // Get group stage IDs
-    const { data: stages } = await supabase
-      .from('stages')
-      .select('id')
-      .eq('season_id', season.id)
-      .eq('type', 'group');
-    const groupStageIds = (stages || []).map(s => s.id);
+        return {
+          standings: standingsRes.data || [],
+          matches: matchesRes.data || [],
+          teams: teamsRes.data || [],
+          groupStageIds: (stagesRes.data || []).map(s => s.id)
+        };
+      });
 
-    let finalStandings: Standing[] = [];
+      const { standings: standingsData, matches: matchesData, teams: teamsData, groupStageIds } = data;
+      const standingsRes = { data: standingsData };
+      const matchesRes = { data: matchesData };
+      const teamsRes = { data: teamsData };
+
+      let finalStandings: Standing[] = [];
 
     if (teamsRes.data) {
       const baseMap: Record<string, Standing> = {};

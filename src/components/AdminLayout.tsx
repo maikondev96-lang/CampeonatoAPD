@@ -31,9 +31,9 @@ const AdminLayout = () => {
   const menuItems = [
     { label: 'Painel', icon: LayoutDashboard, path: `/admin/${slug}/${year}` },
     { label: 'Jogos', icon: Calendar, path: `/admin/${slug}/${year}/jogos` },
-    { label: 'Times', icon: Shield, path: `/admin/${slug}/${year}/times` }, // Shield was Shield but I used Users below, fixed
+    { label: 'Times e Elencos', icon: Shield, path: `/admin/${slug}/${year}/times` },
     { label: 'Jogadores', icon: UserSquare2, path: `/admin/${slug}/${year}/jogadores` },
-    { label: 'Fases', icon: Trophy, path: `/admin/${slug}/${year}/fases` },
+    { label: 'Fases e Sorteio', icon: Trophy, path: `/admin/${slug}/${year}/fases` },
     { label: 'Inscrições', icon: ClipboardList, path: `/admin/${slug}/${year}/inscricoes` },
     { label: 'Configurações', icon: Settings, path: `/admin/${slug}/${year}/settings` },
   ];
@@ -69,23 +69,31 @@ const AdminLayout = () => {
            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Temporada {activeSeason?.year}</div>
         </div>
 
-        {menuItems.map((item) => (
-          <Link 
-            key={item.path}
-            to={item.path} 
-            className={`nav-link-item ${location.pathname === item.path ? 'active' : ''}`}
-            style={{ 
-              justifyContent: 'flex-start', 
-              width: '100%', 
-              padding: '0.75rem 1rem',
-              borderRadius: '8px',
-              fontSize: '0.9rem'
-            }}
-          >
-            <item.icon size={18} />
-            <span>{item.label}</span>
-          </Link>
-        ))}
+        {menuItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link 
+              key={item.path}
+              to={item.path} 
+              style={{ 
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px',
+                fontSize: '0.875rem',
+                fontWeight: 700,
+                color: isActive ? 'var(--primary-color)' : 'var(--text-main)',
+                background: isActive ? 'var(--primary-light)' : 'transparent',
+                textDecoration: 'none',
+                transition: 'all 0.2s'
+              }}
+            >
+              <item.icon size={18} />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
 
         <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
            <Link to={`/competitions/${slug}`} target="_blank" className="btn btn-secondary" style={{ width: '100%', fontSize: '0.75rem', gap: '8px' }}>

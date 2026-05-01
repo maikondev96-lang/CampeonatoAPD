@@ -92,6 +92,21 @@ export const SeasonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (s) setSeason(s);
   }, [competition, season, seasons]);
 
+  // Aplicar tema dinâmico (Fase 3: Identidade Visual)
+  useEffect(() => {
+    const root = document.documentElement;
+    if (competition?.settings_json?.primary_color) {
+      const color = competition.settings_json.primary_color;
+      root.style.setProperty('--primary-color', color);
+      // Gera uma versão semi-transparente para o hover/fundo (15 em hex é aprox 8% de opacidade)
+      root.style.setProperty('--primary-light', `${color}15`);
+    } else {
+      // Reseta para o padrão do index.css se não houver contexto de competição
+      root.style.removeProperty('--primary-color');
+      root.style.removeProperty('--primary-light');
+    }
+  }, [competition]);
+
   const value = React.useMemo(() => ({
     competitions,
     competition,

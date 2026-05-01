@@ -8,6 +8,7 @@ import TournamentDashboard from './pages/TournamentDashboard';
 import Jogos from './pages/Jogos';
 import Classificacao from './pages/Classificacao';
 import Artilharia from './pages/Artilharia';
+import TournamentRosters from './pages/TournamentRosters';
 import Fases from './pages/Fases';
 import Admin from './pages/Admin'; // Agora é o HUB
 import AdminCompetitionDashboard from './pages/AdminCompetitionDashboard';
@@ -18,6 +19,7 @@ import AdminMatchDetail from './pages/AdminMatchDetail';
 import AdminCompetitions from './pages/AdminCompetitions';
 import AdminTournamentSettings from './pages/AdminTournamentSettings';
 import AdminChampionshipWizard from './pages/AdminChampionshipWizard';
+import AdminFases from './pages/AdminFases';
 import AdminNews from './pages/AdminNews';
 import AdminGroupSorter from './pages/AdminGroupSorter';
 import AdminApprovals from './pages/AdminApprovals';
@@ -147,6 +149,9 @@ const Navbar = () => {
                   <Link to={`/competitions/${competition.slug}/${useSeasonContext().season?.year}/classificacao`} className={`nav-link-item ${location.pathname.includes('/classificacao') ? 'active' : ''}`}>
                     <Table size={18} /> <span>Tabela</span>
                   </Link>
+                  <Link to={`/competitions/${competition.slug}/${useSeasonContext().season?.year}/elencos`} className={`nav-link-item ${location.pathname.includes('/elencos') ? 'active' : ''}`}>
+                    <Users size={18} /> <span>Elencos</span>
+                  </Link>
                   <Link to={`/competitions/${competition.slug}/${useSeasonContext().season?.year}/fases`} className={`nav-link-item ${location.pathname.includes('/fases') ? 'active' : ''}`}>
                     <Star size={18} /> <span>Fases</span>
                   </Link>
@@ -230,6 +235,7 @@ function App() {
                 <Route path="/competitions/:slug/:year?/jogos/:id" element={<CompetitionWrapper><MatchDetail /></CompetitionWrapper>} />
                 <Route path="/competitions/:slug/:year?/classificacao" element={<CompetitionWrapper><Classificacao /></CompetitionWrapper>} />
                 <Route path="/competitions/:slug/:year?/estatisticas" element={<CompetitionWrapper><Artilharia /></CompetitionWrapper>} />
+                <Route path="/competitions/:slug/:year?/elencos" element={<CompetitionWrapper><TournamentRosters /></CompetitionWrapper>} />
                 <Route path="/competitions/:slug/:year?/fases" element={<CompetitionWrapper><Fases /></CompetitionWrapper>} />
                 
                 {/* Public Registration & Profiles */}
@@ -253,6 +259,7 @@ function App() {
                       <Route path="jogos/:id" element={<AdminMatchDetail />} />
                       <Route path="times" element={<AdminTimes />} />
                       <Route path="jogadores" element={<AdminJogadores />} />
+                      <Route path="fases" element={<AdminFases />} />
                       <Route path="sorteio" element={<AdminGroupSorter />} />
                       <Route path="inscricoes" element={<AdminApprovals />} />
                       <Route path="settings" element={<AdminTournamentSettings />} />

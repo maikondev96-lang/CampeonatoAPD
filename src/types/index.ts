@@ -18,7 +18,7 @@ export type Organization = {
 }
 
 // ─── Competição ──────────────────────────────────────────────
-export type CompetitionType = 'league' | 'knockout' | 'groups_knockout' | 'hybrid';
+export type CompetitionType = 'league' | 'knockout' | 'groups_knockout' | 'hybrid' | 'league_knockout';
 
 export type Competition = {
   id: string;
@@ -320,4 +320,5 @@ export const COMPETITION_TYPE_LABELS: Record<CompetitionType, string> = {
   knockout: 'Mata-Mata',
   groups_knockout: 'Grupos + Mata-Mata',
   hybrid: 'Híbrido',
+  league_knockout: 'Pontos Corridos + Mata-Mata',
 };

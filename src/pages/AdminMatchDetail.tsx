@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 import { Match, MatchEvent, Player } from '../types';
 import { Save, ChevronLeft, Plus, Trash2, Loader2, RotateCcw, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { checkAndGenerateNextStages } from '../services/automation';
+import { bumpTableVersion } from '../utils/smartCache';
 
 const AdminMatchDetail = () => {
   const { id } = useParams();
@@ -118,6 +119,7 @@ const AdminMatchDetail = () => {
 
     if (!error) {
       await refreshEvents();
+      await bumpTableVersion('partidas');
     } else {
       alert('Erro ao salvar: ' + error.message);
     }
@@ -126,7 +128,8 @@ const AdminMatchDetail = () => {
 
   const deleteEvent = async (eventId: string) => {
     await supabase.from('match_events').delete().eq('id', eventId);
-    refreshEvents();
+    await refreshEvents();
+    await bumpTableVersion('partidas');
   };
 
   // ── FINALIZAR PARTIDA ──
@@ -169,6 +172,8 @@ const AdminMatchDetail = () => {
       }
 
       alert('✅ Resultado salvo com sucesso!');
+      await bumpTableVersion('partidas');
+      await bumpTableVersion('classificacao');
       navigate('/admin/jogos');
     } else {
       alert('Erro ao salvar: ' + (error as Error)?.message || 'Erro desconhecido');
@@ -214,6 +219,8 @@ const AdminMatchDetail = () => {
       await fetchMatch(false);
       setShowResetConfirm(false);
       alert('✅ Partida resetada! Pronto para lançar os dados reais.');
+      await bumpTableVersion('partidas');
+      await bumpTableVersion('classificacao');
     } catch (err: any) {
       alert('❌ ' + err.message);
     } finally {

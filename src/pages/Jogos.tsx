@@ -4,6 +4,7 @@ import { Match, Stage, STAGE_TYPE_LABELS } from '../types';
 import { Calendar, Loader2, Target, Trophy, Clock } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useSeasonContext } from '../components/SeasonContext';
+import { getSmartData } from '../utils/smartCache';
 
 const Jogos = () => {
   const { slug, year } = useParams<{ slug: string; year: string }>();
@@ -20,29 +21,37 @@ const Jogos = () => {
     if (!season) return;
     setLoading(true);
 
-    const { data: stagesData } = await supabase
-      .from('stages')
-      .select('*')
-      .eq('season_id', season.id)
-      .order('order_index');
-    setStages(stagesData || []);
+    try {
+      const data = await getSmartData(`jogos_${season.id}`, async () => {
+        const { data: stagesData } = await supabase
+          .from('stages')
+          .select('*')
+          .eq('season_id', season.id)
+          .order('order_index');
+        
+        const { data: matchesData } = await supabase
+          .from('matches')
+          .select('*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*), stage:stages(id, name, type, order_index)')
+          .eq('season_id', season.id);
 
-    const { data } = await supabase
-      .from('matches')
-      .select('*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*), stage:stages(id, name, type, order_index)')
-      .eq('season_id', season.id);
-      
-    if (data) {
-      const sorted = [...data].sort((a: any, b: any) => {
-        const orderA = a.stage?.order_index ?? 999;
-        const orderB = b.stage?.order_index ?? 999;
-        if (orderA !== orderB) return orderA - orderB;
-        if (a.round !== b.round) return (a.round || 0) - (b.round || 0);
-        return (a.date || '9999').localeCompare(b.date || '9999');
+        const sortedMatches = [...(matchesData || [])].sort((a: any, b: any) => {
+          const orderA = a.stage?.order_index ?? 999;
+          const orderB = b.stage?.order_index ?? 999;
+          if (orderA !== orderB) return orderA - orderB;
+          if (a.round !== b.round) return (a.round || 0) - (b.round || 0);
+          return (a.date || '9999').localeCompare(b.date || '9999');
+        });
+
+        return { stages: stagesData || [], matches: sortedMatches };
       });
-      setJogos(sorted);
+
+      setStages(data.stages);
+      setJogos(data.matches);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (loading || ctxLoading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" color="var(--primary-color)" size={32} /></div>;

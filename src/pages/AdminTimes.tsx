@@ -4,6 +4,7 @@ import { Team } from '../types';
 import { Plus, Shield, Trash2, Loader2, Upload, Image as ImageIcon, X, Edit2, Save, Link as LinkIcon, Copy, RefreshCw, CheckCircle, AlertCircle, Unlock } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useAdminContext } from '../components/AdminContext';
+import { bumpTableVersion } from '../utils/smartCache';
 
 const AdminTimes = () => {
   const { activeSeason, loading: ctxLoading } = useAdminContext();
@@ -141,7 +142,8 @@ const AdminTimes = () => {
       setFile(null);
       setPreviewUrl('');
       setEditingId(null);
-      fetchTimes();
+      await fetchTimes();
+      await bumpTableVersion('times');
       alert(editingId ? 'Time atualizado!' : 'Time adicionado!');
     } catch (error: any) {
       alert(error.message || 'Erro ao salvar time');

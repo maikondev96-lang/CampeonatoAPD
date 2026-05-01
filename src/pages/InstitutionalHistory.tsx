@@ -1,5 +1,6 @@
-import React from 'react';
-import { History as HistoryIcon, Star, Trophy, Users, Flag } from 'lucide-react';
+import { History as HistoryIcon, Star, Trophy, Users, Flag, Loader2 } from 'lucide-react';
+import { supabase } from '../supabaseClient';
+import { Season } from '../types';
 
 const timeline = [
   {
@@ -40,6 +41,23 @@ const timeline = [
 ];
 
 export default function InstitutionalHistory() {
+  const [champions, setChampions] = React.useState<Season[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchChampions = async () => {
+      const { data } = await supabase
+        .from('seasons')
+        .select('*, competition:competitions(name), champion_team:teams!champion_team_id(*), runner_up_team:teams!runner_up_team_id(*)')
+        .eq('status', 'finished')
+        .order('year', { ascending: false });
+      
+      if (data) setChampions(data);
+      setLoading(false);
+    };
+    fetchChampions();
+  }, []);
+
   return (
     <div className="animate-fade" style={{ maxWidth: '900px', margin: '0 auto', paddingBottom: '5rem' }}>
       <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
@@ -109,6 +127,60 @@ export default function InstitutionalHistory() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* HALL OF FAME */}
+      <div style={{ marginTop: '8rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+          <h2 style={{ fontWeight: 950, fontSize: '2rem', display: 'flex', alignItems: 'center', gap: '15px', justifyContent: 'center' }}>
+            <Trophy size={32} color="#eab308" /> GALERIA DE CAMPEÕES
+          </h2>
+          <p style={{ color: 'var(--text-muted)' }}>O hall da fama eterno da APD.</p>
+        </div>
+
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}><Loader2 className="animate-spin" /></div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' }}>
+            {champions.map(s => (
+              <div key={s.id} className="premium-card" style={{ padding: '2rem', border: '2px solid #eab308', background: 'linear-gradient(145deg, var(--card-bg), #fffbeb)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 950, color: '#854d0e' }}>{s.year}</div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#b45309', background: '#fef08a', padding: '4px 12px', borderRadius: '20px' }}>
+                    {s.competition?.name}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                   <div style={{ position: 'relative' }}>
+                      <img src={s.champion_team?.logo_url} style={{ width: '80px', height: '80px', objectFit: 'contain' }} />
+                      <div style={{ position: 'absolute', bottom: -5, right: -5, background: '#eab308', borderRadius: '50%', padding: '4px' }}>
+                        <Trophy size={14} color="white" />
+                      </div>
+                   </div>
+                   <div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '4px' }}>CAMPEÃO</div>
+                      <h3 style={{ fontSize: '1.5rem', fontWeight: 950, color: 'var(--text-main)', margin: 0 }}>{s.champion_team?.name}</h3>
+                   </div>
+                </div>
+
+                {s.runner_up_team && (
+                  <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <img src={s.runner_up_team.logo_url} style={{ width: '40px', height: '40px', objectFit: 'contain', opacity: 0.6 }} />
+                    <div style={{ fontSize: '0.85rem' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>Vice-campeão:</span> {s.runner_up_team.name}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+            {champions.length === 0 && (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>
+                Aguardando a coroação do primeiro campeão oficial.
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div style={{ marginTop: '5rem', textAlign: 'center', background: 'var(--surface-alt)', padding: '3rem', borderRadius: '24px' }}>

@@ -17,14 +17,21 @@ interface HeroStat {
 const TournamentDashboard = () => {
   const { slug, year } = useParams<{ slug: string; year: string }>();
   const navigate = useNavigate();
-  const { season, competition, loading: ctxLoading } = useSeasonContext();
+  const { season, competition, loading: ctxLoading, selectCompetition } = useSeasonContext();
   const [nextMatches, setNextMatches] = useState<Match[]>([]);
   const [recentResults, setRecentResults] = useState<Match[]>([]);
   const [topStandings, setTopStandings] = useState<Standing[]>([]);
   const [topScorer, setTopScorer] = useState<HeroStat | null>(null);
   const [topAssist, setTopAssist] = useState<HeroStat | null>(null);
   const [currentRound, setCurrentRound] = useState<string | null>(null);
+  const [seasonStats, setSeasonStats] = useState({ teams: 0, players: 0, matches: 0 });
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (slug && year) {
+      selectCompetition(slug, parseInt(year));
+    }
+  }, [slug, year, selectCompetition]);
 
   useEffect(() => {
     if (season?.id) fetchData();
@@ -34,7 +41,22 @@ const TournamentDashboard = () => {
     if (!season) return;
     setLoading(true);
     try {
-      const { data: firstNext } = await supabase.from('matches').select('round, stage_id, stage:stages(name, type)').eq('season_id', season.id).eq('status', 'agendado').order('date', { ascending: true }).limit(1).single();
+      const [
+        { count: teamsCount },
+        { count: matchesCount },
+        firstNext,
+        recentRes,
+        teamsRes,
+        stagesRes
+      ] = await Promise.all([
+        supabase.from('season_teams').select('*', { count: 'exact', head: true }).eq('season_id', season.id),
+        supabase.from('matches').select('*', { count: 'exact', head: true }).eq('season_id', season.id),
+        supabase.from('matches').select('round, stage_id, stage:stages(name, type)').eq('season_id', season.id).eq('status', 'agendado').order('date', { ascending: true }).limit(1).maybeSingle(),
+        supabase.from('matches').select('*, home_team:teams!home_team_id(name, logo_url, short_name), away_team:teams!away_team_id(name, logo_url, short_name)').eq('season_id', season.id).eq('status', 'finalizado').order('date', { ascending: false }).limit(4),
+        supabase.from('season_teams').select('team:teams(*)').eq('season_id', season.id),
+        supabase.from('stages').select('id').eq('season_id', season.id).eq('type', 'group')
+      ]);
+
       let nextMatchesData: Match[] = [];
       if (firstNext) {
         const query = supabase.from('matches').select('*, home_team:teams!home_team_id(name, logo_url, short_name), away_team:teams!away_team_id(name, logo_url, short_name)').eq('season_id', season.id).eq('status', 'agendado');
@@ -43,19 +65,24 @@ const TournamentDashboard = () => {
         const { data } = await query.order('date', { ascending: true }).order('time', { ascending: true }).limit(6);
         nextMatchesData = data || [];
       }
-      const [recentRes, teamsRes, stagesRes] = await Promise.all([
-        supabase.from('matches').select('*, home_team:teams!home_team_id(name, logo_url, short_name), away_team:teams!away_team_id(name, logo_url, short_name)').eq('season_id', season.id).eq('status', 'finalizado').order('date', { ascending: false }).limit(4),
-        supabase.from('season_teams').select('team:teams(*)').eq('season_id', season.id),
-        supabase.from('stages').select('id').eq('season_id', season.id).eq('type', 'group')
-      ]);
+
       const teamIds = (teamsRes.data || []).map((st: any) => st.team?.id).filter(Boolean);
       const groupStageIds = (stagesRes.data || []).map(s => s.id);
-      const [{ data: players }, { data: events }, { data: allGroupMatches }] = await Promise.all([
-        supabase.from('players').select('id, name, team_id, photo_url, team:teams(name, logo_url)').in('team_id', teamIds),
+
+      const [{ count: playersCount }, { data: events }, { data: allGroupMatches }] = await Promise.all([
+        supabase.from('players').select('*', { count: 'exact', head: true }).in('team_id', teamIds),
         supabase.from('match_events').select('player_id, assist_player_id, type, match:matches!inner(season_id)').eq('match.season_id', season.id),
         supabase.from('matches').select('*').eq('season_id', season.id).eq('status', 'finalizado').in('stage_id', groupStageIds)
       ]);
+
+      setSeasonStats({
+        teams: teamsCount || 0,
+        players: playersCount || 0,
+        matches: matchesCount || 0
+      });
+
       if (teamsRes.data && allGroupMatches) {
+        // ... (resto da lógica de classificação)
         const baseMap: Record<string, Standing> = {};
         teamsRes.data.forEach((st: any) => { const t = st.team; baseMap[t.id] = { team_id: t.id, season_id: season.id, played: 0, wins: 0, draws: 0, losses: 0, goals_for: 0, goals_against: 0, goal_diff: 0, points: 0, team: t }; });
         allGroupMatches.forEach(m => { const h = baseMap[m.home_team_id]; const a = baseMap[m.away_team_id]; if (!h || !a) return; h.played++; a.played++; h.goals_for += m.home_score || 0; h.goals_against += m.away_score || 0; a.goals_for += m.away_score || 0; a.goals_against += m.home_score || 0; if (m.home_score === m.away_score) { h.points += 1; a.points += 1; } else if ((m.home_score || 0) > (m.away_score || 0)) { h.points += 3; } else { a.points += 3; } });
@@ -122,10 +149,32 @@ const TournamentDashboard = () => {
         
         {/* COLUNA 1: PORTAL DE ENTRADA (LADO ESQUERDO) */}
         <div className="bento-col-portal">
-          <div className="portal-hero-card">
-            <img src={competition?.logo_url || logoApd} alt="" className="portal-logo" />
+          <div className="portal-hero-card" style={{ 
+            backgroundImage: competition?.settings_json?.banner_url ? `linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.95)), url(${competition.settings_json.banner_url})` : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}>
+            <img src={competition?.settings_json?.logo_url || competition?.logo_url || logoApd} alt="" className="portal-logo" />
             <h1 className="portal-title">{competition?.name || 'COPA DO MUNDO APD'}</h1>
-            <p className="portal-description">A emoção do futebol amador em um torneio de nível mundial.</p>
+            <p className="portal-description">
+              {competition?.settings_json?.description || 'A emoção do futebol amador em um torneio de nível mundial.'}
+            </p>
+
+            {/* STATS MINI BAR */}
+            <div className="portal-stats-bar">
+              <div className="p-stat">
+                <span className="p-val">{seasonStats.teams}</span>
+                <span className="p-lbl">TIMES</span>
+              </div>
+              <div className="p-stat">
+                <span className="p-val">{seasonStats.players}</span>
+                <span className="p-lbl">ATLETAS</span>
+              </div>
+              <div className="p-stat">
+                <span className="p-val">{seasonStats.matches}</span>
+                <span className="p-lbl">JOGOS</span>
+              </div>
+            </div>
 
             <div className="portal-menu">
               <Link to={`/competitions/${slug}/${year}/jogos`} className="portal-menu-item">
@@ -136,7 +185,11 @@ const TournamentDashboard = () => {
                 <div className="item-icon green"><TableIcon size={18}/></div>
                 <div className="item-text"><h4>Tabela</h4><p>Classificação geral.</p></div>
               </Link>
-              <Link to={`/competitions/${slug}/${year}/estatisticas`} className="portal-menu-item">
+              <Link to={`/competitions/${slug}/${year}/elencos`} className="portal-menu-item">
+                <div className="item-icon yellow"><Users size={18}/></div>
+                <div className="item-text"><h4>Elencos</h4><p>Times e jogadores.</p></div>
+              </Link>
+              <Link to={`/competitions/${slug}/${year}/artilharia`} className="portal-menu-item">
                 <div className="item-icon blue"><Activity size={18}/></div>
                 <div className="item-text"><h4>Estatísticas</h4><p>Artilharia e desempenho.</p></div>
               </Link>
@@ -250,7 +303,21 @@ const TournamentDashboard = () => {
 
         .portal-logo { width: 140px; height: 140px; object-fit: contain; margin-bottom: 1.5rem; }
         .portal-title { font-size: 1.75rem; font-weight: 950; color: var(--text-main); margin: 0; text-transform: uppercase; letter-spacing: -1px; }
-        .portal-description { font-size: 0.85rem; color: var(--text-muted); margin: 0.75rem 0 2rem; line-height: 1.4; }
+        .portal-description { font-size: 0.85rem; color: var(--text-muted); margin: 0.75rem 0 1.5rem; line-height: 1.4; }
+        
+        .portal-stats-bar {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1rem;
+          width: 100%;
+          margin-bottom: 2rem;
+          padding: 1rem;
+          background: var(--surface-alt);
+          border-radius: 16px;
+        }
+        .p-stat { display: flex; flex-direction: column; gap: 2px; }
+        .p-val { font-size: 1.1rem; font-weight: 950; color: var(--primary-color); }
+        .p-lbl { font-size: 0.6rem; font-weight: 800; color: var(--text-muted); letter-spacing: 1px; }
 
         .portal-menu { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; }
         .portal-menu-item {
