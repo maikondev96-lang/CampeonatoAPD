@@ -111,7 +111,11 @@ html, body, #root {
   background-color: var(--bg-color);
   color: var(--text-main);
   margin: 0;
- /* ─────────── ESTRUTURA DO APLICATIVO ─────────── */
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* ─────────── ESTRUTURA DO APLICATIVO ─────────── */
 .app-container {
   display: flex;
   flex-direction: column;
