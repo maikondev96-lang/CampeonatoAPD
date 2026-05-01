@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate,
 import { Trophy, Calendar, Table, Activity, Settings, Users, Shield, Menu, X, Sun, Moon, Globe, ChevronDown, Layout, Home as HomeIcon, Star } from 'lucide-react';
 
 // Controle de Versão do Cache (Incremente ao fazer mudanças estruturais)
-const APP_BUILD_ID = '2024.05.01.05'; 
+const APP_BUILD_ID = '2024.05.01.08'; 
 
 // Pages
 import Home from './pages/Home';
