@@ -316,6 +316,9 @@ function App() {
                 <Route path="/admin/history" element={<AdminRoute><AdminHistory /></AdminRoute>} />
                 <Route path="/historia" element={<InstitutionalHistory />} />
                 
+                {/* HUB Administrativo (Seletor de Campeonatos) */}
+                <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+
                 {/* Competition Context Routes */}
                 <Route path="/competitions/:slug/:year?" element={<CompetitionWrapper><TournamentDashboard /></CompetitionWrapper>} />
                 <Route path="/competitions/:slug/:year?/jogos" element={<CompetitionWrapper><Jogos /></CompetitionWrapper>} />
@@ -334,12 +337,8 @@ function App() {
                 {/* Admin Public Routes */}
                 <Route path="/admin/login" element={<AdminLogin />} />
 
-                {/* Admin Protected Routes */}
+                {/* Admin Protected Contextual Routes */}
                 <Route element={<AdminRoute />}>
-                   {/* HUB Administrativo (Seletor de Campeonatos) */}
-                   <Route path="/admin" element={<Admin />} />
-                   
-                   {/* Contextual Admin Routes (Nested under AdminLayout) */}
                    <Route path="/admin/:slug/:year" element={<AdminProvider><AdminLayout /></AdminProvider>}>
                       <Route index element={<AdminCompetitionDashboard />} />
                       <Route path="jogos" element={<AdminJogos />} />

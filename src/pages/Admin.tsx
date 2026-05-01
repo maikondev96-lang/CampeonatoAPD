@@ -10,7 +10,8 @@ export default function AdminHub() {
   const { organization } = useOrganizationContext();
   const { competitions, loading } = useSeasonContext();
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '5rem' }}>Carregando Campeonatos...</div>;
+  console.log("AdminHub: Initializing... loading:", loading);
+  if (loading) return <div style={{ textAlign: 'center', padding: '5rem', color: 'blue' }}>Carregando Campeonatos (HUB)...</div>;
 
   return (
     <div className="animate-fade">

@@ -7,7 +7,9 @@ const AdminRoute = ({ children }: { children?: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
+    console.log("AdminRoute: Checking session...");
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("AdminRoute: Session found:", !!session);
       setIsAuthenticated(!!session);
     });
 
@@ -21,7 +23,8 @@ const AdminRoute = ({ children }: { children?: React.ReactNode }) => {
   }, []);
 
   if (isAuthenticated === null) {
-    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '4rem' }}><Loader2 className="animate-spin" /></div>;
+    console.log("AdminRoute: isAuthenticated is null, showing loader");
+    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '4rem', color: 'red' }}>Carregando Auth...</div>;
   }
 
   if (!isAuthenticated) {
