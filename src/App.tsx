@@ -199,6 +199,60 @@ const Navbar = () => {
   );
 };
 
+const BottomNav = () => {
+  const location = useLocation();
+  const { competition } = useSeasonContext();
+  const seasonYear = useSeasonContext().season?.year;
+  const isAdmin = location.pathname.startsWith('/admin');
+
+  if (isAdmin || location.pathname === '/admin/login') return null;
+
+  const isInCompetition = competition && location.pathname.includes(`/competitions/${competition.slug}`);
+
+  if (isInCompetition) {
+    const basePath = `/competitions/${competition.slug}/${seasonYear}`;
+    const isDashboard = location.pathname === basePath || location.pathname === `/competitions/${competition.slug}`;
+    
+    return (
+      <nav className="bottom-nav">
+        <Link to={basePath} className={isDashboard ? 'active' : ''}>
+          <Layout size={20} />
+          <span>Início</span>
+        </Link>
+        <Link to={`${basePath}/jogos`} className={location.pathname.includes('/jogos') ? 'active' : ''}>
+          <Calendar size={20} />
+          <span>Jogos</span>
+        </Link>
+        <Link to={`${basePath}/classificacao`} className={location.pathname.includes('/classificacao') ? 'active' : ''}>
+          <Table size={20} />
+          <span>Tabela</span>
+        </Link>
+        <Link to={`${basePath}/elencos`} className={location.pathname.includes('/elencos') ? 'active' : ''}>
+          <Users size={20} />
+          <span>Elencos</span>
+        </Link>
+      </nav>
+    );
+  }
+
+  return (
+    <nav className="bottom-nav">
+      <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
+        <HomeIcon size={20} />
+        <span>Início</span>
+      </Link>
+      <Link to="/sobre" className={location.pathname === '/sobre' ? 'active' : ''}>
+        <Star size={20} />
+        <span>Sobre</span>
+      </Link>
+      <Link to="/historia" className={location.pathname === '/historia' ? 'active' : ''}>
+        <Trophy size={20} />
+        <span>História</span>
+      </Link>
+    </nav>
+  );
+};
+
 const CompetitionWrapper = ({ children }: { children: React.ReactNode }) => {
   const { slug, year } = useParams<{ slug: string; year?: string }>();
   const { selectCompetition } = useSeasonContext();
@@ -220,7 +274,7 @@ function App() {
         <SeasonProvider>
           <div className="app-container">
             <Navbar />
-            <main>
+            <main className="app-main">
               <Routes>
                 {/* Portal Institutional */}
                 <Route path="/" element={<Home />} />
@@ -267,6 +321,7 @@ function App() {
                 </Route>
               </Routes>
             </main>
+            <BottomNav />
           </div>
         </SeasonProvider>
       </OrganizationProvider>
