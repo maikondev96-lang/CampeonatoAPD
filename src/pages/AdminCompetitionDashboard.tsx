@@ -166,11 +166,10 @@ export default function AdminCompetitionDashboard() {
       </div>
       {/* QUICK ACCESS (List Style) */}
       <div className="fs-comps-section" style={{ marginTop: '1rem' }}>
-        <div className="fs-section-header">AÇÕES RÁPIDAS</div>
+        <div className="fs-section-header" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Clock size={12} color="var(--primary-dark)" /> AÇÕES RÁPIDAS
+        </div>
         <div className="fs-comps-list">
-          <h3 style={{ fontWeight: 950, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem' }}>
-            <Clock size={20} color="var(--primary-color)" /> AÇÕES RÁPIDAS
-          </h3>
             <Link to={`/admin/${slug}/${year}/jogos`} className="fs-comp-item">
               <div className="fs-comp-details"><h3 className="fs-comp-name">Lançar Resultados</h3></div>
               <ArrowRight size={14} color="var(--text-muted)" style={{ marginLeft: 'auto' }} />

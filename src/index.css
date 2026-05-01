@@ -1856,7 +1856,7 @@ input:focus, select:focus {
 
 @media (max-width: 1024px) {
   .admin-layout-root { flex-direction: column; margin-top: 0; }
-  .admin-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); padding: 0.75rem; flex-direction: row; overflow-x: auto; white-space: nowrap; position: sticky; top: 56px; z-index: 50; gap: 0.5rem; scrollbar-width: none; }
+  .admin-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); padding: 0.75rem; flex-direction: row; overflow-x: auto; white-space: nowrap; position: relative; gap: 0.5rem; scrollbar-width: none; }
   .admin-sidebar::-webkit-scrollbar { display: none; }
   .sidebar-header-box { display: none !important; }
   .sidebar-nav-item { padding: 0.6rem 1rem !important; flex-shrink: 0; }

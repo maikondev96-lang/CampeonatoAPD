@@ -138,11 +138,15 @@ const AdminJogos = () => {
 
   return (
     <div className="animate-fade" style={{ maxWidth: '1000px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h1 className="section-title" style={{ margin: 0 }}><Calendar /> Gerenciar Jogos</h1>
+      <div className="admin-header-app" style={{ marginBottom: '1.5rem' }}>
+        <div className="admin-header-title">
+          <Calendar size={18} />
+          <h1>GERENCIAR JOGOS</h1>
+        </div>
+        <p className="admin-header-subtitle">Lance resultados e altere os confrontos.</p>
       </div>
 
-      <div style={{ padding: '1rem', background: 'var(--primary-light)', border: '1px solid var(--primary-color)', borderRadius: '12px', marginBottom: '2.5rem' }}>
+      <div style={{ padding: '16px', background: 'var(--primary-light)', borderBottom: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
         <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--primary-dark)', fontWeight: 700 }}>
           🤖 <strong>Automação Ativada:</strong> Os jogos do mata-mata (Semifinais, Final, etc.) serão gerados automaticamente baseados na regra do campeonato assim que todos os jogos da fase de grupos (ou semis) forem finalizados.
         </p>
@@ -221,41 +225,63 @@ const AdminJogos = () => {
                 <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1rem' }}>
-                {jogosPorRodada[r].map(jogo => (
-                  <div 
-                    key={jogo.id} 
-                    className="card card-hover" 
-                    onClick={() => navigate(`/admin/${activeSeason.competition?.slug}/${activeSeason.year}/jogos/${jogo.id}`)} 
-                    style={{ cursor: 'pointer', padding: '1.25rem', border: '1px solid var(--border-color)' }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        {(jogo as any).stage?.name || ''}
-                      </span>
-                      <div style={{ display: 'flex', gap: '0.25rem' }}>
-                        <button onClick={(e) => handleEdit(e, jogo)} style={{ color: 'var(--primary-dark)', background: 'none', padding: '6px' }}>
-                          <Edit2 size={16} />
+              <div className="fs-comps-list" style={{ borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)' }}>
+                {jogosPorRodada[r].map(jogo => {
+                  const isFinished = jogo.status === 'finalizado';
+                  const isLive = jogo.status === 'ao_vivo';
+                  const homeWin = isFinished && (jogo.home_score || 0) > (jogo.away_score || 0);
+                  const awayWin = isFinished && (jogo.away_score || 0) > (jogo.home_score || 0);
+
+                  return (
+                    <div 
+                      key={jogo.id} 
+                      className="fs-match-row"
+                      onClick={() => navigate(`/admin/${activeSeason.competition?.slug}/${activeSeason.year}/jogos/${jogo.id}`)} 
+                    >
+                      <div className="fs-match-time">
+                        {isFinished ? (
+                          <span className="fs-status finished">Fim</span>
+                        ) : isLive ? (
+                          <span className="fs-status live">Ao Vivo</span>
+                        ) : (
+                          <span className="fs-time">{jogo.time?.slice(0, 5) || 'A Def.'}</span>
+                        )}
+                        {!isFinished && !isLive && <span className="fs-date">{jogo.date?.split('-').reverse().slice(0, 2).join('/')}</span>}
+                      </div>
+
+                      <div className="fs-match-teams">
+                        <div className="fs-team">
+                          {jogo.home_team?.logo_url ? (
+                            <img src={jogo.home_team.logo_url} alt="" className="fs-team-logo" />
+                          ) : (
+                            <div className="fs-team-logo-placeholder">?</div>
+                          )}
+                          <span className={`fs-team-name ${!jogo.home_team ? 'placeholder' : ''} ${homeWin ? 'winner' : ''}`}>{jogo.home_team?.name || 'A Definir'}</span>
+                          <span className={`fs-team-score ${homeWin ? 'winner' : ''}`}>{isFinished || isLive ? jogo.home_score : '-'}</span>
+                        </div>
+                        <div className="fs-team mt-1">
+                          {jogo.away_team?.logo_url ? (
+                            <img src={jogo.away_team.logo_url} alt="" className="fs-team-logo" />
+                          ) : (
+                            <div className="fs-team-logo-placeholder">?</div>
+                          )}
+                          <span className={`fs-team-name ${!jogo.away_team ? 'placeholder' : ''} ${awayWin ? 'winner' : ''}`}>{jogo.away_team?.name || 'A Definir'}</span>
+                          <span className={`fs-team-score ${awayWin ? 'winner' : ''}`}>{isFinished || isLive ? jogo.away_score : '-'}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Ações de Edição (Somente visível no Admin) */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '8px', borderLeft: '1px solid var(--border-color)', marginLeft: '8px' }}>
+                        <button onClick={(e) => handleEdit(e, jogo)} style={{ color: 'var(--primary-dark)', background: 'var(--surface-alt)', border: 'none', padding: '6px', borderRadius: '4px' }}>
+                          <Edit2 size={14} />
                         </button>
-                        <button onClick={(e) => handleDelete(e, jogo.id)} style={{ color: 'var(--error)', background: 'none', padding: '6px' }}>
-                          <Trash2 size={16} />
+                        <button onClick={(e) => handleDelete(e, jogo.id)} style={{ color: 'var(--error)', background: 'var(--surface-alt)', border: 'none', padding: '6px', borderRadius: '4px' }}>
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </div>
-                    
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
-                      <div style={{ flex: 1, textAlign: 'right', fontWeight: 800, fontSize: '0.9rem', color: 'var(--primary-dark)' }}>{jogo.home_team?.name}</div>
-                      <div style={{ background: 'var(--brand-dark)', color: 'white', padding: '6px 12px', borderRadius: '8px', fontWeight: 900, minWidth: '65px', textAlign: 'center', fontSize: '1rem' }}>
-                        {jogo.status === 'finalizado' ? `${jogo.home_score} x ${jogo.away_score}` : 'vs'}
-                      </div>
-                      <div style={{ flex: 1, textAlign: 'left', fontWeight: 800, fontSize: '0.9rem', color: 'var(--primary-dark)' }}>{jogo.away_team?.name}</div>
-                    </div>
-                    
-                    <div style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                      {jogo.date ? jogo.date.split('-').reverse().join('/') : 'A definir'} {jogo.time ? `• ${jogo.time.slice(0, 5)}` : ''}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}
