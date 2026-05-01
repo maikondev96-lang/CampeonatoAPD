@@ -5,6 +5,37 @@ import { Link } from 'react-router-dom';
 import { useOrganizationContext } from '../components/OrganizationContext';
 import logoApd from '../assets/logo.png';
 import { getSmartData } from '../utils/smartCache';
+import { createPortal } from 'react-dom';
+
+// SUB-COMPONENTE NEWS MODAL (PROFISSIONAL)
+const NewsModal = ({ news, onClose }: { news: any, onClose: () => void }) => {
+  const modalRoot = document.getElementById('modal-root');
+  if (!modalRoot) return null;
+
+  return createPortal(
+    <div className="news-modal-overlay" onClick={onClose}>
+      <div className="news-modal-content" onClick={e => e.stopPropagation()}>
+        <button className="news-modal-close-top" onClick={onClose}><X size={24}/></button>
+        
+        <div className="news-modal-hero">
+          <div className="news-modal-hero-bg" style={{ backgroundImage: `url(${news.image_url})` }} />
+          <img src={news.image_url} alt="" className="news-modal-img" />
+        </div>
+
+        <div className="news-modal-body">
+          <span className="news-modal-category">{news.category || 'NOTÍCIA'}</span>
+          <h2 className="news-modal-title">{news.title}</h2>
+          <div className="news-modal-text">{news.content}</div>
+        </div>
+
+        <div className="news-modal-footer">
+          <button className="news-modal-close-btn" onClick={onClose}>VOLTAR AO FEED</button>
+        </div>
+      </div>
+    </div>,
+    modalRoot
+  );
+};
 
 export default function Home() {
   const { organization } = useOrganizationContext();
@@ -20,10 +51,11 @@ export default function Home() {
   
   useEffect(() => {
     if (selectedNews) {
-      window.scrollTo(0, 0);
-      const modal = document.querySelector('.news-modal-compact');
-      if (modal) modal.scrollTop = 0;
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
     }
+    return () => { document.body.style.overflow = 'unset'; };
   }, [selectedNews]);
 
   const fetchHomeData = async () => {
@@ -136,25 +168,12 @@ export default function Home() {
         </div>
       </div>
 
-      {/* MODAL DE NOTÍCIA */}
+      {/* MODAL DE NOTÍCIA VIA PORTAL */}
       {selectedNews && (
-        <div className="modal-overlay" onClick={() => setSelectedNews(null)}>
-           <div className="news-modal-compact" onClick={e => e.stopPropagation()} style={{ background: 'var(--card-bg)', width: '90%', maxWidth: '800px', maxHeight: '90vh', borderRadius: '24px', overflowY: 'auto', position: 'relative' }}>
-              <button className="modal-close" onClick={() => setSelectedNews(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(0,0,0,0.5)', color: 'white', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}><X size={20}/></button>
-              <div className="modal-img-box">
-                <div 
-                  className="modal-img-bg"
-                  style={{ backgroundImage: `url(${selectedNews.image_url})` }}
-                />
-                <img src={selectedNews.image_url} alt="" className="modal-img-main" />
-              </div>
-              <div className="modal-content" style={{ padding: '3rem' }}>
-                <span className="modal-tag" style={{ color: 'var(--primary-color)', fontWeight: 950, fontSize: '0.75rem', textTransform: 'uppercase' }}>{selectedNews.category}</span>
-                <h2 style={{ fontSize: '2.5rem', fontWeight: 950, margin: '1rem 0 2rem', lineHeight: 1.1, color: 'var(--text-main)' }}>{selectedNews.title}</h2>
-                <div className="modal-body-text" style={{ lineHeight: 1.8, fontSize: '1.1rem', whiteSpace: 'pre-wrap', color: 'var(--text-main)' }}>{selectedNews.content}</div>
-              </div>
-           </div>
-        </div>
+        <NewsModal 
+          news={selectedNews} 
+          onClose={() => setSelectedNews(null)} 
+        />
       )}
 
       <style>{`
@@ -380,46 +399,7 @@ export default function Home() {
           line-height: 1;
         }
 
-        /* MODAL (corrigido) */
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100vh;
-          background: rgba(0,0,0,0.6);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 999;
-          backdrop-filter: blur(4px);
-        }
-
-        .modal-img-box {
-          position: relative;
-          width: 100%;
-          height: 400px;
-          overflow: hidden;
-          background: #000;
-        }
-
-        .modal-img-bg {
-          position: absolute;
-          inset: 0;
-          background-size: cover;
-          background-position: center;
-          filter: blur(30px) brightness(0.6);
-          transform: scale(1.2);
-          opacity: 0.8;
-        }
-
-        .modal-img-main {
-          position: relative;
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          z-index: 2;
-        }
+        /* MODAL (removido localmente, agora usa Portal) */
 
         /* RESPONSIVO REAL */
         @media (max-width: 1200px) {
