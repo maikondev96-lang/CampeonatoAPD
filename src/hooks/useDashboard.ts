@@ -1,69 +1,95 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '../supabaseClient';
 
+async function fetchFromAPI(seasonId: string) {
+  const res = await fetch(`/api/dashboard?season_id=${seasonId}`);
+  // Trata qualquer status não-OK como falha — sem silêncio em 404/500
+  if (!res.ok) throw new Error(`API retornou ${res.status}`);
+  return res.json();
+}
+
+async function fetchFromSupabase(seasonId: string) {
+  // Busca os teamIds da season para filtrar corretamente
+  const { data: seasonTeamRows } = await supabase
+    .from('season_teams')
+    .select('team_id')
+    .eq('season_id', seasonId);
+
+  const teamIds = (seasonTeamRows || []).map((r: any) => r.team_id);
+
+  // 4 queries paralelas — não seriais
+  const [statsRes, nextMatchesRes, recentMatchesRes, standingsRes] = await Promise.all([
+    supabase
+      .from('matches')
+      .select('id', { count: 'exact', head: true })
+      .eq('season_id', seasonId),
+
+    supabase
+      .from('matches')
+      .select('*, home_team:teams!home_team_id(id,name,logo_url,short_name), away_team:teams!away_team_id(id,name,logo_url,short_name)')
+      .eq('season_id', seasonId)
+      .eq('status', 'agendado')
+      .order('date', { ascending: true })
+      .order('time', { ascending: true })
+      .limit(6),
+
+    supabase
+      .from('matches')
+      .select('*, home_team:teams!home_team_id(id,name,logo_url,short_name), away_team:teams!away_team_id(id,name,logo_url,short_name)')
+      .eq('season_id', seasonId)
+      .eq('status', 'finalizado')
+      .order('date', { ascending: false })
+      .order('time', { ascending: false })
+      .limit(4),
+
+    supabase
+      .from('standings')
+      .select('*, team:teams(id,name,logo_url,short_name)')
+      .eq('season_id', seasonId)
+      .order('points', { ascending: false })
+      .order('goal_diff', { ascending: false })
+      .limit(4),
+  ]);
+
+  // playersCount filtrado pelos times desta season (não global)
+  const { count: playersCount } = teamIds.length > 0
+    ? await supabase
+        .from('players')
+        .select('id', { count: 'exact', head: true })
+        .in('team_id', teamIds)
+    : { count: 0 };
+
+  return {
+    stats: {
+      teams: teamIds.length,
+      matches: statsRes.count ?? 0,
+      players: playersCount ?? 0,
+    },
+    nextMatches: nextMatchesRes.data ?? [],
+    recentResults: recentMatchesRes.data ?? [],
+    standings: standingsRes.data ?? [],
+  };
+}
+
 export function useDashboard(seasonId: string | undefined) {
   return useQuery({
     queryKey: ['dashboard', seasonId],
     queryFn: async () => {
-      // 1. Tenta a API de Produção (Vercel)
-      try {
-        const res = await fetch(`/api/dashboard?season_id=${seasonId}`);
-        if (res.ok) return res.json();
-      } catch (e) {
-        console.warn("API offline, usando fallback Supabase...");
-      }
-
-      // 2. Fallback Supabase (Usando a estrutura REAL do banco)
       if (!seasonId) return null;
 
-      const [statsRes, nextMatchesRes, recentMatchesRes, standingsRes] = await Promise.all([
-        // Stats resumidos
-        supabase.from('matches').select('id', { count: 'exact', head: true }).eq('season_id', seasonId),
-        
-        // Próximos jogos
-        supabase.from('matches')
-          .select('*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*)')
-          .eq('season_id', seasonId)
-          .eq('status', 'agendado')
-          .order('date', { ascending: true })
-          .order('time', { ascending: true })
-          .limit(6),
-
-        // Resultados recentes
-        supabase.from('matches')
-          .select('*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*)')
-          .eq('season_id', seasonId)
-          .eq('status', 'finalizado')
-          .order('date', { ascending: false })
-          .order('time', { ascending: false })
-          .limit(4),
-
-        // Tabela REAL (Usando a tabela 'standings' do banco)
-        supabase.from('standings')
-          .select('*, team:teams(*)')
-          .eq('season_id', seasonId)
-          .order('points', { ascending: false })
-          .order('goal_diff', { ascending: false })
-          .limit(4)
-      ]);
-
-      // Busca contagem de times e jogadores para o stats
-      const { count: teamsCount } = await supabase.from('season_teams').select('id', { count: 'exact', head: true }).eq('season_id', seasonId);
-      const { count: playersCount } = await supabase.from('players').select('id', { count: 'exact', head: true });
-
-      return {
-        stats: { 
-          teams: teamsCount || 0, 
-          matches: statsRes.count || 0, 
-          players: playersCount || 0 
-        },
-        nextMatches: nextMatchesRes.data || [],
-        recentResults: recentMatchesRes.data || [],
-        standings: standingsRes.data || []
-      };
+      // Tenta API primeiro. Se falhar por qualquer motivo (rede, 500, 404),
+      // cai no fallback do Supabase sem disparar requests duplicados.
+      try {
+        return await fetchFromAPI(seasonId);
+      } catch (e) {
+        console.warn('[useDashboard] API indisponível, usando Supabase diretamente:', e);
+        return await fetchFromSupabase(seasonId);
+      }
     },
     enabled: !!seasonId,
     staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
     placeholderData: keepPreviousData,
+    retry: 1,
   });
 }

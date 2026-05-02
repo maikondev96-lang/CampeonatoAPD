@@ -35,52 +35,57 @@ const NewsModal = ({ news, onClose }: { news: any, onClose: () => void }) => {
 };
 
 export default function Home() {
+  // organization é APENAS para exibição (logo/nome). Nunca bloqueia o render.
   const { organization } = useOrganizationContext();
   const queryClient = useQueryClient();
   const [selectedNews, setSelectedNews] = useState<any>(null);
 
-  // Hooks de Dados (Sempre no topo do componente)
   const { data: news, isLoading: newsLoading } = useQuery({
     queryKey: ['news'],
     queryFn: async () => {
-      const res = await fetch('/api/news');
-      if (res.ok) return res.json();
+      try {
+        const res = await fetch('/api/news');
+        if (res.ok) return res.json();
+      } catch (_) { /* API offline */ }
       const { data } = await supabase.from('news').select('*').order('created_at', { ascending: false });
-      return data;
+      return data ?? [];
     }
   });
 
   const { data: competitions, isLoading: compsLoading } = useQuery({
     queryKey: ['competitions'],
     queryFn: async () => {
-      const res = await fetch('/api/competitions');
-      if (res.ok) return res.json();
+      try {
+        const res = await fetch('/api/competitions');
+        if (res.ok) return res.json();
+      } catch (_) { /* API offline */ }
       const { data } = await supabase.from('competitions').select('*, seasons(*)').order('created_at', { ascending: false });
-      return data;
+      return data ?? [];
     }
   });
 
   useEffect(() => {
-    if (selectedNews) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
+    document.body.style.overflow = selectedNews ? 'hidden' : 'unset';
     return () => { document.body.style.overflow = 'unset'; };
   }, [selectedNews]);
 
-  // Função de Prefetch (Fora do Return!)
   const prefetchDashboard = (seasonId: string) => {
     queryClient.prefetchQuery({
       queryKey: ['dashboard', seasonId],
-      queryFn: () => fetch(`/api/dashboard?season_id=${seasonId}`).then(res => res.json()),
+      queryFn: async () => {
+        try {
+          const res = await fetch(`/api/dashboard?season_id=${seasonId}`);
+          if (res.ok) return res.json();
+        } catch (_) { /* silencioso */ }
+        return null;
+      },
       staleTime: 1000 * 60 * 5
     });
   };
 
-  const loading = newsLoading || compsLoading;
-
-  if (!organization || loading) {
+  // Bloqueia render APENAS se os dados reais ainda não chegaram.
+  // organization nunca bloqueia — ela é opcional para exibição.
+  if (newsLoading && compsLoading) {
     return (
       <div className="home-loading-compact" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
         <Activity className="animate-spin" color="var(--primary-color)" size={32} />
