@@ -5,12 +5,13 @@ import { Standing } from '../types';
 import { Table, Loader2, Info } from 'lucide-react';
 import { useSeasonContext } from '../components/SeasonContext';
 import { useQuery } from '@tanstack/react-query';
+import { QueryError } from '../components/QueryError';
 
 const Classificacao = () => {
   const { season, loading: ctxLoading } = useSeasonContext();
 
   // TanStack Query: queryKey inclui season.id → auto-refetch ao trocar temporada
-  const { data: rawData, isLoading: queryLoading } = useQuery({
+  const { data: rawData, isLoading: queryLoading, isError, refetch } = useQuery({
     queryKey: ['classificacao', season?.id],
     queryFn: async () => {
       const [standingsRes, matchesRes, teamsRes, stagesRes] = await Promise.all([
@@ -100,6 +101,7 @@ const Classificacao = () => {
     return { standings: finalStandings, recentResults: resultsMap };
   }, [rawData, season]);
 
+  if (isError && !rawData) return <QueryError message="Erro ao carregar a classificação." onRetry={refetch} />;
   if (queryLoading || ctxLoading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
 
   const dotColor = (r: 'W' | 'D' | 'L') =>

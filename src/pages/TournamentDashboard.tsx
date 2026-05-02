@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 import logoApd from '../assets/logo.png';
 import { useSeasonContext } from '../components/SeasonContext';
 import { useDashboard } from '../hooks/useDashboard';
+import { QueryError } from '../components/QueryError';
 
 // COMPONENTE DE LINHA MEMOIZADO (GPU ACCELERATED) - DEFINIDO FORA PARA PERFORMANCE
 const MatchRow = React.memo(({ m, slug, year }: { m: Match, slug: string | undefined, year: string | undefined }) => {
@@ -47,7 +48,10 @@ const TournamentDashboard = () => {
   const { season, competition, loading: ctxLoading } = useSeasonContext();
 
   // Uma única requisição para TUDO (Stats, Jogos, Resultados, Tabela)
-  const { data, isLoading } = useDashboard(season?.id);
+  const { data, isLoading, isError, refetch } = useDashboard(season?.id);
+
+  // Erro real + sem cache disponível → mostra fallback com retry
+  if (isError && !data) return <QueryError message="Erro ao carregar o campeonato." onRetry={refetch} />;
 
   if (ctxLoading || isLoading || !season || !data) {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80vh' }}>

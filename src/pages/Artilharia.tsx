@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useSeasonContext } from '../components/SeasonContext';
 import { useState } from 'react';
+import { QueryError } from '../components/QueryError';
 
 interface PlayerStat {
   id: string;
@@ -39,7 +40,7 @@ const Artilharia = () => {
   const [activeIndivTab, setActiveIndivTab] = useState<'gols' | 'assistencias' | 'goleiros'>('gols');
 
   // TanStack Query: queryKey inclui season.id → auto-refetch ao trocar temporada
-  const { data: rawData, isLoading: queryLoading } = useQuery({
+  const { data: rawData, isLoading: queryLoading, isError, refetch } = useQuery({
     queryKey: ['artilharia', season?.id],
     queryFn: async () => {
       const { data: seasonTeamsData } = await supabase
@@ -118,6 +119,7 @@ const Artilharia = () => {
     return { playerStats: Object.values(pMap), teamStats: Object.values(tMap) };
   }, [rawData]);
 
+  if (isError && !rawData) return <QueryError message="Erro ao carregar a artilharia." onRetry={refetch} />;
   if (queryLoading || ctxLoading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
 
   const toggleSection = (section: string) => {

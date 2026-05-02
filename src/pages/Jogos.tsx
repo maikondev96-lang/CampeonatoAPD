@@ -5,13 +5,14 @@ import { Calendar, Loader2, Target, Trophy } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useSeasonContext } from '../components/SeasonContext';
 import { useQuery } from '@tanstack/react-query';
+import { QueryError } from '../components/QueryError';
 
 const Jogos = () => {
   const { slug, year } = useParams<{ slug: string; year: string }>();
   const { season, loading: ctxLoading } = useSeasonContext();
 
   // TanStack Query: queryKey inclui season.id → reexecuta automaticamente ao trocar temporada
-  const { data, isLoading: queryLoading } = useQuery({
+  const { data, isLoading: queryLoading, isError, refetch } = useQuery({
     queryKey: ['jogos', season?.id],
     queryFn: async () => {
       const [stagesRes, matchesRes] = await Promise.all([
@@ -43,6 +44,7 @@ const Jogos = () => {
   const jogos: Match[] = data?.matches ?? [];
   const stages: Stage[] = data?.stages ?? [];
 
+  if (isError && !data) return <QueryError message="Erro ao carregar os jogos." onRetry={refetch} />;
   if (queryLoading || ctxLoading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" color="var(--primary-color)" size={32} /></div>;
 
   const groups: { key: string; label: string; matches: Match[]; isKnockout: boolean }[] = [];
