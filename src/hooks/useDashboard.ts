@@ -1,10 +1,10 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '../supabaseClient';
+import { fetchSafe } from '../utils/fetchSafe';
+import { logger } from '../utils/logger';
 
 async function fetchFromAPI(seasonId: string) {
-  const res = await fetch(`/api/dashboard?season_id=${seasonId}`);
-  // Trata qualquer status não-OK como falha — sem silêncio em 404/500
-  if (!res.ok) throw new Error(`API retornou ${res.status}`);
+  const res = await fetchSafe(`/api/dashboard?season_id=${seasonId}`);
   return res.json();
 }
 
@@ -82,7 +82,7 @@ export function useDashboard(seasonId: string | undefined) {
       try {
         return await fetchFromAPI(seasonId);
       } catch (e) {
-        console.warn('[useDashboard] API indisponível, usando Supabase diretamente:', e);
+        logger.warn('useDashboard', 'API indisponível, usando Supabase diretamente', e);
         return await fetchFromSupabase(seasonId);
       }
     },
