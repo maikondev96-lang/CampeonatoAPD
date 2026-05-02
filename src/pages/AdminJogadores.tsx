@@ -8,6 +8,7 @@ import { playerSchema } from '../utils/schemas';
 import { validateImageUrl } from '../utils/imageValidation';
 
 import { useQueryClient } from '@tanstack/react-query';
+import { AdminEngine } from '../admin/adminEngine';
 
 const AdminJogadores = () => {
   const { activeSeason: season, loading: ctxLoading } = useAdminContext();
@@ -140,17 +141,23 @@ const AdminJogadores = () => {
         updated_at: new Date().toISOString()
       };
 
-      if (editingId) {
-        const { error } = await supabase.from('players').update(playerData).eq('id', editingId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('players').insert([playerData]);
-        if (error) throw error;
-      }
-      cancelEdit();
-      await fetchData();
-      queryClient.invalidateQueries({ queryKey: ['artilharia'] });
-      queryClient.invalidateQueries({ queryKey: ['rosters'] });
+      await AdminEngine.safeMutation({
+        mutationFn: async () => {
+          if (editingId) {
+            const { error } = await supabase.from('players').update(playerData).eq('id', editingId);
+            if (error) throw error;
+          } else {
+            const { error } = await supabase.from('players').insert([playerData]);
+            if (error) throw error;
+          }
+        },
+        invalidateKeys: [['artilharia'], ['rosters']],
+        onSuccess: async () => {
+          cancelEdit();
+          await fetchData();
+        }
+      });
+
     } catch (err: any) {
       alert(err.message || 'Erro ao salvar jogador');
     } finally {
@@ -161,12 +168,20 @@ const AdminJogadores = () => {
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (!confirm('Tem certeza que deseja excluir este jogador?')) return;
-    const { error } = await supabase.from('players').delete().eq('id', id);
-    if (!error) {
-      await fetchData();
-      queryClient.invalidateQueries({ queryKey: ['artilharia'] });
-      queryClient.invalidateQueries({ queryKey: ['rosters'] });
-    }
+    
+    await AdminEngine.safeMutation({
+      mutationFn: async () => {
+        const { error } = await supabase.from('players').delete().eq('id', id);
+        if (error) throw error;
+      },
+      invalidateKeys: [['artilharia'], ['rosters']],
+      onSuccess: async () => {
+        await fetchData();
+      },
+      onError: (err: any) => {
+        alert('Erro ao excluir: ' + err.message);
+      }
+    });
   };
 
   const groupedPlayers = times.map(time => ({

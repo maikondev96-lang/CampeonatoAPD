@@ -4,6 +4,7 @@ import { Team, Match, Stage, STAGE_TYPE_LABELS } from '../types';
 import { Plus, Calendar, Edit2, Loader2, Wand2, Trash2, Save, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminContext } from '../components/AdminContext';
+import { AdminEngine } from '../admin/adminEngine';
 
 const AdminJogos = () => {
   const navigate = useNavigate();
@@ -85,9 +86,15 @@ const AdminJogos = () => {
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (!confirm('Tem certeza que deseja excluir este jogo?')) return;
-    const { error } = await supabase.from('matches').delete().eq('id', id);
-    if (!error) fetchData();
-    else alert('Erro ao excluir jogo');
+    
+    await AdminEngine.safeMutation({
+      mutationFn: async () => {
+        const { error } = await supabase.from('matches').delete().eq('id', id);
+        if (error) throw error;
+      },
+      onSuccess: () => fetchData(),
+      onError: (err: any) => alert('Erro ao excluir jogo: ' + err.message)
+    });
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -108,22 +115,29 @@ const AdminJogos = () => {
       venue: venue || null,
     };
 
-    if (editingId) {
-      const { error } = await supabase.from('matches').update(matchData).eq('id', editingId);
-      if (error) alert('Erro ao atualizar jogo');
-      else {
-        setEditingId(null);
-        cancelEdit();
+    await AdminEngine.safeMutation({
+      mutationFn: async () => {
+        if (editingId) {
+          const { error } = await supabase.from('matches').update(matchData).eq('id', editingId);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('matches').insert([{
+            ...matchData,
+            status: 'agendado'
+          }]);
+          if (error) throw error;
+        }
+      },
+      onSuccess: () => {
+        if (editingId) {
+          setEditingId(null);
+          cancelEdit();
+        }
         fetchData();
-      }
-    } else {
-      const { error } = await supabase.from('matches').insert([{
-        ...matchData,
-        status: 'agendado'
-      }]);
-      if (error) alert('Erro ao salvar jogo');
-      else fetchData();
-    }
+      },
+      onError: (err: any) => alert('Erro ao salvar jogo: ' + err.message)
+    });
+    
     setSaving(false);
   };
 

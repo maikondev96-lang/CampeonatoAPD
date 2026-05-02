@@ -112,30 +112,35 @@ const AdminMatchDetail = () => {
       }
     }
 
-    const { error } = await supabase.from('match_events').insert([{
-      match_id: id,
-      player_id: pId,
-      type: finalType,
-      minute: min ? parseInt(min) : null,
-      assist_player_id: assistId || null
-    }]);
+    await AdminEngine.safeMutation({
+      mutationFn: async () => {
+        const { error } = await supabase.from('match_events').insert([{
+          match_id: id,
+          player_id: pId,
+          type: finalType,
+          minute: min ? parseInt(min) : null,
+          assist_player_id: assistId || null
+        }]);
+        if (error) throw error;
+      },
+      invalidateKeys: [['jogos'], ['artilharia']],
+      onSuccess: () => refreshEvents(),
+      onError: (err: any) => alert('Erro ao salvar: ' + err.message)
+    });
 
-    if (!error) {
-      await refreshEvents();
-      // Invalida cache do TanStack para forcar refetch nas paginas publicas
-      queryClient.invalidateQueries({ queryKey: ['jogos'] });
-      queryClient.invalidateQueries({ queryKey: ['artilharia'] });
-    } else {
-      alert('Erro ao salvar: ' + error.message);
-    }
     setSaving(false);
   };
 
   const deleteEvent = async (eventId: string) => {
-    await supabase.from('match_events').delete().eq('id', eventId);
-    await refreshEvents();
-    queryClient.invalidateQueries({ queryKey: ['jogos'] });
-    queryClient.invalidateQueries({ queryKey: ['artilharia'] });
+    await AdminEngine.safeMutation({
+      mutationFn: async () => {
+        const { error } = await supabase.from('match_events').delete().eq('id', eventId);
+        if (error) throw error;
+      },
+      invalidateKeys: [['jogos'], ['artilharia']],
+      onSuccess: () => refreshEvents(),
+      onError: (err: any) => alert('Erro ao deletar: ' + err.message)
+    });
   };
 
   // ── FINALIZAR PARTIDA (Admin Engine Layer) ──
@@ -203,51 +208,57 @@ const AdminMatchDetail = () => {
   // ── RESETAR PARTIDA (dados de teste → agendado, placar zerado) ──
   const handleReset = async () => {
     setResetting(true);
-    try {
-      // 1. Apaga todos os eventos da partida
-      const { error: evError } = await supabase
-        .from('match_events')
-        .delete()
-        .eq('match_id', id);
 
-      if (evError) throw new Error('Erro ao apagar eventos: ' + evError.message);
+    await AdminEngine.safeMutation({
+      mutationFn: async () => {
+        // 1. Apaga todos os eventos da partida
+        const { error: evError } = await supabase
+          .from('match_events')
+          .delete()
+          .eq('match_id', id);
 
-      // 2. Zera placar e volta status para agendado
-      const { error: mError } = await supabase.from('matches').update({
-        home_score: null,
-        away_score: null,
-        home_penalties: null,
-        away_penalties: null,
-        winner_id: null,
-        status: 'agendado'
-      }).eq('id', id);
+        if (evError) throw new Error('Erro ao apagar eventos: ' + evError.message);
 
-      if (mError) throw new Error('Erro ao resetar partida: ' + mError.message);
+        // 2. Zera placar e volta status para agendado
+        const { error: mError } = await supabase.from('matches').update({
+          home_score: null,
+          away_score: null,
+          home_penalties: null,
+          away_penalties: null,
+          winner_id: null,
+          status: 'agendado'
+        }).eq('id', id);
 
-      // 2.1. Limpar propagação via automation se existirem finais já configuradas e essa partida foi resetada
-      if (match && match.season_id) {
-        await checkAndGenerateNextStages(match.season_id);
+        if (mError) throw new Error('Erro ao resetar partida: ' + mError.message);
+
+        // 2.1. Limpar propagação via automation se existirem finais já configuradas e essa partida foi resetada
+        if (match && match.season_id) {
+          await checkAndGenerateNextStages(match.season_id);
+        }
+      },
+      invalidateKeys: match?.season_id ? [
+        ['jogos', match.season_id],
+        ['dashboard', match.season_id],
+        ['classificacao', match.season_id],
+        ['artilharia', match.season_id]
+      ] : [],
+      onSuccess: async () => {
+        // 3. Recarrega dados localmente
+        setHomeScore(0);
+        setAwayScore(0);
+        setHomePens(0);
+        setAwayPens(0);
+        setEvents([]);
+        await fetchMatch(false);
+        setShowResetConfirm(false);
+        alert('✅ Partida resetada! Pronto para lançar os dados reais.');
+      },
+      onError: (err: any) => {
+        alert('❌ ' + err.message);
       }
+    });
 
-      // 3. Recarrega dados
-      setHomeScore(0);
-      setAwayScore(0);
-      setHomePens(0);
-      setAwayPens(0);
-      setEvents([]);
-      await fetchMatch(false);
-      setShowResetConfirm(false);
-      alert('✅ Partida resetada! Pronto para lançar os dados reais.');
-      const sid = match?.season_id;
-      queryClient.invalidateQueries({ queryKey: ['jogos', sid] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', sid] });
-      queryClient.invalidateQueries({ queryKey: ['classificacao', sid] });
-      queryClient.invalidateQueries({ queryKey: ['artilharia', sid] });
-    } catch (err: any) {
-      alert('❌ ' + err.message);
-    } finally {
-      setResetting(false);
-    }
+    setResetting(false);
   };
 
   if (loading || !match) return (

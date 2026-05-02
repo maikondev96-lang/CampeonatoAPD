@@ -5,6 +5,7 @@ import { Plus, Shield, Trash2, Loader2, Upload, Image as ImageIcon, X, Edit2, Sa
 import { v4 as uuidv4 } from 'uuid';
 import { useAdminContext } from '../components/AdminContext';
 import { useQueryClient } from '@tanstack/react-query';
+import { AdminEngine } from '../admin/adminEngine';
 
 const AdminTimes = () => {
   const { activeSeason, loading: ctxLoading } = useAdminContext();
@@ -133,42 +134,49 @@ const AdminTimes = () => {
 
       if (!finalLogoUrl) throw new Error('Selecione o escudo do time');
 
-      if (editingId) {
-        const { error: dbError } = await supabase
-          .from('teams')
-          .update({ name, logo_url: finalLogoUrl, squad_photo_url: finalSquadUrl })
-          .eq('id', editingId);
-        if (dbError) throw dbError;
-      } else {
-        const { data: newTeam, error: dbError } = await supabase.from('teams').insert([{ 
-          name, 
-          logo_url: finalLogoUrl,
-          squad_photo_url: finalSquadUrl 
-        }]).select().single();
-        if (dbError) throw dbError;
-        
-        // Enroll in current season
-        if (newTeam) {
-          const { error: stError } = await supabase.from('season_teams').insert([{
-            season_id: activeSeason?.id,
-            team_id: newTeam.id
-          }]);
-          if (stError) throw stError;
+      await AdminEngine.safeMutation({
+        mutationFn: async () => {
+          if (editingId) {
+            const { error: dbError } = await supabase
+              .from('teams')
+              .update({ name, logo_url: finalLogoUrl, squad_photo_url: finalSquadUrl })
+              .eq('id', editingId);
+            if (dbError) throw dbError;
+          } else {
+            const { data: newTeam, error: dbError } = await supabase.from('teams').insert([{ 
+              name, 
+              logo_url: finalLogoUrl,
+              squad_photo_url: finalSquadUrl 
+            }]).select().single();
+            if (dbError) throw dbError;
+            
+            // Enroll in current season
+            if (newTeam) {
+              const { error: stError } = await supabase.from('season_teams').insert([{
+                season_id: activeSeason?.id,
+                team_id: newTeam.id
+              }]);
+              if (stError) throw stError;
+            }
+          }
+        },
+        invalidateKeys: [['rosters'], ['competitions']],
+        onSuccess: async () => {
+          setName('');
+          setFile(null);
+          setSquadFile(null);
+          setPreviewUrl('');
+          setSquadPreviewUrl('');
+          setEditingId(null);
+          await fetchTimes();
+          alert(editingId ? 'Time atualizado!' : 'Time adicionado!');
+        },
+        onError: (err: any) => {
+          alert(err.message || 'Erro ao salvar time');
         }
-      }
-
-      setName('');
-      setFile(null);
-      setSquadFile(null);
-      setPreviewUrl('');
-      setSquadPreviewUrl('');
-      setEditingId(null);
-      await fetchTimes();
-      queryClient.invalidateQueries({ queryKey: ['rosters'] });
-      queryClient.invalidateQueries({ queryKey: ['competitions'] });
-      alert(editingId ? 'Time atualizado!' : 'Time adicionado!');
+      });
     } catch (error: any) {
-      alert(error.message || 'Erro ao salvar time');
+      alert(error.message || 'Erro inesperado no upload');
     } finally {
       setSaving(false);
     }
@@ -177,15 +185,22 @@ const AdminTimes = () => {
   const handleDelete = async (id: string, logoUrl: string) => {
     if (!confirm('Tem certeza que deseja excluir este time? Todos os jogadores e jogos vinculados serão afetados.')) return;
     
-    if (logoUrl.includes('supabase.co')) {
-      const path = logoUrl.split('/public/logos/')[1];
-      if (path) {
-        await supabase.storage.from('logos').remove([path]);
-      }
-    }
+    await AdminEngine.safeMutation({
+      mutationFn: async () => {
+        if (logoUrl && logoUrl.includes('supabase.co')) {
+          const path = logoUrl.split('/public/logos/')[1];
+          if (path) {
+            await supabase.storage.from('logos').remove([path]);
+          }
+        }
 
-    const { error } = await supabase.from('teams').delete().eq('id', id);
-    if (!error) fetchTimes();
+        const { error } = await supabase.from('teams').delete().eq('id', id);
+        if (error) throw error;
+      },
+      invalidateKeys: [['rosters'], ['competitions']],
+      onSuccess: () => fetchTimes(),
+      onError: (err: any) => alert('Erro ao excluir: ' + err.message)
+    });
   };
 
   const generateInvite = async (teamId: string) => {
