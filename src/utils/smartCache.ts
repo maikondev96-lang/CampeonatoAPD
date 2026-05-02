@@ -1,61 +1,54 @@
 import React from 'react';
-import { supabase } from '../supabaseClient';
 
-interface AppMetadata {
-  tabela: string;
-  version: number;
-  updated_at: string;
-}
+const CACHE_TTL_MS = 1000 * 60 * 5; // 5 minutos
 
 /**
- * Função inteligente que gerencia cache local com validação de versão remota.
- * Otimizada para não bloquear a thread principal.
+ * Cache simples baseado em localStorage com TTL.
+ * NÃO depende da tabela 'app_metadata' (que não existe no banco).
  */
 export async function getSmartData<T>(tabela: string, fetcher: () => Promise<T>): Promise<T> {
-  const localVersion = localStorage.getItem(`cache_v_${tabela}`);
-  const cachedData = localStorage.getItem(`cache_data_${tabela}`);
+  const cacheKey = `cache_data_${tabela}`;
+  const cacheTimeKey = `cache_time_${tabela}`;
 
   try {
-    // 1. Busca a versão atual no Supabase (com timeout curto para não travar)
-    const promise = supabase
-      .from('app_metadata')
-      .select('version')
-      .eq('tabela', tabela)
-      .single();
+    const cachedData = localStorage.getItem(cacheKey);
+    const cachedTime = localStorage.getItem(cacheTimeKey);
 
-    const { data: meta, error } = await promise;
-
-    if (error || !meta) {
-      if (cachedData) return JSON.parse(cachedData) as T;
-      return await fetcher();
+    // Usa cache se existir e ainda for válido (dentro do TTL)
+    if (cachedData && cachedTime) {
+      const age = Date.now() - parseInt(cachedTime);
+      if (age < CACHE_TTL_MS) {
+        return JSON.parse(cachedData) as T;
+      }
     }
 
-    const remoteVersion = meta.version;
-
-    // 2. Verifica se o cache é válido
-    if (cachedData && localVersion && parseInt(localVersion) === remoteVersion) {
-      return JSON.parse(cachedData) as T;
-    }
-
-    // 3. Busca dados frescos
+    // Cache expirado ou inexistente: busca dados frescos
     const freshData = await fetcher();
 
-    // 4. Salva no cache local (assíncrono para não travar)
+    // Salva em background para não bloquear a UI
     setTimeout(() => {
-      localStorage.setItem(`cache_data_${tabela}`, JSON.stringify(freshData));
-      localStorage.setItem(`cache_v_${tabela}`, remoteVersion.toString());
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(freshData));
+        localStorage.setItem(cacheTimeKey, Date.now().toString());
+      } catch (e) {
+        // localStorage cheio — ignora silenciosamente
+      }
     }, 0);
 
     return freshData;
   } catch (err) {
-    if (cachedData) return JSON.parse(cachedData) as T;
+    // Se qualquer coisa falhar, tenta usar dados do cache mesmo que expirados
+    const staleCached = localStorage.getItem(cacheKey);
+    if (staleCached) return JSON.parse(staleCached) as T;
+
+    // Última tentativa: vai ao fetcher diretamente
     return await fetcher();
   }
 }
 
 /**
- * Hook customizado otimizado com SWR (Stale-While-Revalidate).
- * Retorna o cache IMEDIATAMENTE e atualiza em background.
+ * Hook customizado com SWR (Stale-While-Revalidate).
+ * Retorna o cache IMEDIATAMENTE e revalida em background.
  */
 export function useSmartData<T>(tabela: string, fetcher: () => Promise<T>) {
   const [data, setData] = React.useState<T | null>(() => {
@@ -69,10 +62,8 @@ export function useSmartData<T>(tabela: string, fetcher: () => Promise<T>) {
 
   React.useEffect(() => {
     let isMounted = true;
-    
+
     async function sync() {
-      // Se já temos dados no cache, o loading inicial é falso
-      // mas vamos buscar a versão remota para ver se mudou
       try {
         const freshData = await getSmartData(tabela, fetcher);
         if (isMounted) {
@@ -92,28 +83,15 @@ export function useSmartData<T>(tabela: string, fetcher: () => Promise<T>) {
 }
 
 export function invalidateCache(tabela: string) {
-  localStorage.removeItem(`cache_v_${tabela}`);
   localStorage.removeItem(`cache_data_${tabela}`);
+  localStorage.removeItem(`cache_time_${tabela}`);
 }
 
-export async function bumpTableVersion(tabela: string) {
-  try {
-    const { data: current } = await supabase
-      .from('app_metadata')
-      .select('version')
-      .eq('tabela', tabela)
-      .single();
-    
-    const nextVersion = (current?.version || 0) + 1;
-
-    await supabase
-      .from('app_metadata')
-      .upsert({ 
-        tabela,
-        version: nextVersion,
-        updated_at: new Date().toISOString() 
-      });
-  } catch (err) {
-    console.error(`[SmartCache] Falha ao atualizar versão de ${tabela}:`, err);
-  }
+/**
+ * Stub: bumpTableVersion não faz nada pois app_metadata não existe.
+ * Mantido para não quebrar imports nos componentes Admin.
+ */
+export async function bumpTableVersion(tabela: string): Promise<void> {
+  // Invalida o cache local para forçar refetch na próxima visita
+  invalidateCache(tabela);
 }

@@ -141,6 +141,20 @@ body {
   width: 100%;
 }
 
+.page-fluid {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+@media (max-width: 768px) {
+  .page-fluid { padding: 12px; }
+}
+
 /* ─────────── ESTRUTURA DO APLICATIVO ─────────── */
 .app-container {
   display: flex;

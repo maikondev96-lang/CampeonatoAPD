@@ -88,7 +88,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const location = useLocation();
   const { organization } = useOrganizationContext();
-  const { competition } = useSeasonContext();
+  const { competition, season } = useSeasonContext();
   const isAdmin = location.pathname.startsWith('/admin');
   const navigate = useNavigate();
   const [theme, setTheme] = React.useState<'light' | 'dark'>(() => {
@@ -146,19 +146,19 @@ const Navbar = () => {
                   >
                     <Layout size={18} /> <span>Dashboard</span>
                   </Link>
-                  <Link to={`/competitions/${competition.slug}/${useSeasonContext().season?.year}/jogos`} className={`nav-link-item ${location.pathname.includes('/jogos') ? 'active' : ''}`}>
+                  <Link to={`/competitions/${competition.slug}/${season?.year}/jogos`} className={`nav-link-item ${location.pathname.includes('/jogos') ? 'active' : ''}`}>
                     <Calendar size={18} /> <span>Jogos</span>
                   </Link>
-                  <Link to={`/competitions/${competition.slug}/${useSeasonContext().season?.year}/classificacao`} className={`nav-link-item ${location.pathname.includes('/classificacao') ? 'active' : ''}`}>
+                  <Link to={`/competitions/${competition.slug}/${season?.year}/classificacao`} className={`nav-link-item ${location.pathname.includes('/classificacao') ? 'active' : ''}`}>
                     <Table size={18} /> <span>Tabela</span>
                   </Link>
-                  <Link to={`/competitions/${competition.slug}/${useSeasonContext().season?.year}/elencos`} className={`nav-link-item ${location.pathname.includes('/elencos') ? 'active' : ''}`}>
+                  <Link to={`/competitions/${competition.slug}/${season?.year}/elencos`} className={`nav-link-item ${location.pathname.includes('/elencos') ? 'active' : ''}`}>
                     <Users size={18} /> <span>Elencos</span>
                   </Link>
-                  <Link to={`/competitions/${competition.slug}/${useSeasonContext().season?.year}/fases`} className={`nav-link-item ${location.pathname.includes('/fases') ? 'active' : ''}`}>
+                  <Link to={`/competitions/${competition.slug}/${season?.year}/fases`} className={`nav-link-item ${location.pathname.includes('/fases') ? 'active' : ''}`}>
                     <Star size={18} /> <span>Fases</span>
                   </Link>
-                  <Link to={`/competitions/${competition.slug}/${useSeasonContext().season?.year}/estatisticas`} className={`nav-link-item ${location.pathname.includes('/estatisticas') ? 'active' : ''}`}>
+                  <Link to={`/competitions/${competition.slug}/${season?.year}/estatisticas`} className={`nav-link-item ${location.pathname.includes('/estatisticas') ? 'active' : ''}`}>
                     <Activity size={18} /> <span>Estatísticas</span>
                   </Link>
                   <SeasonBadge />
@@ -221,8 +221,8 @@ const Navbar = () => {
 
 const BottomNav = () => {
   const location = useLocation();
-  const { competition } = useSeasonContext();
-  const seasonYear = useSeasonContext().season?.year;
+  const { competition, season } = useSeasonContext();
+  const seasonYear = season?.year;
   const isAdmin = location.pathname.startsWith('/admin');
 
   if (isAdmin || location.pathname === '/admin/login') return null;
@@ -286,16 +286,11 @@ function App() {
   useEffect(() => {
     const localBuildId = localStorage.getItem('app_build_id');
     if (localBuildId !== APP_BUILD_ID) {
-      // Limpa caches do SmartCache
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('cache_')) localStorage.removeItem(key);
       });
       localStorage.setItem('app_build_id', APP_BUILD_ID);
-      
-      // Se não for a primeira vez (ou seja, se mudou mesmo), recarrega
-      if (localBuildId) {
-        window.location.reload();
-      }
+      if (localBuildId) window.location.reload();
     }
   }, []);
 

@@ -94,18 +94,17 @@ export const SeasonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (s) setSeason(s);
   }, [competition, season, seasons]);
 
-  // Tema dinâmico
+  // Tema dinâmico otimizado (só atualiza se a cor realmente mudar)
   useEffect(() => {
     const root = document.documentElement;
-    if (competition?.settings_json?.primary_color) {
-      const color = competition.settings_json.primary_color;
-      root.style.setProperty('--primary-color', color);
-      root.style.setProperty('--primary-light', `${color}15`);
-    } else {
-      root.style.removeProperty('--primary-color');
-      root.style.removeProperty('--primary-light');
+    const newColor = competition?.settings_json?.primary_color || '#00e676';
+    if (root.style.getPropertyValue('--primary-color') !== newColor) {
+      requestAnimationFrame(() => {
+        root.style.setProperty('--primary-color', newColor);
+        root.style.setProperty('--primary-light', `${newColor}15`);
+      });
     }
-  }, [competition]);
+  }, [competition?.id]);
 
   // Memoriza o valor para evitar re-renderizações desnecessárias dos consumidores
   const value = React.useMemo(() => ({
