@@ -5,7 +5,8 @@ import { Link, useParams } from 'react-router-dom';
 import logoApd from '../assets/logo.png';
 import { useSeasonContext } from '../components/SeasonContext';
 import { useDashboard } from '../hooks/useDashboard';
-import { QueryError } from '../components/QueryError';
+import { useQueryEngine } from '../query/useQueryEngine';
+import { QueryView } from '../query/QueryView';
 
 // COMPONENTE DE LINHA MEMOIZADO (GPU ACCELERATED) - DEFINIDO FORA PARA PERFORMANCE
 const MatchRow = React.memo(({ m, slug, year }: { m: Match, slug: string | undefined, year: string | undefined }) => {
@@ -48,30 +49,20 @@ const TournamentDashboard = () => {
   const { season, competition, loading: ctxLoading } = useSeasonContext();
 
   // Uma única requisição para TUDO (Stats, Jogos, Resultados, Tabela)
-  const { data, isLoading, isError, refetch } = useDashboard(season?.id);
+  const query = useDashboard(season?.id);
+  const { state, data, refetch } = useQueryEngine(query, ctxLoading);
 
-  if ((ctxLoading || isLoading) && !data) {
-    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80vh' }}>
-      <Loader2 className="animate-spin" size={32} color="var(--primary-color)" />
-    </div>;
-  }
-
-  if (isError && !data) {
-    return <QueryError message="Erro ao carregar o campeonato." onRetry={refetch} />;
-  }
-
-  if (!season || !data) return null;
-
-  const { stats, nextMatches, recentResults, standings } = data;
+  if (!season) return null;
 
   return (
-    <div className="page-fluid animate-fade">
-      {isError && data && (
-        <QueryError message="Conexão instável. Exibindo dados antigos." onRetry={refetch} variant="warning" />
-      )}
-      <div className="bento-dashboard-grid">
-        
-        {/* COLUNA 1: PORTAL DE ENTRADA (LADO ESQUERDO) */}
+    <QueryView state={state} data={data} onRetry={refetch}>
+      {(safeData) => {
+        const { stats, nextMatches, recentResults, standings } = safeData;
+        return (
+          <div className="page-fluid animate-fade">
+            <div className="bento-dashboard-grid">
+              
+              {/* COLUNA 1: PORTAL DE ENTRADA (LADO ESQUERDO) */}
         <div className="bento-col-portal">
           <div className="portal-hero-card" style={{ 
             backgroundImage: competition?.settings_json?.banner_url ? `linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.95)), url(${competition.settings_json.banner_url})` : 'none',
@@ -216,7 +207,10 @@ const TournamentDashboard = () => {
           .bento-col-portal { position: relative; top: 0; }
         }
       `}</style>
-    </div>
+          </div>
+        );
+      }}
+    </QueryView>
   );
 };
 

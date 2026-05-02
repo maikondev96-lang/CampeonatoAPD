@@ -6,7 +6,7 @@ import logoApd from '../assets/logo.png';
 import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabaseClient';
-import { QueryError } from '../components/QueryError';
+import { QueryView } from '../query/QueryView';
 
 // SUB-COMPONENTE NEWS MODAL
 const NewsModal = ({ news, onClose }: { news: any, onClose: () => void }) => {
@@ -93,28 +93,23 @@ export default function Home() {
   const hasData = !!(news || competitions);
   const refetch = () => { refetchNews(); refetchComps(); };
 
-  if (isLoading && !hasData) {
-    return (
-      <div className="home-loading-compact" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
-        <Activity className="animate-spin" color="var(--primary-color)" size={32} />
-      </div>
-    );
-  }
-
-  if (isError && !hasData) {
-    return <QueryError message="Erro ao carregar a página inicial." onRetry={refetch} />;
-  }
-
-  const featuredNews = news?.find((n: any) => n.is_featured) || news?.[0];
-  const sideNews = news?.filter((n: any) => n.id !== featuredNews?.id) || [];
+  const state = {
+    loading: (newsLoading || compsLoading) && !hasData,
+    error: (newsError || compsError) && !hasData,
+    warning: (newsError || compsError) && hasData,
+    success: hasData
+  };
 
   return (
-    <div className="home-dashboard animate-fade" style={{ willChange: 'transform' }}>
-      {isError && hasData && (
-        <QueryError message="Conexão instável. Exibindo dados antigos." onRetry={refetch} variant="warning" />
-      )}
-      <div className="dashboard-container">
-        <div className="dashboard-row main-content-row">
+    <QueryView state={state} data={{ news, competitions }} onRetry={refetch}>
+      {({ news, competitions }) => {
+        const featuredNews = news?.find((n: any) => n.is_featured) || news?.[0];
+        const sideNews = news?.filter((n: any) => n.id !== featuredNews?.id) || [];
+
+        return (
+          <div className="home-dashboard animate-fade" style={{ willChange: 'transform' }}>
+            <div className="dashboard-container">
+              <div className="dashboard-row main-content-row">
           <main className="fs-news-section">
             <div className="fs-tabs-scroll">
               <span className="fs-tab active">TODOS</span>
@@ -192,6 +187,9 @@ export default function Home() {
         .fs-comp-name { font-size: 0.9rem; font-weight: 700; }
         @media (max-width: 900px) { .main-content-row { grid-template-columns: 1fr; } .fs-hero-img { height: 180px; } }
       `}</style>
-    </div>
+          </div>
+        );
+      }}
+    </QueryView>
   );
 }

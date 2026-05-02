@@ -5,13 +5,14 @@ import { Standing } from '../types';
 import { Table, Loader2, Info } from 'lucide-react';
 import { useSeasonContext } from '../components/SeasonContext';
 import { useQuery } from '@tanstack/react-query';
-import { QueryError } from '../components/QueryError';
+import { useQueryEngine } from '../query/useQueryEngine';
+import { QueryView } from '../query/QueryView';
 
 const Classificacao = () => {
   const { season, loading: ctxLoading } = useSeasonContext();
 
   // TanStack Query: queryKey inclui season.id → auto-refetch ao trocar temporada
-  const { data: rawData, isLoading: queryLoading, isError, refetch } = useQuery({
+  const query = useQuery({
     queryKey: ['classificacao', season?.id],
     queryFn: async () => {
       const [standingsRes, matchesRes, teamsRes, stagesRes] = await Promise.all([
@@ -99,28 +100,22 @@ const Classificacao = () => {
     });
 
     return { standings: finalStandings, recentResults: resultsMap };
-  }, [rawData, season]);
+  }, [query.data, season]);
 
-  if ((queryLoading || ctxLoading) && !rawData) {
-    return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
-  }
-
-  if (isError && !rawData) {
-    return <QueryError message="Erro ao carregar a classificação." onRetry={refetch} />;
-  }
-
-  const dotColor = (r: 'W' | 'D' | 'L') =>
-    r === 'W' ? '#059669' : r === 'L' ? '#dc2626' : '#94a3b8';
+  const { state, refetch } = useQueryEngine(query, ctxLoading);
 
   return (
-    <div className="page-fluid animate-fade">
-      {isError && rawData && (
-        <QueryError message="Conexão instável. Exibindo dados antigos." onRetry={refetch} variant="warning" />
-      )}
-      <h1 className="section-title"><Table /> Classificação {season && <span style={{ fontSize: '0.6em', color: 'var(--text-muted)', fontWeight: 600 }}>{season.year}</span>}</h1>
+    <QueryView state={state} data={query.data} onRetry={refetch}>
+      {() => {
+        const dotColor = (r: 'W' | 'D' | 'L') =>
+          r === 'W' ? '#059669' : r === 'L' ? '#dc2626' : '#94a3b8';
 
-      <div className="fs-table-container">
-        {standings.length === 0 && !loading ? (
+        return (
+          <div className="page-fluid animate-fade">
+            <h1 className="section-title"><Table /> Classificação {season && <span style={{ fontSize: '0.6em', color: 'var(--text-muted)', fontWeight: 600 }}>{season.year}</span>}</h1>
+
+            <div className="fs-table-container">
+              {standings.length === 0 ? (
           <p style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontWeight: 700 }}>Nenhum dado de classificação disponível.</p>
         ) : (
           <table className="standings-table" style={{ fontSize: undefined }}>
@@ -378,7 +373,10 @@ const Classificacao = () => {
           .standings-table th, .standings-table td { padding: 12px 8px; }
         }
       `}</style>
-    </div>
+          </div>
+        );
+      }}
+    </QueryView>
   );
 };
 
