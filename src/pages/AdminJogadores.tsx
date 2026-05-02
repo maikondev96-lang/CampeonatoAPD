@@ -1,21 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { Team, Player } from '../types';
-import { Plus, Users, Trash2, Loader2, Edit2, Save, ChevronDown, ChevronUp, Search, Upload, Image as ImageIcon, X } from 'lucide-react';
+import { Plus, Users, Trash2, Edit2, Save, ChevronDown, ChevronUp, Search, Upload, X, Loader2 } from 'lucide-react';
 import { useAdminContext } from '../components/AdminContext';
-
 import { playerSchema } from '../utils/schemas';
 import { validateImageUrl } from '../utils/imageValidation';
-
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { useQueryEngine } from '../query/useQueryEngine';
+import { QueryView } from '../query/QueryView';
 import { AdminEngine } from '../admin/adminEngine';
 
 const AdminJogadores = () => {
   const { activeSeason: season, loading: ctxLoading } = useAdminContext();
-  const queryClient = useQueryClient();
-  const [times, setTimes] = useState<Team[]>([]);
-  const [jogadores, setJogadores] = useState<Player[]>([]);
-  const [loading, setLoading] = useState(true);
   
   const [name, setName] = useState('');
   const [teamId, setTeamId] = useState('');
@@ -32,25 +28,28 @@ const AdminJogadores = () => {
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    if (season) fetchData();
-  }, [season]);
+  // 1. DATA LAYER (READ)
+  const query = useQuery({
+    queryKey: ['admin-players', season?.id],
+    queryFn: async () => {
+      if (!season) return null;
+      const [stRes, jRes] = await Promise.all([
+        supabase.from('season_teams').select('team:teams(*)').eq('season_id', season.id),
+        supabase.from('players').select('*, teams(name)').order('shirt_number', { ascending: true })
+      ]);
+      
+      if (stRes.error) throw stRes.error;
+      if (jRes.error) throw jRes.error;
 
-  const fetchData = async () => {
-    if (!season) return;
-    setLoading(true);
+      const times = stRes.data.map(st => st.team as unknown as Team).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name));
+      const jogadores = jRes.data || [];
 
-    const [stRes, jRes] = await Promise.all([
-      supabase.from('season_teams').select('team:teams(*)').eq('season_id', season.id),
-      supabase.from('players').select('*, teams(name)').order('shirt_number', { ascending: true })
-    ]);
-    
-    if (!stRes.error && stRes.data) {
-      setTimes(stRes.data.map(st => st.team as unknown as Team).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name)));
-    }
-    if (!jRes.error) setJogadores(jRes.data || []);
-    setLoading(false);
-  };
+      return { times, jogadores };
+    },
+    enabled: !!season
+  });
+
+  const { state, data, refetch } = useQueryEngine(query, ctxLoading);
 
   const handleEdit = (e: React.MouseEvent, j: Player) => {
     e.stopPropagation();
@@ -86,31 +85,19 @@ const AdminJogadores = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     setSaving(true);
     
     try {
-      // Validate Image URL if provided
       if (photoUrl && photoUrl !== previewUrl) {
         setIsValidating(true);
         const imgCheck = await validateImageUrl(photoUrl);
         setIsValidating(false);
-        if (!imgCheck.valid) {
-          throw new Error(imgCheck.error);
-        }
+        if (!imgCheck.valid) throw new Error(imgCheck.error);
       }
 
-      const validation = playerSchema.safeParse({
-        name,
-        team_id: teamId,
-        shirt_number: shirtNumber,
-        photo_url: photoUrl || previewUrl,
-        position
-      });
+      const validation = playerSchema.safeParse({ name, team_id: teamId, shirt_number: shirtNumber, photo_url: photoUrl || previewUrl, position });
+      if (!validation.success) throw new Error(validation.error.issues[0].message);
 
-      if (!validation.success) {
-        throw new Error(validation.error.issues[0].message);
-      }
       let finalPhotoUrl = previewUrl || '';
 
       if (file) {
@@ -118,28 +105,16 @@ const AdminJogadores = () => {
         const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `player-photos/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('logos')
-          .upload(filePath, file);
+        const { error: uploadError } = await supabase.storage.from('logos').upload(filePath, file);
 
         if (!uploadError) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('logos')
-            .getPublicUrl(filePath);
+          const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(filePath);
           finalPhotoUrl = publicUrl;
         }
       }
 
       const pNum = parseInt(shirtNumber);
-
-      const playerData = { 
-        name, 
-        team_id: teamId,
-        shirt_number: pNum,
-        position: position || null,
-        photo_url: finalPhotoUrl,
-        updated_at: new Date().toISOString()
-      };
+      const playerData = { name, team_id: teamId, shirt_number: pNum, position: position || null, photo_url: finalPhotoUrl, updated_at: new Date().toISOString() };
 
       await AdminEngine.safeMutation({
         mutationFn: async () => {
@@ -151,13 +126,12 @@ const AdminJogadores = () => {
             if (error) throw error;
           }
         },
-        invalidateKeys: [['artilharia'], ['rosters']],
-        onSuccess: async () => {
+        invalidateKeys: [['artilharia'], ['rosters'], ['admin-players']],
+        onSuccess: () => {
           cancelEdit();
-          await fetchData();
+          refetch();
         }
       });
-
     } catch (err: any) {
       alert(err.message || 'Erro ao salvar jogador');
     } finally {
@@ -174,68 +148,53 @@ const AdminJogadores = () => {
         const { error } = await supabase.from('players').delete().eq('id', id);
         if (error) throw error;
       },
-      invalidateKeys: [['artilharia'], ['rosters']],
-      onSuccess: async () => {
-        await fetchData();
-      },
-      onError: (err: any) => {
-        alert('Erro ao excluir: ' + err.message);
-      }
+      invalidateKeys: [['artilharia'], ['rosters'], ['admin-players']],
+      onSuccess: () => refetch(),
+      onError: (err: any) => alert('Erro ao excluir: ' + err.message)
     });
   };
-
-  const groupedPlayers = times.map(time => ({
-    ...time,
-    players: jogadores.filter(j => j.team_id === time.id).sort((a, b) => (a.shirt_number || 0) - (b.shirt_number || 0))
-  })).filter(t => 
-    searchTerm === '' || 
-    t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.players.some(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
 
   return (
     <div className="animate-fade container" style={{ maxWidth: '900px' }}>
       <h1 className="section-title"><Users /> Gerenciar Jogadores</h1>
       
-      <form className="card" onSubmit={handleSave} style={{ marginBottom: '3rem', border: editingId ? '2px solid var(--primary-color)' : '1px solid var(--border-color)' }}>
-        <h3 style={{ marginBottom: '1.5rem', fontSize: '1.1rem', fontWeight: 950, color: 'var(--primary-dark)' }}>
-          {editingId ? '📝 Editar Jogador' : '➕ Novo Jogador'}
-        </h3>
-        
-        <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
-          <div className="form-group">
-            <label>Nome Completo *</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: José Silva" required />
-          </div>
-          <div className="form-group">
-            <label>Número da Camisa *</label>
-            <input type="number" value={shirtNumber} onChange={e => setShirtNumber(e.target.value)} placeholder="10" required />
-          </div>
-        </div>
-
-        <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
-          <div className="form-group">
-            <label>Time *</label>
-            <select value={teamId} onChange={e => setTeamId(e.target.value)} required>
-              <option value="">Selecione um time</option>
-              {times.map(t => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Posição</label>
-            <select value={position} onChange={e => setPosition(e.target.value)}>
-              <option value="">Selecione...</option>
-              <option value="GOL">Goleiro (GOL)</option>
-              <option value="ZAG">Zagueiro (ZAG)</option>
-              <option value="LAT">Lateral (LAT)</option>
-              <option value="VOL">Volante (VOL)</option>
-              <option value="MEI">Meio-Campo (MEI)</option>
-              <option value="ATA">Atacante (ATA)</option>
-            </select>
-          </div>
-        </div>
+      <QueryView state={state} data={times} onRetry={refetch}>
+        {(times) => (
+          <>
+            <form className="card" onSubmit={handleSave} style={{ marginBottom: '3rem', border: editingId ? '2px solid var(--primary-color)' : '1px solid var(--border-color)' }}>
+              <h3 style={{ marginBottom: '1.5rem', fontWeight: 900 }}>{editingId ? 'Editar Jogador' : 'Novo Jogador'}</h3>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                <div className="form-group">
+                  <label className="input-label">Nome Completo</label>
+                  <input type="text" className="form-input" value={name} onChange={e => setName(e.target.value)} required placeholder="Ex: Maikon Santos" />
+                </div>
+                <div className="form-group">
+                  <label className="input-label">Número da Camisa</label>
+                  <input type="number" className="form-input" value={shirtNumber} onChange={e => setShirtNumber(e.target.value)} required />
+                </div>
+                <div className="form-group">
+                  <label className="input-label">Equipe</label>
+                  <select className="form-input" value={teamId} onChange={e => setTeamId(e.target.value)} required>
+                    <option value="">Selecione um time</option>
+                    {times.map((t: any) => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="input-label">Posição</label>
+                  <select className="form-input" value={position} onChange={e => setPosition(e.target.value)}>
+                    <option value="">Selecione...</option>
+                    <option value="GOL">Goleiro (GOL)</option>
+                    <option value="ZAG">Zagueiro (ZAG)</option>
+                    <option value="LAT">Lateral (LAT)</option>
+                    <option value="VOL">Volante (VOL)</option>
+                    <option value="MEI">Meio-Campo (MEI)</option>
+                    <option value="ATA">Atacante (ATA)</option>
+                  </select>
+                </div>
+              </div>
 
         <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
           <div className="form-group">

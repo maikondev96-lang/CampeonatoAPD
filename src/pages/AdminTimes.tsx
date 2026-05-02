@@ -1,17 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { Team } from '../types';
-import { Plus, Shield, Trash2, Loader2, Upload, Image as ImageIcon, X, Edit2, Save, Link as LinkIcon, Copy, RefreshCw, CheckCircle, AlertCircle, Unlock } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
+import { Plus, Shield, Trash2, Loader2, Upload, X, Edit2, Save, Trophy, Users, Camera } from 'lucide-react';
 import { useAdminContext } from '../components/AdminContext';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { useQueryEngine } from '../query/useQueryEngine';
+import { QueryView } from '../query/QueryView';
 import { AdminEngine } from '../admin/adminEngine';
 
 const AdminTimes = () => {
   const { activeSeason, loading: ctxLoading } = useAdminContext();
-  const queryClient = useQueryClient();
-  const [times, setTimes] = useState<Team[]>([]);
-  const [loading, setLoading] = useState(true);
+  
   const [name, setName] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -21,32 +20,24 @@ const AdminTimes = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const squadInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (activeSeason) fetchTimes();
+  // 1. DATA LAYER (READ)
+  const query = useQuery({
+    queryKey: ['admin-teams', activeSeason?.id],
+    queryFn: async () => {
+      if (!activeSeason) return null;
+      const { data, error } = await supabase.from('season_teams')
+        .select('team:teams(*, players(*))')
+        .eq('season_id', activeSeason.id);
+        
+      if (error) throw error;
+      return data.map(st => st.team as unknown as Team).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name));
+    },
+    enabled: !!activeSeason
+  });
 
-    // Atualiza os dados automaticamente quando o admin volta para a aba
-    const onFocus = () => { if (activeSeason) fetchTimes(); };
-    window.addEventListener('focus', onFocus);
-    
-    return () => {
-      window.removeEventListener('focus', onFocus);
-    };
-  }, [activeSeason]);
-
-  const fetchTimes = async () => {
-    if (!activeSeason) return;
-    setLoading(true);
-    const { data, error } = await supabase.from('season_teams')
-      .select('team:teams(*, players(*))')
-      .eq('season_id', activeSeason.id);
-      
-    if (!error && data) {
-      const formattedTeams = data.map(st => st.team as unknown as Team).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name));
-      setTimes(formattedTeams);
-    }
-    setLoading(false);
-  };
+  const { state, data: times, refetch } = useQueryEngine(query, ctxLoading);
 
   const handleEdit = (time: Team) => {
     setEditingId(time.id);
@@ -55,7 +46,6 @@ const AdminTimes = () => {
     setSquadPreviewUrl(time.squad_photo_url || '');
     setFile(null);
     setSquadFile(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const cancelEdit = () => {
@@ -67,50 +57,11 @@ const AdminTimes = () => {
     setSquadPreviewUrl('');
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setPreviewUrl(URL.createObjectURL(selectedFile));
-    }
-  };
-
-  const onDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const onDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const droppedFile = e.dataTransfer.files?.[0];
-    if (droppedFile && droppedFile.type.startsWith('image/')) {
-      setFile(droppedFile);
-      setPreviewUrl(URL.createObjectURL(droppedFile));
-    }
-  };
-
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name) return alert('Informe o nome do time');
-    
+    if (!name || !activeSeason) return;
     setSaving(true);
 
-    try {
-      let finalLogoUrl = previewUrl;
-
-      if (file) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `team-logos/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('logos')
-          .upload(filePath, file);
 
         if (uploadError) throw new Error('Erro no upload: ' + uploadError.message);
 

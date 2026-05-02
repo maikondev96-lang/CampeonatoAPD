@@ -1,19 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { Team, Match, Stage, STAGE_TYPE_LABELS } from '../types';
-import { Plus, Calendar, Edit2, Loader2, Wand2, Trash2, Save, X } from 'lucide-react';
+import { Plus, Calendar, Edit2, Loader2, Wand2, Trash2, Save, X, Trophy, MapPin, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminContext } from '../components/AdminContext';
+import { useQuery } from '@tanstack/react-query';
+import { useQueryEngine } from '../query/useQueryEngine';
+import { QueryView } from '../query/QueryView';
 import { AdminEngine } from '../admin/adminEngine';
 
 const AdminJogos = () => {
   const navigate = useNavigate();
   const { activeSeason, loading: ctxLoading } = useAdminContext();
-  const [times, setTimes] = useState<Team[]>([]);
-  const [stages, setStages] = useState<Stage[]>([]);
-  const [jogos, setJogos] = useState<Match[]>([]);
-  const [loading, setLoading] = useState(true);
-
   
   // Form state
   const [round, setRound] = useState(1);
@@ -26,40 +24,31 @@ const AdminJogos = () => {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (activeSeason) fetchData();
-  }, [activeSeason]);
+  // 1. DATA LAYER (READ)
+  const query = useQuery({
+    queryKey: ['admin-matches', activeSeason?.id],
+    queryFn: async () => {
+      if (!activeSeason) return null;
+      const [stRes, jRes, stagesRes] = await Promise.all([
+        supabase.from('season_teams').select('team:teams(*)').eq('season_id', activeSeason.id),
+        supabase.from('matches').select('*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*), stage:stages(id, name, type, order_index)').eq('season_id', activeSeason.id).order('date'),
+        supabase.from('stages').select('*').eq('season_id', activeSeason.id).order('order_index')
+      ]);
+      
+      if (stRes.error) throw stRes.error;
+      if (jRes.error) throw jRes.error;
+      if (stagesRes.error) throw stagesRes.error;
 
-  const fetchData = async () => {
-    if (!activeSeason) return;
-    setLoading(true);
+      const times = stRes.data.map(st => st.team as unknown as Team).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name));
+      const matches = jRes.data || [];
+      const stagesList = stagesRes.data || [];
 
-    const [stRes, jRes, stagesRes] = await Promise.all([
-      supabase.from('season_teams').select('team:teams(*)').eq('season_id', activeSeason.id),
-      supabase.from('matches').select('*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*), stage:stages(id, name, type, order_index)').eq('season_id', activeSeason.id).order('date'),
-      supabase.from('stages').select('*').eq('season_id', activeSeason.id).order('order_index')
-    ]);
-    
-    if (!stRes.error && stRes.data) {
-      setTimes(stRes.data.map(st => st.team as unknown as Team).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name)));
-    }
-    
-    const matchesData = jRes.data || [];
-    setJogos(matchesData);
-    setStages(stagesRes.data || []);
-    
-    if (stagesRes.data && stagesRes.data.length > 0 && !stageId) {
-      setStageId(stagesRes.data[0].id);
-    }
+      return { times, matches, stagesList };
+    },
+    enabled: !!activeSeason
+  });
 
-    // Auto-suggest round if not editing
-    if (!editingId && matchesData.length > 0) {
-      const maxRound = Math.max(...matchesData.map(j => j.round || 1));
-      setRound(maxRound);
-    }
-    
-    setLoading(false);
-  };
+  const { state, data, refetch } = useQueryEngine(query, ctxLoading);
 
   const handleEdit = (e: React.MouseEvent, jogo: Match) => {
     e.stopPropagation();
@@ -92,27 +81,27 @@ const AdminJogos = () => {
         const { error } = await supabase.from('matches').delete().eq('id', id);
         if (error) throw error;
       },
-      onSuccess: () => fetchData(),
+      invalidateKeys: [['admin-matches', activeSeason?.id], ['matches']],
+      onSuccess: () => refetch(),
       onError: (err: any) => alert('Erro ao excluir jogo: ' + err.message)
     });
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!homeId || !awayId) return alert('Selecione os dois times');
-    if (homeId === awayId) return alert('Os times devem ser diferentes');
-    if (!stageId) return alert('Selecione uma fase (stage)');
-    
+    if (!activeSeason) return;
     setSaving(true);
+    
     const matchData = {
-      season_id: activeSeason!.id,
-      stage_id: stageId,
+      season_id: activeSeason.id,
+      stage_id: stageId || null,
       round,
       home_team_id: homeId,
       away_team_id: awayId,
       date: date || null,
       time: time || null,
-      venue: venue || null,
+      venue: venue || '',
+      status: 'pending'
     };
 
     await AdminEngine.safeMutation({
@@ -121,34 +110,20 @@ const AdminJogos = () => {
           const { error } = await supabase.from('matches').update(matchData).eq('id', editingId);
           if (error) throw error;
         } else {
-          const { error } = await supabase.from('matches').insert([{
-            ...matchData,
-            status: 'agendado'
-          }]);
+          const { error } = await supabase.from('matches').insert([matchData]);
           if (error) throw error;
         }
       },
+      invalidateKeys: [['admin-matches', activeSeason?.id], ['matches']],
       onSuccess: () => {
-        if (editingId) {
-          setEditingId(null);
-          cancelEdit();
-        }
-        fetchData();
-      },
-      onError: (err: any) => alert('Erro ao salvar jogo: ' + err.message)
+        cancelEdit();
+        refetch();
+      }
     });
-    
     setSaving(false);
   };
 
-  // Otimização: Agrupa os jogos por rodada para facilitar a visualização e melhorar a performance
-  const jogosPorRodada = jogos.reduce((acc: Record<number, Match[]>, jogo) => {
-    if (!acc[jogo.round]) acc[jogo.round] = [];
-    acc[jogo.round].push(jogo);
-    return acc;
-  }, {});
-
-  const roundsSorted = Object.keys(jogosPorRodada).map(Number).sort((a, b) => a - b);
+  const rounds = data ? [...new Set(data.matches.map(m => m.round))].sort((a, b) => a - b) : [];
 
   return (
     <div className="animate-fade" style={{ maxWidth: '1000px', margin: '0 auto' }}>

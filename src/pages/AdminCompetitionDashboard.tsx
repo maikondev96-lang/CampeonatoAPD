@@ -11,6 +11,8 @@ import { generateRoundRobin } from '../utils/tournamentGenerator';
 import { advanceTeamsToKnockout } from '../utils/knockoutAdvancement';
 import { Loader2, Wand2, Trophy as TrophyIcon } from 'lucide-react';
 
+import { AdminEngine } from '../admin/adminEngine';
+
 export default function AdminCompetitionDashboard() {
   const { activeCompetition, activeSeason, loading: ctxLoading } = useAdminContext();
   const [stats, setStats] = useState({
@@ -66,66 +68,69 @@ export default function AdminCompetitionDashboard() {
       if (!window.confirm('Já existem jogos cadastrados. Gerar novamente irá adicionar novos jogos à tabela. Deseja continuar?')) return;
     }
 
-    setLoading(true);
-    try {
-      // 1. Buscar Times
-      const { data: teamsData } = await supabase
-        .from('season_teams')
-        .select('team:teams(id, name)')
-        .eq('season_id', activeSeason.id);
-      
-      const teams = teamsData?.map((t: any) => t.team) || [];
+    await AdminEngine.safeMutation({
+      mutationFn: async () => {
+        // 1. Buscar Times
+        const { data: teamsData } = await supabase
+          .from('season_teams')
+          .select('team:teams(id, name)')
+          .eq('season_id', activeSeason.id);
+        
+        const teams = teamsData?.map((t: any) => t.team) || [];
 
-      // 2. Buscar Fase de Grupo/Liga
-      const { data: stages } = await supabase
-        .from('stages')
-        .select('*')
-        .eq('season_id', activeSeason.id)
-        .order('order_index', { ascending: true });
+        // 2. Buscar Fase de Grupo/Liga
+        const { data: stages } = await supabase
+          .from('stages')
+          .select('*')
+          .eq('season_id', activeSeason.id)
+          .order('order_index', { ascending: true });
 
-      const groupStage = stages?.find(s => s.type === 'group' || s.type === 'league_round');
-      if (!groupStage) throw new Error('Fase de grupo não encontrada. Verifique as configurações do campeonato.');
+        const groupStage = stages?.find(s => s.type === 'group' || s.type === 'league_round');
+        if (!groupStage) throw new Error('Fase de grupo não encontrada. Verifique as configurações do campeonato.');
 
-      // 3. Gerar Round Robin
-      const isDoubleRound = activeCompetition?.type === 'hybrid' || activeCompetition?.type === 'league'; // Simplificação
-      const schedule = generateRoundRobin(teams, isDoubleRound);
+        // 3. Gerar Round Robin
+        const isDoubleRound = activeCompetition?.type === 'hybrid' || activeCompetition?.type === 'league';
+        const schedule = generateRoundRobin(teams, isDoubleRound);
 
-      // 4. Inserir Jogos
-      const matchesToInsert = schedule.map(m => ({
-        season_id: activeSeason.id,
-        stage_id: groupStage.id,
-        round: m.round,
-        home_team_id: m.home_team_id,
-        away_team_id: m.away_team_id,
-        phase: groupStage.type === 'group' ? 'grupo' : 'grupo', // Mapping
-        status: 'agendado'
-      }));
+        // 4. Inserir Jogos
+        const matchesToInsert = schedule.map(m => ({
+          season_id: activeSeason.id,
+          stage_id: groupStage.id,
+          round: m.round,
+          home_team_id: m.home_team_id,
+          away_team_id: m.away_team_id,
+          phase: 'grupo',
+          status: 'agendado'
+        }));
 
-      const { error: matchErr } = await supabase.from('matches').insert(matchesToInsert);
-      if (matchErr) throw matchErr;
-
-      alert(`✅ Tabela gerada com sucesso! ${matchesToInsert.length} jogos criados.`);
-      fetchDashboardData();
-    } catch (err: any) {
-      alert('Erro ao gerar torneio: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
+        const { error: matchErr } = await supabase.from('matches').insert(matchesToInsert);
+        if (matchErr) throw matchErr;
+        
+        return { count: matchesToInsert.length };
+      },
+      onSuccess: (res: any) => {
+        alert(`✅ Tabela gerada com sucesso! ${res.count} jogos criados.`);
+        fetchDashboardData();
+      },
+      onError: (err: any) => alert('Erro ao gerar: ' + err.message)
+    });
   };
 
   const handleAdvanceToKnockout = async () => {
     if (!activeSeason) return;
-    setLoading(true);
-    try {
-      const result = await advanceTeamsToKnockout(activeSeason.id);
-      if (result.error) throw new Error(result.error);
-      alert('🚀 Mata-mata gerado com sucesso com os melhores da classificação!');
-      fetchDashboardData();
-    } catch (err: any) {
-      alert('Erro ao avançar: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
+    
+    await AdminEngine.safeMutation({
+      mutationFn: async () => {
+        const result = await advanceTeamsToKnockout(activeSeason.id);
+        if (result.error) throw new Error(result.error);
+        return result;
+      },
+      onSuccess: () => {
+        alert('🚀 Mata-mata gerado com sucesso com os melhores da classificação!');
+        fetchDashboardData();
+      },
+      onError: (err: any) => alert('Erro ao avançar: ' + err.message)
+    });
   };
 
   if (ctxLoading || loading) return <div style={{ textAlign: 'center', padding: '5rem' }}>Carregando Painel...</div>;

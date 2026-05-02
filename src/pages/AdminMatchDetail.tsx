@@ -1,132 +1,100 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Match, MatchEvent, Player } from '../types';
-import { Save, ChevronLeft, Plus, Trash2, Loader2, RotateCcw, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Match, Player } from '../types';
+import { Save, ChevronLeft, Plus, Trash2, Loader2, RotateCcw, CheckCircle2, AlertTriangle, Trophy, Users, Timer } from 'lucide-react';
 import { checkAndGenerateNextStages } from '../services/automation';
-import { useQueryClient } from '@tanstack/react-query';
-import { useSafeAdminMutation } from '../admin/useSafeAdminMutation';
+import { useQuery } from '@tanstack/react-query';
+import { useQueryEngine } from '../query/useQueryEngine';
+import { QueryView } from '../query/QueryView';
 import { AdminEngine } from '../admin/adminEngine';
 
 const AdminMatchDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [match, setMatch] = useState<Match | null>(null);
-  const [events, setEvents] = useState<any[]>([]);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [loading, setLoading] = useState(true);
+  
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  const [homeScore, setHomeScore] = useState<number>(0);
-  const [awayScore, setAwayScore] = useState<number>(0);
-  const [homePens, setHomePens] = useState<number>(0);
-  const [awayPens, setAwayPens] = useState<number>(0);
+  // 1. DATA LAYER (READ)
+  const matchQuery = useQuery({
+    queryKey: ['admin-match', id],
+    queryFn: async () => {
+      const [mRes, eRes] = await Promise.all([
+        supabase.from('matches').select('*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*)').eq('id', id).single(),
+        supabase.from('match_events').select('*').eq('match_id', id).order('minute', { ascending: true })
+      ]);
 
-  useEffect(() => {
-    if (id) fetchMatch(true);
-  }, [id]);
+      if (mRes.error) throw mRes.error;
+      const match = mRes.data;
+      const events = eRes.data || [];
 
-  // Calcula placar a partir dos eventos de gol
-  useEffect(() => {
-    if (match && players.length > 0) {
-      const hScore = events.filter(ev =>
-        (ev.type === 'gol' || ev.type === 'gol_penalti') &&
-        players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id
-      ).length;
-      const aScore = events.filter(ev =>
-        (ev.type === 'gol' || ev.type === 'gol_penalti') &&
-        players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id
-      ).length;
-      const hPens = events.filter(ev =>
-        ev.type === 'penalti_convertido' &&
-        players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id
-      ).length;
-      const aPens = events.filter(ev =>
-        ev.type === 'penalti_convertido' &&
-        players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id
-      ).length;
-      setHomeScore(hScore);
-      setAwayScore(aScore);
-      setHomePens(hPens);
-      setAwayPens(aPens);
-    }
-  }, [events, players, match]);
+      const { data: players, error: pErr } = await supabase
+        .from('players')
+        .select('*')
+        .in('team_id', [match.home_team_id, match.away_team_id])
+        .order('shirt_number', { ascending: true });
 
-  const fetchMatch = async (isInitial = true) => {
-    try {
-      const { data: mData } = await supabase
-        .from('matches')
-        .select('*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*)')
-        .eq('id', id)
-        .single();
+      if (pErr) throw pErr;
 
-      if (mData) {
-        setMatch(mData);
-        if (isInitial) {
-          setHomeScore(mData.home_score || 0);
-          setAwayScore(mData.away_score || 0);
-          setHomePens(mData.home_penalties || 0);
-          setAwayPens(mData.away_penalties || 0);
-        }
+      return { match: match as Match, events, players: players as Player[] };
+    },
+    enabled: !!id
+  });
 
-        const { data: pData } = await supabase
-          .from('players')
-          .select('*')
-          .in('team_id', [mData.home_team_id, mData.away_team_id])
-          .order('shirt_number', { ascending: true });
-        setPlayers(pData || []);
-        await refreshEvents();
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      if (isInitial) setLoading(false);
-    }
-  };
+  const { state, data, refetch } = useQueryEngine(matchQuery);
 
-  const refreshEvents = async () => {
-    const { data: eData } = await supabase
-      .from('match_events')
-      .select('*')
-      .eq('match_id', id)
-      .order('minute', { ascending: true });
-    setEvents(eData || []);
-  };
+  // Placares dinâmicos derivados dos eventos
+  const scores = useMemo(() => {
+    if (!data) return { h: 0, a: 0, hp: 0, ap: 0 };
+    const { match, events, players } = data;
+    
+    const hScore = events.filter(ev =>
+      (ev.type === 'gol' || ev.type === 'gol_penalti') &&
+      players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id
+    ).length;
+    
+    const aScore = events.filter(ev =>
+      (ev.type === 'gol' || ev.type === 'gol_penalti') &&
+      players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id
+    ).length;
+    
+    const hPens = events.filter(ev =>
+      ev.type === 'penalti_convertido' &&
+      players.find(p => p.id === ev.player_id)?.team_id === match.home_team_id
+    ).length;
+    
+    const aPens = events.filter(ev =>
+      ev.type === 'penalti_convertido' &&
+      players.find(p => p.id === ev.player_id)?.team_id === match.away_team_id
+    ).length;
+
+    return { h: hScore, a: aScore, hp: hPens, ap: aPens };
+  }, [data]);
 
   const handleAddEvent = async (pId: string, type: string, min: string, assistId: string) => {
     setSaving(true);
-    let finalType = type;
-
-    if (type === 'cartao_amarelo') {
-      const existingYellow = events.find(ev => ev.player_id === pId && ev.type === 'cartao_amarelo');
-      if (existingYellow) {
-        if (confirm('Este jogador já tem um amarelo. Lançar como Expulsão (2º Amarelo)?')) {
-          finalType = 'cartao_vermelho_indireto';
-        } else {
-          setSaving(false);
-          return;
-        }
-      }
-    }
-
+    
     await AdminEngine.safeMutation({
       mutationFn: async () => {
         const { error } = await supabase.from('match_events').insert([{
           match_id: id,
           player_id: pId,
-          type: finalType,
-          minute: min ? parseInt(min) : null,
+          type: type,
+          minute: parseInt(min) || 0,
           assist_player_id: assistId || null
         }]);
         if (error) throw error;
       },
-      invalidateKeys: [['jogos'], ['artilharia']],
-      onSuccess: () => refreshEvents(),
-      onError: (err: any) => alert('Erro ao salvar: ' + err.message)
+      invalidateKeys: [['admin-match', id], ['artilharia'], ['match-detail']],
+      onSuccess: () => {
+        refetch();
+      },
+      onError: (err: any) => alert('Erro ao salvar evento: ' + err.message)
     });
+    setSaving(false);
+  };
 
     setSaving(false);
   };

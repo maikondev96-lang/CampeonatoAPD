@@ -282,18 +282,9 @@ const CompetitionWrapper = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-function App() {
-  useEffect(() => {
-    const localBuildId = localStorage.getItem('app_build_id');
-    if (localBuildId !== APP_BUILD_ID) {
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('cache_')) localStorage.removeItem(key);
-      });
-      localStorage.setItem('app_build_id', APP_BUILD_ID);
-      if (localBuildId) window.location.reload();
-    }
-  }, []);
+import PWABadge from './components/PWABadge';
 
+function App() {
   return (
     <Router>
       <ScrollToTop />
@@ -348,6 +339,7 @@ function App() {
               </Routes>
             </main>
             <BottomNav />
+            <PWABadge />
           </div>
         </SeasonProvider>
       </OrganizationProvider>

@@ -36,72 +36,32 @@ const NewsModal = ({ news, onClose }: { news: any, onClose: () => void }) => {
 };
 
 export default function Home() {
-  // organization é APENAS para exibição (logo/nome). Nunca bloqueia o render.
   const { organization } = useOrganizationContext();
   const queryClient = useQueryClient();
   const [selectedNews, setSelectedNews] = useState<any>(null);
 
-  const { data: news, isLoading: newsLoading, isError: newsError, refetch: refetchNews } = useQuery({
-    queryKey: ['news'],
+  const query = useQuery({
+    queryKey: ['home-data'],
     queryFn: async () => {
-      try {
-        const res = await fetch('/api/news');
-        const isJson = res.ok && res.headers.get('content-type')?.includes('application/json');
-        if (isJson) return res.json();
-      } catch (_) { /* API offline */ }
-      // Fallback: busca direto no Supabase
-      const { data } = await supabase.from('news').select('*').order('created_at', { ascending: false });
-      return data ?? [];
+      const [nRes, cRes] = await Promise.all([
+        supabase.from('news').select('*').eq('is_published', true).order('created_at', { ascending: false }).limit(10),
+        supabase.from('competitions').select('*, seasons(*)').order('created_at', { ascending: false })
+      ]);
+      if (nRes.error) throw nRes.error;
+      if (cRes.error) throw cRes.error;
+      return { news: nRes.data, competitions: cRes.data };
     }
   });
 
-  const { data: competitions, isLoading: compsLoading, isError: compsError, refetch: refetchComps } = useQuery({
-    queryKey: ['competitions'],
-    queryFn: async () => {
-      try {
-        const res = await fetch('/api/competitions');
-        const isJson = res.ok && res.headers.get('content-type')?.includes('application/json');
-        if (isJson) return res.json();
-      } catch (_) { /* API offline */ }
-      // Fallback: busca direto no Supabase
-      const { data } = await supabase.from('competitions').select('*, seasons(*)').order('created_at', { ascending: false });
-      return data ?? [];
-    }
-  });
+  const { state, data, refetch } = useQueryEngine(query);
 
   useEffect(() => {
     document.body.style.overflow = selectedNews ? 'hidden' : 'unset';
     return () => { document.body.style.overflow = 'unset'; };
   }, [selectedNews]);
 
-  const prefetchDashboard = (seasonId: string) => {
-    queryClient.prefetchQuery({
-      queryKey: ['dashboard', seasonId],
-      queryFn: async () => {
-        try {
-          const res = await fetch(`/api/dashboard?season_id=${seasonId}`);
-          if (res.ok) return res.json();
-        } catch (_) { /* silencioso */ }
-        return null;
-      },
-      staleTime: 1000 * 60 * 5
-    });
-  };
-
-  const isLoading = newsLoading || compsLoading;
-  const isError = newsError || compsError;
-  const hasData = !!(news || competitions);
-  const refetch = () => { refetchNews(); refetchComps(); };
-
-  const state = {
-    loading: (newsLoading || compsLoading) && !hasData,
-    error: (newsError || compsError) && !hasData,
-    warning: (newsError || compsError) && hasData,
-    success: hasData
-  };
-
   return (
-    <QueryView state={state} data={{ news, competitions }} onRetry={refetch}>
+    <QueryView state={state} data={data} onRetry={refetch}>
       {({ news, competitions }) => {
         const featuredNews = news?.find((n: any) => n.is_featured) || news?.[0];
         const sideNews = news?.filter((n: any) => n.id !== featuredNews?.id) || [];

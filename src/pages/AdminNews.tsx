@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Plus, Trash2, Edit, Save, Image as ImageIcon, CheckCircle, XCircle, Globe, Upload, Link as LinkIcon } from 'lucide-react';
-
-import { useQueryClient } from '@tanstack/react-query';
+import { Plus, Trash2, Edit, Save, Globe, Upload, Link as LinkIcon } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { useQueryEngine } from '../query/useQueryEngine';
+import { QueryView } from '../query/QueryView';
+import { AdminEngine } from '../admin/adminEngine';
 
 export default function AdminNews() {
-  const queryClient = useQueryClient();
-  const [news, setNews] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -23,16 +22,17 @@ export default function AdminNews() {
     external_url: ''
   });
 
-  useEffect(() => {
-    fetchNews();
-  }, []);
+  // 1. DATA LAYER (READ)
+  const query = useQuery({
+    queryKey: ['news'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('news').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    }
+  });
 
-  const fetchNews = async () => {
-    setLoading(true);
-    const { data } = await supabase.from('news').select('*').order('created_at', { ascending: false });
-    if (data) setNews(data);
-    setLoading(false);
-  };
+  const { state, data, refetch } = useQueryEngine(query);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -63,30 +63,42 @@ export default function AdminNews() {
   };
 
   const handleSave = async () => {
-    try {
-      if (editingId) {
-        await supabase.from('news').update(formData).eq('id', editingId);
-      } else {
-        await supabase.from('news').insert([formData]);
-      }
-      alert('Notícia salva com sucesso!');
-      setEditingId(null);
-      setFormData({ title: '', subtitle: '', content: '', image_url: '', category: 'Geral', is_published: true, is_featured: false, external_url: '' });
-      await fetchNews();
-      queryClient.invalidateQueries({ queryKey: ['news'] });
-    } catch (err: any) {
-      alert(err.message);
-    }
+    if (!formData.title) return alert('Título é obrigatório');
+    
+    await AdminEngine.safeMutation({
+      mutationFn: async () => {
+        if (editingId) {
+          const { error } = await supabase.from('news').update(formData).eq('id', editingId);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('news').insert([formData]);
+          if (error) throw error;
+        }
+      },
+      invalidateKeys: [['news']],
+      onSuccess: () => {
+        alert('Notícia salva com sucesso!');
+        setEditingId(null);
+        setFormData({ title: '', subtitle: '', content: '', image_url: '', category: 'Geral', is_published: true, is_featured: false, external_url: '' });
+        refetch();
+      },
+      onError: (err: any) => alert(err.message)
+    });
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Excluir esta notícia definitivamente?')) return;
-    await supabase.from('news').delete().eq('id', id);
-    await fetchNews();
-    queryClient.invalidateQueries({ queryKey: ['news'] });
+    
+    await AdminEngine.safeMutation({
+      mutationFn: async () => {
+        const { error } = await supabase.from('news').delete().eq('id', id);
+        if (error) throw error;
+      },
+      invalidateKeys: [['news']],
+      onSuccess: () => refetch(),
+      onError: (err: any) => alert(err.message)
+    });
   };
-
-  if (loading && news.length === 0) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
 
   return (
     <div className="animate-fade">
@@ -101,22 +113,20 @@ export default function AdminNews() {
         </button>
       </div>
 
-      {/* FORMULÁRIO */}
-      <div id="news-form" className="premium-card" style={{ padding: '2rem', marginBottom: '3rem', border: editingId ? '2px solid var(--primary-color)' : 'none' }}>
-        <h2 style={{ fontWeight: 950, marginBottom: '1.5rem' }}>{editingId ? 'Editar Notícia' : 'Escrever Nova'}</h2>
+      <div className="card" id="news-form" style={{ marginBottom: '3rem' }}>
+        <h3 style={{ marginBottom: '1.5rem', fontWeight: 900 }}>{editingId ? 'Editar Notícia' : 'Publicar Nova Notícia'}</h3>
         
-        <div className="grid-2">
-          {/* Uploader de Imagem */}
-          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-            <label>Capa da Notícia (Arraste ou clique para upload)</label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+          <div className="form-group">
+            <label className="input-label">Capa da Notícia</label>
             <div 
+              className="upload-zone"
               onClick={() => fileInputRef.current?.click()}
               style={{ 
-                height: '220px', 
+                height: '200px', 
+                borderRadius: '15px', 
                 border: '2px dashed var(--border-color)', 
-                borderRadius: '16px', 
                 display: 'flex', 
-                flexDirection: 'column',
                 alignItems: 'center', 
                 justifyContent: 'center',
                 cursor: 'pointer',
@@ -136,8 +146,8 @@ export default function AdminNews() {
             </div>
             {formData.image_url && (
               <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <input type="text" value={formData.image_url} readOnly style={{ fontSize: '0.7rem', opacity: 0.6 }} />
-                <button className="btn btn-secondary" onClick={() => setFormData({...formData, image_url: ''})} style={{ padding: '4px 8px', fontSize: '0.7rem' }}>Limpar</button>
+                <input type="text" className="form-input" value={formData.image_url} readOnly style={{ fontSize: '0.7rem', opacity: 0.6 }} />
+                <button type="button" className="btn btn-secondary" onClick={() => setFormData({...formData, image_url: ''})} style={{ padding: '4px 8px', fontSize: '0.7rem' }}>Limpar</button>
               </div>
             )}
           </div>
