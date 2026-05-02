@@ -5,6 +5,8 @@ import { Match, MatchEvent, Player } from '../types';
 import { Save, ChevronLeft, Plus, Trash2, Loader2, RotateCcw, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { checkAndGenerateNextStages } from '../services/automation';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSafeAdminMutation } from '../admin/useSafeAdminMutation';
+import { AdminEngine } from '../admin/adminEngine';
 
 const AdminMatchDetail = () => {
   const { id } = useParams();
@@ -136,57 +138,66 @@ const AdminMatchDetail = () => {
     queryClient.invalidateQueries({ queryKey: ['artilharia'] });
   };
 
-  // ── FINALIZAR PARTIDA ──
-  const handleFinalize = async () => {
-    if (match?.status === 'finalizado') {
-      if (!confirm('Esta partida já está finalizada. Deseja CORRIGIR o resultado?\n\nAtenção: a classificação será recalculada automaticamente.')) return;
-    }
+  // ── FINALIZAR PARTIDA (Admin Engine Layer) ──
+  const finalizeMutation = useSafeAdminMutation({
+    mutationFn: async () => {
+      const isPenaltyTied = match?.phase !== 'grupo' && homeScore === awayScore;
+      let winnerId: string | null = null;
 
-    setSaving(true);
-    const isPenaltyTied = match?.phase !== 'grupo' && homeScore === awayScore;
-    let winnerId: string | null = null;
-
-    if (homeScore > awayScore) winnerId = match?.home_team_id || null;
-    else if (awayScore > homeScore) winnerId = match?.away_team_id || null;
-    else if (isPenaltyTied) {
-      if (homePens === awayPens) {
-        alert('Pênaltis empatados! Defina um vencedor nos pênaltis.');
-        setSaving(false);
-        return;
+      if (homeScore > awayScore) winnerId = match?.home_team_id || null;
+      else if (awayScore > homeScore) winnerId = match?.away_team_id || null;
+      else if (isPenaltyTied) {
+        if (homePens === awayPens) {
+          throw new Error('Pênaltis empatados! Defina um vencedor nos pênaltis.');
+        }
+        winnerId = homePens > awayPens ? (match?.home_team_id || null) : (match?.away_team_id || null);
       }
-      winnerId = homePens > awayPens ? (match?.home_team_id || null) : (match?.away_team_id || null);
-    }
 
-    const { error } = await supabase.from('matches').update({
-      home_score: homeScore,
-      away_score: awayScore,
-      home_penalties: isPenaltyTied && (homePens > 0 || awayPens > 0) ? homePens : null,
-      away_penalties: isPenaltyTied && (homePens > 0 || awayPens > 0) ? awayPens : null,
-      winner_id: winnerId,
-      status: 'finalizado'
-    }).eq('id', id);
+      const { error } = await supabase.from('matches').update({
+        home_score: homeScore,
+        away_score: awayScore,
+        home_penalties: isPenaltyTied && (homePens > 0 || awayPens > 0) ? homePens : null,
+        away_penalties: isPenaltyTied && (homePens > 0 || awayPens > 0) ? awayPens : null,
+        winner_id: winnerId,
+        status: 'finalizado'
+      }).eq('id', id);
 
-    if (!error && match) {
+      if (error) throw error;
+
       // Propagação automática para mata-mata ou finais e correções
-      if (match.season_id) {
+      let autoPropagated = false;
+      if (match?.season_id) {
         const autoRes = await checkAndGenerateNextStages(match.season_id);
         if (autoRes.generated) {
-          alert('🎉 Fases seguintes (Mata-Mata ou Finais) foram atualizadas ou geradas automaticamente com base no resultado!');
+          autoPropagated = true;
         }
       }
 
+      return { autoPropagated };
+    },
+    invalidateKeys: match?.season_id ? [
+      ['jogos', match.season_id],
+      ['dashboard', match.season_id],
+      ['classificacao', match.season_id],
+      ['artilharia', match.season_id]
+    ] : [],
+    onSuccess: (data) => {
+      if (data?.autoPropagated) {
+        alert('🎉 Fases seguintes (Mata-Mata ou Finais) foram atualizadas ou geradas automaticamente com base no resultado!');
+      }
       alert('✅ Resultado salvo com sucesso!');
-      // Invalida todas as queries que dependem do resultado da partida
-      const sid = match.season_id;
-      queryClient.invalidateQueries({ queryKey: ['jogos', sid] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', sid] });
-      queryClient.invalidateQueries({ queryKey: ['classificacao', sid] });
-      queryClient.invalidateQueries({ queryKey: ['artilharia', sid] });
       navigate('/admin/jogos');
-    } else {
-      alert('Erro ao salvar: ' + (error as Error)?.message || 'Erro desconhecido');
+    },
+    onError: (err: any) => {
+      alert(err.message || 'Erro desconhecido');
     }
-    setSaving(false);
+  });
+
+  const handleFinalize = () => {
+    if (match?.status === 'finalizado') {
+      if (!confirm('Esta partida já está finalizada. Deseja CORRIGIR o resultado?\n\nAtenção: a classificação será recalculada automaticamente.')) return;
+    }
+    finalizeMutation.mutate();
   };
 
   // ── RESETAR PARTIDA (dados de teste → agendado, placar zerado) ──
@@ -329,11 +340,11 @@ const AdminMatchDetail = () => {
           <div style={{ display: 'grid', gridTemplateColumns: isFinished ? '1fr 1fr' : '1fr', gap: '0.5rem', marginTop: '1.25rem' }}>
             <button
               onClick={handleFinalize}
-              disabled={saving}
+              disabled={finalizeMutation.isPending || AdminEngine.isMutating}
               className="btn-app-primary"
               style={{ background: isFinished ? 'var(--surface-alt)' : 'var(--primary-color)', color: isFinished ? 'var(--text-main)' : '#fff', border: isFinished ? '1px solid var(--border-color)' : 'none' }}
             >
-              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              {finalizeMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
               {isFinished ? 'Corrigir' : 'Finalizar Partida'}
             </button>
 
