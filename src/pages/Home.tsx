@@ -35,6 +35,8 @@ const NewsModal = ({ news, onClose }: { news: any, onClose: () => void }) => {
   );
 };
 
+import { useQueryEngine } from '../query/useQueryEngine';
+
 export default function Home() {
   const { organization } = useOrganizationContext();
   const queryClient = useQueryClient();
@@ -106,8 +108,6 @@ export default function Home() {
                     to={activeSeason ? `/competitions/${comp.slug}/${activeSeason.year}` : '#'} 
                     key={comp.id} 
                     className="fs-comp-item"
-                    onMouseEnter={() => activeSeason && prefetchDashboard(activeSeason.id)}
-                    onTouchStart={() => activeSeason && prefetchDashboard(activeSeason.id)}
                   >
                     <img src={comp.logo_url || logoApd} alt="" className="fs-comp-logo" loading="lazy" width="24" height="24" />
                     <div className="fs-comp-details">

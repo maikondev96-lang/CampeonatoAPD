@@ -34,10 +34,6 @@ export default function PublicRegistration() {
   // Form State - Players
   const [players, setPlayers] = useState<any[]>([]);
 
-  useEffect(() => {
-    validateToken();
-  }, [token]);
-
   const validateToken = async () => {
     try {
       if (!token) throw new Error('Token inválido');
@@ -65,6 +61,10 @@ export default function PublicRegistration() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    validateToken();
+  }, [token]);
 
   const addPlayer = () => {
     setPlayers([...players, { id: crypto.randomUUID(), name: '', number: '', position: 'ATA', photo: '' }]);

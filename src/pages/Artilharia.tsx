@@ -63,8 +63,8 @@ const Artilharia = () => {
   });
 
   const { playerStats, teamStats } = useMemo(() => {
-    if (!rawData) return { playerStats: [], teamStats: [] };
-    const { players, seasonTeamsData, matches, events } = rawData;
+    if (!query.data) return { playerStats: [], teamStats: [] };
+    const { players, seasonTeamsData, matches, events } = query.data;
     const teams = (seasonTeamsData || []).map((st: any) => st.team).filter(Boolean);
 
     const pMap: Record<string, PlayerStat> = {};
@@ -186,7 +186,7 @@ const Artilharia = () => {
     );
   };
 
-  if (loading || ctxLoading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
+  if (state.loading || ctxLoading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
 
   const scorers = [...playerStats].sort((a, b) => b.gols - a.gols || b.assistencias - a.assistencias).map(s => ({ ...s, value: s.gols }));
   const assisters = [...playerStats].sort((a, b) => b.assistencias - a.assistencias || b.gols - a.gols).map(s => ({ ...s, value: s.assistencias }));

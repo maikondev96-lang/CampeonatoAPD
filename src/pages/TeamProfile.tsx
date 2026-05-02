@@ -12,10 +12,6 @@ export default function TeamProfile() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (id && season) fetchTeamData();
-  }, [id, season]);
-
   const fetchTeamData = async () => {
     setLoading(true);
     try {
@@ -45,6 +41,10 @@ export default function TeamProfile() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (id && season) fetchTeamData();
+  }, [id, season]);
 
   if (loading) return <div style={{ padding: '5rem', textAlign: 'center' }}><Loader2 className="animate-spin" size={40} color="var(--primary-color)" /></div>;
   if (!team) return <div style={{ padding: '5rem', textAlign: 'center' }}>Time não encontrado.</div>;

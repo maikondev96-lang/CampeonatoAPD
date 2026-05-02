@@ -5,7 +5,7 @@ import { RefreshCcw, X } from 'lucide-react'
 function PWABadge() {
   const {
     offlineReady: [offlineReady, setOfflineReady],
-    needUpdate: [needUpdate, setNeedUpdate],
+    needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
     onRegistered(r) {
@@ -18,10 +18,10 @@ function PWABadge() {
 
   const close = () => {
     setOfflineReady(false)
-    setNeedUpdate(false)
+    setNeedRefresh(false)
   }
 
-  if (!offlineReady && !needUpdate) return null
+  if (!offlineReady && !needRefresh) return null
 
   return (
     <div 
@@ -57,7 +57,7 @@ function PWABadge() {
           : 'Uma atualização importante foi lançada para o portal Copa APD.'}
       </p>
 
-      {needUpdate && (
+      {needRefresh && (
         <button 
           className="btn btn-primary" 
           onClick={() => updateServiceWorker(true)}

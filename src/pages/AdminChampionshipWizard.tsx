@@ -64,7 +64,7 @@ export default function AdminChampionshipWizard() {
     }
   });
 
-  const { state, data: templates } = useQueryEngine(templatesQuery);
+  const { state, data: templates, refetch } = useQueryEngine(templatesQuery);
 
   const generateSlug = (name: string) => {
     return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
@@ -191,7 +191,7 @@ export default function AdminChampionshipWizard() {
       case 2: return (
         <div className="animate-fade">
           <h2 className="step-title"><Layout /> Etapa 2: Modelo de Campeonato</h2>
-          <QueryView state={state} data={templates}>
+          <QueryView state={state} data={templates} onRetry={refetch}>
             {(templateList) => (
               <div className="template-grid">
                 {templateList.map((t: any) => (

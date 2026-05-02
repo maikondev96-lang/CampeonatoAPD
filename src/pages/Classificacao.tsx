@@ -43,9 +43,9 @@ const Classificacao = () => {
 
   // Toda a lógica de negócio agora em useMemo — não muda, só o transporte mudou
   const { standings, recentResults } = useMemo(() => {
-    if (!rawData || !season) return { standings: [], recentResults: {} };
+    if (!query.data || !season) return { standings: [], recentResults: {} };
 
-    const { teams: teamsData, matches: matchesData, groupStageIds } = rawData;
+    const { teams: teamsData, matches: matchesData, groupStageIds } = query.data;
     const baseMap: Record<string, Standing> = {};
 
     teamsData.forEach((st: any) => {

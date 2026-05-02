@@ -114,8 +114,34 @@ const Fases = () => {
     );
   };
 
+  const roundOf16 = matches?.filter(m => m.stage?.type === 'round_of_16') || [];
+  const quarters = matches?.filter(m => m.stage?.type === 'quarter') || [];
+  const semiFinals = matches?.filter(m => m.stage?.type === 'semi') || [];
+  const final = matches?.find(m => m.stage?.type === 'final');
+  const thirdPlace = matches?.find(m => m.stage?.type === 'third_place');
+  const year = season?.year || new Date().getFullYear();
+
   return (
-              <div className="col-label">OITAVAS</div>
+    <div className="epic-fases-page animate-fade">
+      <div className="epic-background-glow"></div>
+      
+      <header className="epic-header">
+        <div className="header-icon"><Trophy size={32} /></div>
+        <h1 className="epic-title">CHAVES <span>DO MATA-MATA</span></h1>
+        <p className="epic-subtitle">Acompanhe o caminho rumo à glória eterna</p>
+      </header>
+
+      <div className="bracket-tabs">
+        {roundOf16.length > 0 && <button className={activeTab === 'oitavas' ? 'active' : ''} onClick={() => setActiveTab('oitavas')}>OITAVAS</button>}
+        {quarters.length > 0 && <button className={activeTab === 'quartas' ? 'active' : ''} onClick={() => setActiveTab('quartas')}>QUARTAS</button>}
+        <button className={activeTab === 'semis' ? 'active' : ''} onClick={() => setActiveTab('semis')}>SEMIS</button>
+        <button className={activeTab === 'final' ? 'active' : ''} onClick={() => setActiveTab('final')}>FINAL</button>
+      </div>
+
+      <div className="epic-bracket-container">
+        <div className="desktop-only epic-bracket-layout">
+          {roundOf16.length > 0 && (
+            <div className="bracket-col side-col">
               <div className="col-matches-stack" style={{ gap: '1rem' }}>
                 {roundOf16.slice(0, Math.ceil(roundOf16.length/2)).map((m, i) => (
                   <BracketCard key={m.id} match={m} placeholderHome={`TIME ${i*2+1}`} placeholderAway={`TIME ${i*2+2}`} type="oitavas" />

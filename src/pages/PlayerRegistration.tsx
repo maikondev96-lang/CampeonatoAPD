@@ -28,10 +28,6 @@ export default function PlayerRegistration() {
     photoUrl: ''
   });
 
-  useEffect(() => {
-    fetchData();
-  }, [inviteToken]);
-
   const fetchData = async () => {
     try {
       if (!inviteToken) throw new Error('Token de convite não fornecido.');
@@ -92,6 +88,10 @@ export default function PlayerRegistration() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, [inviteToken]);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

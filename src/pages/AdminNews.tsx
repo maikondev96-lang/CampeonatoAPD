@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { Plus, Trash2, Edit, Save, Globe, Upload, Link as LinkIcon } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, Globe, Upload, Link as LinkIcon, Image, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useQueryEngine } from '../query/useQueryEngine';
 import { QueryView } from '../query/QueryView';
@@ -224,10 +224,10 @@ export default function AdminNews() {
 
       {/* LISTAGEM */}
       <div className="grid-2" style={{ gap: '1.5rem' }}>
-        {news.map(item => (
+        {(data || []).map(item => (
           <div key={item.id} className="premium-card" style={{ display: 'flex', gap: '1.5rem', padding: '1.25rem' }}>
             <div style={{ width: '120px', height: '100px', background: 'var(--surface-alt)', borderRadius: '12px', overflow: 'hidden', flexShrink: 0 }}>
-              {item.image_url ? <img src={item.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={24} style={{ margin: '35px 48px', opacity: 0.2 }} />}
+              {item.image_url ? <img src={item.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Image size={24} style={{ margin: '35px 48px', opacity: 0.2 }} />}
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
