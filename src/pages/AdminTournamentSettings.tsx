@@ -3,9 +3,11 @@ import { useAdminContext } from '../components/AdminContext';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Settings, Save, Loader2, Image as ImageIcon, Layout, ShieldCheck, Palette, AlertTriangle, Trash2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function AdminTournamentSettings() {
   const { activeCompetition, activeSeason, loading: ctxLoading } = useAdminContext();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -60,9 +62,9 @@ export default function AdminTournamentSettings() {
 
       if (seasonErr) throw seasonErr;
 
-      // Invalida cache para refletir no público
-      const { bumpTableVersion } = await import('../utils/smartCache');
-      await bumpTableVersion('competitions');
+      // Invalida cache para refletir no publico
+      queryClient.invalidateQueries({ queryKey: ['competitions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 
       alert('Configurações salvas com sucesso!');
     } catch (err: any) {

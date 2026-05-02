@@ -6,10 +6,12 @@ import { useAdminContext } from '../components/AdminContext';
 
 import { playerSchema } from '../utils/schemas';
 import { validateImageUrl } from '../utils/imageValidation';
-import { bumpTableVersion } from '../utils/smartCache';
+
+import { useQueryClient } from '@tanstack/react-query';
 
 const AdminJogadores = () => {
   const { activeSeason: season, loading: ctxLoading } = useAdminContext();
+  const queryClient = useQueryClient();
   const [times, setTimes] = useState<Team[]>([]);
   const [jogadores, setJogadores] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,7 +149,8 @@ const AdminJogadores = () => {
       }
       cancelEdit();
       await fetchData();
-      await bumpTableVersion('jogadores');
+      queryClient.invalidateQueries({ queryKey: ['artilharia'] });
+      queryClient.invalidateQueries({ queryKey: ['rosters'] });
     } catch (err: any) {
       alert(err.message || 'Erro ao salvar jogador');
     } finally {
@@ -161,7 +164,8 @@ const AdminJogadores = () => {
     const { error } = await supabase.from('players').delete().eq('id', id);
     if (!error) {
       await fetchData();
-      await bumpTableVersion('jogadores');
+      queryClient.invalidateQueries({ queryKey: ['artilharia'] });
+      queryClient.invalidateQueries({ queryKey: ['rosters'] });
     }
   };
 

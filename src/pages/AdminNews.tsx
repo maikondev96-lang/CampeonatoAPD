@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { Loader2, Plus, Trash2, Edit, Save, Image as ImageIcon, CheckCircle, XCircle, Globe, Upload, Link as LinkIcon } from 'lucide-react';
-import { bumpTableVersion } from '../utils/smartCache';
+
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function AdminNews() {
+  const queryClient = useQueryClient();
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -71,7 +73,7 @@ export default function AdminNews() {
       setEditingId(null);
       setFormData({ title: '', subtitle: '', content: '', image_url: '', category: 'Geral', is_published: true, is_featured: false, external_url: '' });
       await fetchNews();
-      await bumpTableVersion('noticias');
+      queryClient.invalidateQueries({ queryKey: ['news'] });
     } catch (err: any) {
       alert(err.message);
     }
@@ -81,7 +83,7 @@ export default function AdminNews() {
     if (!window.confirm('Excluir esta notícia definitivamente?')) return;
     await supabase.from('news').delete().eq('id', id);
     await fetchNews();
-    await bumpTableVersion('noticias');
+    queryClient.invalidateQueries({ queryKey: ['news'] });
   };
 
   if (loading && news.length === 0) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;

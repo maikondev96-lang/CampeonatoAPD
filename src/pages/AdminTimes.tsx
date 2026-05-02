@@ -4,10 +4,11 @@ import { Team } from '../types';
 import { Plus, Shield, Trash2, Loader2, Upload, Image as ImageIcon, X, Edit2, Save, Link as LinkIcon, Copy, RefreshCw, CheckCircle, AlertCircle, Unlock } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useAdminContext } from '../components/AdminContext';
-import { bumpTableVersion } from '../utils/smartCache';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AdminTimes = () => {
   const { activeSeason, loading: ctxLoading } = useAdminContext();
+  const queryClient = useQueryClient();
   const [times, setTimes] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
@@ -163,7 +164,8 @@ const AdminTimes = () => {
       setSquadPreviewUrl('');
       setEditingId(null);
       await fetchTimes();
-      await bumpTableVersion('times');
+      queryClient.invalidateQueries({ queryKey: ['rosters'] });
+      queryClient.invalidateQueries({ queryKey: ['competitions'] });
       alert(editingId ? 'Time atualizado!' : 'Time adicionado!');
     } catch (error: any) {
       alert(error.message || 'Erro ao salvar time');

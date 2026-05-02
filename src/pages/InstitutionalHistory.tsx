@@ -1,7 +1,7 @@
 import React from 'react';
 import { History as HistoryIcon, Star, Trophy, Users, Flag, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../supabaseClient';
-import { useSmartData } from '../utils/smartCache';
 
 // Fallback hardcoded (Dados reais estáticos pois as tabelas não existem no DB)
 const fallbackTimeline = [
@@ -15,37 +15,37 @@ const fallbackTimeline = [
 const iconMap: any = { 'HistoryIcon': HistoryIcon, 'Star': Star, 'Trophy': Trophy, 'Users': Users, 'Flag': Flag };
 
 export default function InstitutionalHistory() {
-  const { data: historyData, loading: cacheLoading } = useSmartData('history_full', async () => {
-    try {
-      // 1. Busca Campeões Automáticos (Seasons terminadas)
-      const { data: autoChamps } = await supabase
-        .from('seasons')
-        .select('*, competition:competitions(name), champion_team:teams!champion_team_id(*), runner_up_team:teams!runner_up_team_id(*)')
-        .eq('status', 'finished');
-      
-      // 2. Nota: As tabelas 'hall_of_fame' e 'history_timeline' não existem.
-      // Usaremos apenas os dados automáticos e o fallback para timeline.
+  const { data: historyData, isLoading: cacheLoading } = useQuery({
+    queryKey: ['history'],
+    queryFn: async () => {
+      try {
+        const { data: autoChamps } = await supabase
+          .from('seasons')
+          .select('*, competition:competitions(name), champion_team:teams!champion_team_id(*), runner_up_team:teams!runner_up_team_id(*)')
+          .eq('status', 'finished');
 
-      const normalizedAuto = (autoChamps || []).map(s => ({
-        id: s.id,
-        year: s.year,
-        competition_name: s.competition?.name,
-        champion_name: s.champion_team?.name,
-        champion_logo: s.champion_team?.logo_url,
-        squad_photo: s.champion_team?.squad_photo_url,
-        runner_up_name: s.runner_up_team?.name,
-        runner_up_logo: s.runner_up_team?.logo_url,
-        is_auto: true
-      }));
+        const normalizedAuto = (autoChamps || []).map(s => ({
+          id: s.id,
+          year: s.year,
+          competition_name: s.competition?.name,
+          champion_name: s.champion_team?.name,
+          champion_logo: s.champion_team?.logo_url,
+          squad_photo: s.champion_team?.squad_photo_url,
+          runner_up_name: s.runner_up_team?.name,
+          runner_up_logo: s.runner_up_team?.logo_url,
+          is_auto: true
+        }));
 
-      return {
-        champions: normalizedAuto.sort((a, b) => b.year - a.year),
-        timeline: fallbackTimeline
-      };
-    } catch (e) {
-      console.error("Erro ao carregar história:", e);
-      return { champions: [], timeline: fallbackTimeline };
-    }
+        return {
+          champions: normalizedAuto.sort((a, b) => b.year - a.year),
+          timeline: fallbackTimeline
+        };
+      } catch (e) {
+        console.error('Erro ao carregar história:', e);
+        return { champions: [], timeline: fallbackTimeline };
+      }
+    },
+    staleTime: 1000 * 60 * 10,
   });
 
   const allChampions = historyData?.champions || [];

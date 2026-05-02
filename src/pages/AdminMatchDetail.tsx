@@ -4,11 +4,12 @@ import { supabase } from '../supabaseClient';
 import { Match, MatchEvent, Player } from '../types';
 import { Save, ChevronLeft, Plus, Trash2, Loader2, RotateCcw, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { checkAndGenerateNextStages } from '../services/automation';
-import { bumpTableVersion } from '../utils/smartCache';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AdminMatchDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [match, setMatch] = useState<Match | null>(null);
   const [events, setEvents] = useState<any[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -119,7 +120,9 @@ const AdminMatchDetail = () => {
 
     if (!error) {
       await refreshEvents();
-      await bumpTableVersion('partidas');
+      // Invalida cache do TanStack para forcar refetch nas paginas publicas
+      queryClient.invalidateQueries({ queryKey: ['jogos'] });
+      queryClient.invalidateQueries({ queryKey: ['artilharia'] });
     } else {
       alert('Erro ao salvar: ' + error.message);
     }
@@ -129,7 +132,8 @@ const AdminMatchDetail = () => {
   const deleteEvent = async (eventId: string) => {
     await supabase.from('match_events').delete().eq('id', eventId);
     await refreshEvents();
-    await bumpTableVersion('partidas');
+    queryClient.invalidateQueries({ queryKey: ['jogos'] });
+    queryClient.invalidateQueries({ queryKey: ['artilharia'] });
   };
 
   // ── FINALIZAR PARTIDA ──
@@ -172,8 +176,12 @@ const AdminMatchDetail = () => {
       }
 
       alert('✅ Resultado salvo com sucesso!');
-      await bumpTableVersion('partidas');
-      await bumpTableVersion('classificacao');
+      // Invalida todas as queries que dependem do resultado da partida
+      const sid = match.season_id;
+      queryClient.invalidateQueries({ queryKey: ['jogos', sid] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', sid] });
+      queryClient.invalidateQueries({ queryKey: ['classificacao', sid] });
+      queryClient.invalidateQueries({ queryKey: ['artilharia', sid] });
       navigate('/admin/jogos');
     } else {
       alert('Erro ao salvar: ' + (error as Error)?.message || 'Erro desconhecido');
@@ -219,8 +227,11 @@ const AdminMatchDetail = () => {
       await fetchMatch(false);
       setShowResetConfirm(false);
       alert('✅ Partida resetada! Pronto para lançar os dados reais.');
-      await bumpTableVersion('partidas');
-      await bumpTableVersion('classificacao');
+      const sid = match?.season_id;
+      queryClient.invalidateQueries({ queryKey: ['jogos', sid] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', sid] });
+      queryClient.invalidateQueries({ queryKey: ['classificacao', sid] });
+      queryClient.invalidateQueries({ queryKey: ['artilharia', sid] });
     } catch (err: any) {
       alert('❌ ' + err.message);
     } finally {
