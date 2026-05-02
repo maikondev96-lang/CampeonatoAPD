@@ -70,8 +70,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     navigate(`/admin/${comp.slug}/${season.year}`);
   };
 
+  const value = React.useMemo(() => ({ 
+    activeCompetition, 
+    activeSeason, 
+    loading, 
+    setContext 
+  }), [activeCompetition?.id, activeSeason?.id, loading]);
+
   return (
-    <AdminContext.Provider value={{ activeCompetition, activeSeason, loading, setContext }}>
+    <AdminContext.Provider value={value}>
       {children}
     </AdminContext.Provider>
   );

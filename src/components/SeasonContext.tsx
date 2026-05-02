@@ -107,6 +107,7 @@ export const SeasonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [competition]);
 
+  // Memoriza o valor para evitar re-renderizações desnecessárias dos consumidores
   const value = React.useMemo(() => ({
     competitions,
     competition,
@@ -115,7 +116,7 @@ export const SeasonProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     loading,
     selectCompetition,
     selectSeason,
-  }), [competitions, competition, season, seasons, loading, selectCompetition, selectSeason]);
+  }), [competitions, competition?.id, season?.id, seasons, loading, selectCompetition, selectSeason]);
 
   return (
     <SeasonContext.Provider value={value}>
