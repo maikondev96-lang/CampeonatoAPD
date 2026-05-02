@@ -101,14 +101,22 @@ const Classificacao = () => {
     return { standings: finalStandings, recentResults: resultsMap };
   }, [rawData, season]);
 
-  if (isError && !rawData) return <QueryError message="Erro ao carregar a classificação." onRetry={refetch} />;
-  if (queryLoading || ctxLoading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
+  if ((queryLoading || ctxLoading) && !rawData) {
+    return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
+  }
+
+  if (isError && !rawData) {
+    return <QueryError message="Erro ao carregar a classificação." onRetry={refetch} />;
+  }
 
   const dotColor = (r: 'W' | 'D' | 'L') =>
     r === 'W' ? '#059669' : r === 'L' ? '#dc2626' : '#94a3b8';
 
   return (
     <div className="page-fluid animate-fade">
+      {isError && rawData && (
+        <QueryError message="Conexão instável. Exibindo dados antigos." onRetry={refetch} variant="warning" />
+      )}
       <h1 className="section-title"><Table /> Classificação {season && <span style={{ fontSize: '0.6em', color: 'var(--text-muted)', fontWeight: 600 }}>{season.year}</span>}</h1>
 
       <div className="fs-table-container">

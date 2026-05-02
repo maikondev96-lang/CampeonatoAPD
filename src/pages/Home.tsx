@@ -6,6 +6,7 @@ import logoApd from '../assets/logo.png';
 import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabaseClient';
+import { QueryError } from '../components/QueryError';
 
 // SUB-COMPONENTE NEWS MODAL
 const NewsModal = ({ news, onClose }: { news: any, onClose: () => void }) => {
@@ -40,7 +41,7 @@ export default function Home() {
   const queryClient = useQueryClient();
   const [selectedNews, setSelectedNews] = useState<any>(null);
 
-  const { data: news, isLoading: newsLoading } = useQuery({
+  const { data: news, isLoading: newsLoading, isError: newsError, refetch: refetchNews } = useQuery({
     queryKey: ['news'],
     queryFn: async () => {
       try {
@@ -54,7 +55,7 @@ export default function Home() {
     }
   });
 
-  const { data: competitions, isLoading: compsLoading } = useQuery({
+  const { data: competitions, isLoading: compsLoading, isError: compsError, refetch: refetchComps } = useQuery({
     queryKey: ['competitions'],
     queryFn: async () => {
       try {
@@ -87,9 +88,12 @@ export default function Home() {
     });
   };
 
-  // Bloqueia render APENAS se os dados reais ainda não chegaram.
-  // organization nunca bloqueia — ela é opcional para exibição.
-  if (newsLoading && compsLoading) {
+  const isLoading = newsLoading || compsLoading;
+  const isError = newsError || compsError;
+  const hasData = !!(news || competitions);
+  const refetch = () => { refetchNews(); refetchComps(); };
+
+  if (isLoading && !hasData) {
     return (
       <div className="home-loading-compact" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
         <Activity className="animate-spin" color="var(--primary-color)" size={32} />
@@ -97,11 +101,18 @@ export default function Home() {
     );
   }
 
+  if (isError && !hasData) {
+    return <QueryError message="Erro ao carregar a página inicial." onRetry={refetch} />;
+  }
+
   const featuredNews = news?.find((n: any) => n.is_featured) || news?.[0];
   const sideNews = news?.filter((n: any) => n.id !== featuredNews?.id) || [];
 
   return (
     <div className="home-dashboard animate-fade" style={{ willChange: 'transform' }}>
+      {isError && hasData && (
+        <QueryError message="Conexão instável. Exibindo dados antigos." onRetry={refetch} variant="warning" />
+      )}
       <div className="dashboard-container">
         <div className="dashboard-row main-content-row">
           <main className="fs-news-section">

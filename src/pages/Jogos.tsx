@@ -44,8 +44,13 @@ const Jogos = () => {
   const jogos: Match[] = data?.matches ?? [];
   const stages: Stage[] = data?.stages ?? [];
 
-  if (isError && !data) return <QueryError message="Erro ao carregar os jogos." onRetry={refetch} />;
-  if (queryLoading || ctxLoading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" color="var(--primary-color)" size={32} /></div>;
+  if ((queryLoading || ctxLoading) && !data) {
+    return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" color="var(--primary-color)" size={32} /></div>;
+  }
+
+  if (isError && !data) {
+    return <QueryError message="Erro ao carregar os jogos." onRetry={refetch} />;
+  }
 
   const groups: { key: string; label: string; matches: Match[]; isKnockout: boolean }[] = [];
   const groupStageIds = stages.filter(s => s.type === 'group').map(s => s.id);
@@ -75,6 +80,9 @@ const Jogos = () => {
 
   return (
     <div className="page-fluid animate-fade">
+      {isError && data && (
+        <QueryError message="Conexão instável. Exibindo dados antigos." onRetry={refetch} variant="warning" />
+      )}
       <div className="jogos-header">
         <div className="header-badge"><Calendar size={14}/><span>TEMPORADA {year}</span></div>
         <h1 className="main-title">Calendário de Jogos</h1>

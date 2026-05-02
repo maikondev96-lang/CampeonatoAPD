@@ -50,19 +50,25 @@ const TournamentDashboard = () => {
   // Uma única requisição para TUDO (Stats, Jogos, Resultados, Tabela)
   const { data, isLoading, isError, refetch } = useDashboard(season?.id);
 
-  // Erro real + sem cache disponível → mostra fallback com retry
-  if (isError && !data) return <QueryError message="Erro ao carregar o campeonato." onRetry={refetch} />;
-
-  if (ctxLoading || isLoading || !season || !data) {
+  if ((ctxLoading || isLoading) && !data) {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80vh' }}>
       <Loader2 className="animate-spin" size={32} color="var(--primary-color)" />
     </div>;
   }
 
+  if (isError && !data) {
+    return <QueryError message="Erro ao carregar o campeonato." onRetry={refetch} />;
+  }
+
+  if (!season || !data) return null;
+
   const { stats, nextMatches, recentResults, standings } = data;
 
   return (
     <div className="page-fluid animate-fade">
+      {isError && data && (
+        <QueryError message="Conexão instável. Exibindo dados antigos." onRetry={refetch} variant="warning" />
+      )}
       <div className="bento-dashboard-grid">
         
         {/* COLUNA 1: PORTAL DE ENTRADA (LADO ESQUERDO) */}
