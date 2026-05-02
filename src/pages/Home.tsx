@@ -45,8 +45,10 @@ export default function Home() {
     queryFn: async () => {
       try {
         const res = await fetch('/api/news');
-        if (res.ok) return res.json();
+        const isJson = res.ok && res.headers.get('content-type')?.includes('application/json');
+        if (isJson) return res.json();
       } catch (_) { /* API offline */ }
+      // Fallback: busca direto no Supabase
       const { data } = await supabase.from('news').select('*').order('created_at', { ascending: false });
       return data ?? [];
     }
@@ -57,8 +59,10 @@ export default function Home() {
     queryFn: async () => {
       try {
         const res = await fetch('/api/competitions');
-        if (res.ok) return res.json();
+        const isJson = res.ok && res.headers.get('content-type')?.includes('application/json');
+        if (isJson) return res.json();
       } catch (_) { /* API offline */ }
+      // Fallback: busca direto no Supabase
       const { data } = await supabase.from('competitions').select('*, seasons(*)').order('created_at', { ascending: false });
       return data ?? [];
     }

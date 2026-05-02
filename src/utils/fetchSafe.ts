@@ -24,6 +24,13 @@ export async function fetchSafe(url: string, options: FetchSafeOptions = {}): Pr
       throw Object.assign(new Error(`HTTP ${res.status} em ${url}`), { status: res.status });
     }
 
+    // Vite local devolve index.html com status 200 para rotas /api/*
+    // Detectar e rejeitar respostas HTML (não são JSON válido)
+    const contentType = res.headers.get('content-type') ?? '';
+    if (!contentType.includes('application/json')) {
+      throw Object.assign(new Error(`Resposta não-JSON (${contentType}) em ${url}`), { status: 404 });
+    }
+
     return res;
   } catch (err: any) {
     if (err.name === 'AbortError') {
