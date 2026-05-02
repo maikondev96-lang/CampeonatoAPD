@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { supabase } from '../supabaseClient';
-import { getSmartData } from '../utils/smartCache';
+import { useQuery } from '@tanstack/react-query';
 import { 
   Activity, Loader2, Medal, Users, Footprints, 
   ChevronDown, ChevronUp, Shield, Flame, Zap, ScrollText, AlertTriangle 
 } from 'lucide-react';
 import { useSeasonContext } from '../components/SeasonContext';
+import { useState } from 'react';
 
 interface PlayerStat {
   id: string;
@@ -34,141 +35,90 @@ interface TeamStat {
 
 const Artilharia = () => {
   const { season, loading: ctxLoading } = useSeasonContext();
-  const [playerStats, setPlayerStats] = useState<PlayerStat[]>([]);
-  const [teamStats, setTeamStats] = useState<TeamStat[]>([]);
-  const [loading, setLoading] = useState(true);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [activeIndivTab, setActiveIndivTab] = useState<'gols' | 'assistencias' | 'goleiros'>('gols');
 
-  useEffect(() => {
-    if (season) fetchStats();
-  }, [season]);
+  // TanStack Query: queryKey inclui season.id → auto-refetch ao trocar temporada
+  const { data: rawData, isLoading: queryLoading } = useQuery({
+    queryKey: ['artilharia', season?.id],
+    queryFn: async () => {
+      const { data: seasonTeamsData } = await supabase
+        .from('season_teams')
+        .select('team_id, team:teams(*)')
+        .eq('season_id', season!.id);
+      const enrolledTeamIds = (seasonTeamsData || []).map((st: any) => st.team_id);
 
-  const fetchStats = async () => {
-    if (!season) return;
-    try {
-      const data = await getSmartData(`artilharia_${season.id}`, async () => {
-        // Get teams enrolled in this season
-        const { data: seasonTeamsData } = await supabase
-          .from('season_teams')
-          .select('team_id, team:teams(*)')
-          .eq('season_id', season.id);
-        const enrolledTeamIds = (seasonTeamsData || []).map(st => st.team_id);
+      const [{ data: players }, { data: matches }, { data: events }] = await Promise.all([
+        supabase.from('players').select('*, team:teams(*)').in('team_id', enrolledTeamIds),
+        supabase.from('matches').select('*').eq('season_id', season!.id).eq('status', 'finalizado'),
+        supabase.from('match_events').select('*, match:matches!inner(season_id)').eq('match.season_id', season!.id)
+      ]);
 
-        const [
-          { data: players },
-          { data: matches },
-          { data: events }
-        ] = await Promise.all([
-          supabase.from('players').select('*, team:teams(*)').in('team_id', enrolledTeamIds),
-          supabase.from('matches').select('*').eq('season_id', season.id).eq('status', 'finalizado'),
-          supabase.from('match_events').select('*, match:matches!inner(season_id)').eq('match.season_id', season.id)
-        ]);
+      return { players: players ?? [], seasonTeamsData: seasonTeamsData ?? [], matches: matches ?? [], events: events ?? [] };
+    },
+    enabled: !!season?.id,
+    staleTime: 1000 * 60 * 5,
+  });
 
-        return { players, seasonTeamsData, matches, events };
+  const { playerStats, teamStats } = useMemo(() => {
+    if (!rawData) return { playerStats: [], teamStats: [] };
+    const { players, seasonTeamsData, matches, events } = rawData;
+    const teams = (seasonTeamsData || []).map((st: any) => st.team).filter(Boolean);
+
+    const pMap: Record<string, PlayerStat> = {};
+    (players || []).forEach((p: any) => {
+      pMap[p.id] = { id: p.id, name: p.name, team_name: p.team?.name || 'Sem Time', team_logo: p.team?.logo_url || '',
+        gols: 0, assistencias: 0, yellow_cards: 0, red_cards: 0, position: p.position, photo_url: p.photo_url, goals_conceded: 0, matches_played: 0 };
+    });
+
+    (events || []).forEach((ev: any) => {
+      if ((ev.type === 'gol' || ev.type === 'gol_penalti') && pMap[ev.player_id]) pMap[ev.player_id].gols++;
+      if (ev.assist_player_id && pMap[ev.assist_player_id]) pMap[ev.assist_player_id].assistencias++;
+    });
+
+    (matches || []).forEach((m: any) => {
+      const matchEvents = (events || []).filter((e: any) => e.match_id === m.id);
+      (players || []).forEach((p: any) => {
+        const pEvents = matchEvents.filter((e: any) => e.player_id === p.id);
+        const hasIndirectRed = pEvents.some((e: any) => e.type === 'cartao_vermelho_indireto');
+        const hasDirectRed = pEvents.some((e: any) => e.type === 'cartao_vermelho_direto');
+        const yellowCount = pEvents.filter((e: any) => e.type === 'cartao_amarelo').length;
+        if (hasIndirectRed) { pMap[p.id].red_cards++; }
+        else { if (hasDirectRed) pMap[p.id].red_cards++; pMap[p.id].yellow_cards += yellowCount; }
       });
+    });
 
-      const { players, seasonTeamsData, matches, events } = data;
-      const teams = (seasonTeamsData || []).map((st: any) => st.team).filter(Boolean);
+    const tMap: Record<string, TeamStat> = {};
+    teams.forEach((t: any) => {
+      tMap[t.id] = { id: t.id, name: t.name, logo: t.logo_url, goals_scored: 0, goals_conceded: 0, yellow_cards: 0, red_cards: 0 };
+    });
 
-      if (players && teams && matches && events) {
-        // --- Process Player Stats ---
-        // --- Process Player Stats (Regra Brasileirão) ---
-        const pMap: Record<string, PlayerStat> = {};
-        players.forEach(p => {
-          pMap[p.id] = { 
-            id: p.id, name: p.name, team_name: p.team?.name || 'Sem Time', team_logo: p.team?.logo_url || '', 
-            gols: 0, assistencias: 0, yellow_cards: 0, red_cards: 0, position: p.position, photo_url: p.photo_url,
-            goals_conceded: 0, matches_played: 0 
-          };
+    (matches || []).forEach((m: any) => {
+      if (tMap[m.home_team_id]) {
+        tMap[m.home_team_id].goals_scored += m.home_score || 0;
+        tMap[m.home_team_id].goals_conceded += m.away_score || 0;
+        (players || []).filter((p: any) => p.team_id === m.home_team_id && p.position === 'GOL').forEach((gk: any) => {
+          if (pMap[gk.id]) { pMap[gk.id].matches_played = (pMap[gk.id].matches_played || 0) + 1; pMap[gk.id].goals_conceded = (pMap[gk.id].goals_conceded || 0) + (m.away_score || 0); }
         });
-
-        // 1. Gols e Assistências (Geral)
-        events.forEach(ev => {
-          if ((ev.type === 'gol' || ev.type === 'gol_penalti') && pMap[ev.player_id]) pMap[ev.player_id].gols++;
-          if (ev.assist_player_id && pMap[ev.assist_player_id]) pMap[ev.assist_player_id].assistencias++;
-        });
-
-        // 2. Cartões com Regra de Acúmulo (Por Partida)
-        matches.forEach(m => {
-          const matchEvents = events.filter(e => e.match_id === m.id);
-          
-          players.forEach(p => {
-            const pEvents = matchEvents.filter(e => e.player_id === p.id);
-            const hasIndirectRed = pEvents.some(e => e.type === 'cartao_vermelho_indireto');
-            const hasDirectRed = pEvents.some(e => e.type === 'cartao_vermelho_direto');
-            const yellowCount = pEvents.filter(e => e.type === 'cartao_amarelo').length;
-
-            if (hasIndirectRed) {
-              pMap[p.id].red_cards++;
-              // Regra Brasileirão: 2 amarelos na mesma partida = 0 amarelos pro acumulado
-            } else {
-              if (hasDirectRed) pMap[p.id].red_cards++;
-              pMap[p.id].yellow_cards += yellowCount;
-            }
-          });
-        });
-
-        setPlayerStats(Object.values(pMap));
-
-        // --- Process Team Stats ---
-        const tMap: Record<string, TeamStat> = {};
-        teams.forEach(t => {
-          tMap[t.id] = {
-            id: t.id,
-            name: t.name,
-            logo: t.logo_url,
-            goals_scored: 0,
-            goals_conceded: 0,
-            yellow_cards: 0,
-            red_cards: 0,
-          };
-        });
-
-        matches.forEach(m => {
-          if (tMap[m.home_team_id]) {
-            tMap[m.home_team_id].goals_scored += m.home_score || 0;
-            tMap[m.home_team_id].goals_conceded += m.away_score || 0;
-            
-            // Add matches and goals conceded to goalkeepers
-            players.filter(p => p.team_id === m.home_team_id && p.position === 'GOL').forEach(gk => {
-              if (pMap[gk.id]) {
-                pMap[gk.id].matches_played = (pMap[gk.id].matches_played || 0) + 1;
-                pMap[gk.id].goals_conceded = (pMap[gk.id].goals_conceded || 0) + (m.away_score || 0);
-              }
-            });
-          }
-          if (tMap[m.away_team_id]) {
-            tMap[m.away_team_id].goals_scored += m.away_score || 0;
-            tMap[m.away_team_id].goals_conceded += m.home_score || 0;
-            
-            // Add matches and goals conceded to goalkeepers
-            players.filter(p => p.team_id === m.away_team_id && p.position === 'GOL').forEach(gk => {
-              if (pMap[gk.id]) {
-                pMap[gk.id].matches_played = (pMap[gk.id].matches_played || 0) + 1;
-                pMap[gk.id].goals_conceded = (pMap[gk.id].goals_conceded || 0) + (m.home_score || 0);
-              }
-            });
-          }
-        });
-
-        // Sum team cards from player cards
-        Object.values(pMap).forEach(pStat => {
-          const team = players.find(p => p.id === pStat.id)?.team_id;
-          if (team && tMap[team]) {
-            tMap[team].yellow_cards += pStat.yellow_cards;
-            tMap[team].red_cards += pStat.red_cards;
-          }
-        });
-
-        setTeamStats(Object.values(tMap));
       }
-    } catch (err) {
-      console.error('Erro ao carregar estatísticas:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (tMap[m.away_team_id]) {
+        tMap[m.away_team_id].goals_scored += m.away_score || 0;
+        tMap[m.away_team_id].goals_conceded += m.home_score || 0;
+        (players || []).filter((p: any) => p.team_id === m.away_team_id && p.position === 'GOL').forEach((gk: any) => {
+          if (pMap[gk.id]) { pMap[gk.id].matches_played = (pMap[gk.id].matches_played || 0) + 1; pMap[gk.id].goals_conceded = (pMap[gk.id].goals_conceded || 0) + (m.home_score || 0); }
+        });
+      }
+    });
+
+    Object.values(pMap).forEach((pStat: any) => {
+      const team = (players || []).find((p: any) => p.id === pStat.id)?.team_id;
+      if (team && tMap[team]) { tMap[team].yellow_cards += pStat.yellow_cards; tMap[team].red_cards += pStat.red_cards; }
+    });
+
+    return { playerStats: Object.values(pMap), teamStats: Object.values(tMap) };
+  }, [rawData]);
+
+  if (queryLoading || ctxLoading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);

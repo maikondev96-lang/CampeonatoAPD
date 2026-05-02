@@ -1,137 +1,106 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Standing } from '../types';
 import { Table, Loader2, Info } from 'lucide-react';
 import { useSeasonContext } from '../components/SeasonContext';
-import { getSmartData } from '../utils/smartCache';
+import { useQuery } from '@tanstack/react-query';
 
 const Classificacao = () => {
   const { season, loading: ctxLoading } = useSeasonContext();
-  const [standings, setStandings] = useState<Standing[]>([]);
-  const [recentResults, setRecentResults] = useState<Record<string, ('W' | 'D' | 'L')[]>>({});
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (season) fetchStandings();
-  }, [season]);
+  // TanStack Query: queryKey inclui season.id → auto-refetch ao trocar temporada
+  const { data: rawData, isLoading: queryLoading } = useQuery({
+    queryKey: ['classificacao', season?.id],
+    queryFn: async () => {
+      const [standingsRes, matchesRes, teamsRes, stagesRes] = await Promise.all([
+        supabase.from('standings').select('*, team:teams(*)').eq('season_id', season!.id),
+        supabase.from('matches')
+          .select('home_team_id, away_team_id, home_score, away_score, stage_id, status')
+          .eq('season_id', season!.id)
+          .eq('status', 'finalizado')
+          .order('date', { ascending: true }),
+        supabase.from('season_teams')
+          .select('team:teams(*)')
+          .eq('season_id', season!.id),
+        supabase.from('stages')
+          .select('id')
+          .eq('season_id', season!.id)
+          .eq('type', 'group')
+      ]);
+      return {
+        standings: standingsRes.data ?? [],
+        matches: matchesRes.data ?? [],
+        teams: teamsRes.data ?? [],
+        groupStageIds: (stagesRes.data ?? []).map((s: any) => s.id)
+      };
+    },
+    enabled: !!season?.id,
+    staleTime: 1000 * 60 * 5,
+  });
 
-  const fetchStandings = async () => {
-    if (!season) return;
-    setLoading(true);
+  // Toda a lógica de negócio agora em useMemo — não muda, só o transporte mudou
+  const { standings, recentResults } = useMemo(() => {
+    if (!rawData || !season) return { standings: [], recentResults: {} };
 
-    try {
-      const data = await getSmartData(`classificacao_${season.id}`, async () => {
-        const [standingsRes, matchesRes, teamsRes, stagesRes] = await Promise.all([
-          supabase.from('standings').select('*, team:teams(*)').eq('season_id', season.id),
-          supabase.from('matches')
-            .select('home_team_id, away_team_id, home_score, away_score, stage_id, status')
-            .eq('season_id', season.id)
-            .eq('status', 'finalizado')
-            .order('date', { ascending: true }),
-          supabase.from('season_teams')
-            .select('team:teams(*)')
-            .eq('season_id', season.id),
-          supabase.from('stages')
-            .select('id')
-            .eq('season_id', season.id)
-            .eq('type', 'group')
-        ]);
+    const { teams: teamsData, matches: matchesData, groupStageIds } = rawData;
+    const baseMap: Record<string, Standing> = {};
 
-        return {
-          standings: standingsRes.data || [],
-          matches: matchesRes.data || [],
-          teams: teamsRes.data || [],
-          groupStageIds: (stagesRes.data || []).map(s => s.id)
-        };
-      });
+    teamsData.forEach((st: any) => {
+      const t = st.team;
+      if (!t) return;
+      baseMap[t.id] = {
+        team_id: t.id,
+        season_id: season.id,
+        played: 0, wins: 0, draws: 0, losses: 0,
+        goals_for: 0, goals_against: 0, goal_diff: 0,
+        points: 0,
+        team: t
+      };
+    });
 
-      const { standings: standingsData, matches: matchesData, teams: teamsData, groupStageIds } = data;
-      const standingsRes = { data: standingsData };
-      const matchesRes = { data: matchesData };
-      const teamsRes = { data: teamsData };
+    const groupMatches = matchesData.filter((m: any) => groupStageIds.includes(m.stage_id));
 
-      let finalStandings: Standing[] = [];
+    groupMatches.forEach((m: any) => {
+      const home = baseMap[m.home_team_id];
+      const away = baseMap[m.away_team_id];
+      if (!home || !away) return;
+      home.played++; away.played++;
+      home.goals_for += m.home_score || 0;
+      home.goals_against += m.away_score || 0;
+      away.goals_for += m.away_score || 0;
+      away.goals_against += m.home_score || 0;
+      if (m.home_score === m.away_score) {
+        home.draws++; away.draws++;
+        home.points += 1; away.points += 1;
+      } else if ((m.home_score ?? 0) > (m.away_score ?? 0)) {
+        home.wins++; away.losses++; home.points += 3;
+      } else {
+        away.wins++; home.losses++; away.points += 3;
+      }
+      home.goal_diff = home.goals_for - home.goals_against;
+      away.goal_diff = away.goals_for - away.goals_against;
+    });
 
-    if (teamsRes.data) {
-      const baseMap: Record<string, Standing> = {};
-      teamsRes.data.forEach((st: any) => {
-        const t = st.team;
-        if (!t) return;
-        baseMap[t.id] = {
-          team_id: t.id,
-          season_id: season.id,
-          played: 0, wins: 0, draws: 0, losses: 0,
-          goals_for: 0, goals_against: 0, goal_diff: 0,
-          points: 0,
-          team: t
-        };
-      });
+    const finalStandings = Object.values(baseMap).sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.goal_diff !== a.goal_diff) return b.goal_diff - a.goal_diff;
+      if (b.goals_for !== a.goals_for) return b.goals_for - a.goals_for;
+      return (a.team?.name || '').localeCompare(b.team?.name || '');
+    });
 
-      // Filter only group stage matches
-      const groupMatches = (matchesRes.data || []).filter(m =>
-        groupStageIds.includes(m.stage_id)
-      );
+    const resultsMap: Record<string, ('W' | 'D' | 'L')[]> = {};
+    groupMatches.forEach((m: any) => {
+      const add = (id: string, r: 'W' | 'D' | 'L') => { if (!resultsMap[id]) resultsMap[id] = []; resultsMap[id].push(r); };
+      if (m.home_score === m.away_score) { add(m.home_team_id, 'D'); add(m.away_team_id, 'D'); }
+      else if ((m.home_score ?? 0) > (m.away_score ?? 0)) { add(m.home_team_id, 'W'); add(m.away_team_id, 'L'); }
+      else { add(m.home_team_id, 'L'); add(m.away_team_id, 'W'); }
+    });
 
-      groupMatches.forEach(m => {
-        const home = baseMap[m.home_team_id];
-        const away = baseMap[m.away_team_id];
-        if (!home || !away) return;
+    return { standings: finalStandings, recentResults: resultsMap };
+  }, [rawData, season]);
 
-        home.played++;
-        away.played++;
-        home.goals_for += m.home_score || 0;
-        home.goals_against += m.away_score || 0;
-        away.goals_for += m.away_score || 0;
-        away.goals_against += m.home_score || 0;
-
-        if (m.home_score === m.away_score) {
-          home.draws++; away.draws++;
-          home.points += 1; away.points += 1;
-        } else if ((m.home_score ?? 0) > (m.away_score ?? 0)) {
-          home.wins++; away.losses++;
-          home.points += 3;
-        } else {
-          away.wins++; home.losses++;
-          away.points += 3;
-        }
-        home.goal_diff = home.goals_for - home.goals_against;
-        away.goal_diff = away.goals_for - away.goals_against;
-      });
-
-      finalStandings = Object.values(baseMap).sort((a, b) => {
-        if (b.points !== a.points) return b.points - a.points;
-        if (b.goal_diff !== a.goal_diff) return b.goal_diff - a.goal_diff;
-        if (b.goals_for !== a.goals_for) return b.goals_for - a.goals_for;
-        return (a.team?.name || '').localeCompare(b.team?.name || '');
-      });
-
-      // Recent results
-      const resultsMap: Record<string, ('W' | 'D' | 'L')[]> = {};
-      groupMatches.forEach(m => {
-        const addResult = (teamId: string, result: 'W' | 'D' | 'L') => {
-          if (!resultsMap[teamId]) resultsMap[teamId] = [];
-          resultsMap[teamId].push(result);
-        };
-        if (m.home_score === m.away_score) {
-          addResult(m.home_team_id, 'D'); addResult(m.away_team_id, 'D');
-        } else if ((m.home_score ?? 0) > (m.away_score ?? 0)) {
-          addResult(m.home_team_id, 'W'); addResult(m.away_team_id, 'L');
-        } else {
-          addResult(m.home_team_id, 'L'); addResult(m.away_team_id, 'W');
-        }
-      });
-      setRecentResults(resultsMap);
-    }
-      setStandings(finalStandings);
-    } catch (error) {
-      console.error("Error fetching standings:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading || ctxLoading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
+  if (queryLoading || ctxLoading) return <div style={{ textAlign: 'center', padding: '5rem' }}><Loader2 className="animate-spin" /></div>;
 
   const dotColor = (r: 'W' | 'D' | 'L') =>
     r === 'W' ? '#059669' : r === 'L' ? '#dc2626' : '#94a3b8';
